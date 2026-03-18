@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mądra Nadpłata – Jak małe nadpłaty zmieniają cały kredyt</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --bg2: #181c27;
+      --bg3: #1e2333;
+      --card: #252a3a;
+      --border: #2e3450;
+      --accent: #4f8ef7;
+      --accent2: #6ee7b7;
+      --accent3: #f97316;
+      --danger: #ef4444;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --radius: 14px;
+      --shadow: 0 4px 32px rgba(0,0,0,.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(15,17,23,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(16px,4vw,48px);
+      height: 60px;
+    }
+    .nav-logo { font-size: 1.1rem; font-weight: 700; color: var(--accent); letter-spacing: -.3px; }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a { color: var(--text2); text-decoration: none; font-size: .9rem; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    @media(max-width:600px){ .nav-links { display:none; } }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 80px clamp(16px,5vw,80px) 60px;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,142,247,.12) 0%, transparent 70%);
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content:'';
+      position:absolute; inset:0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232e3450' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: .4;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(79,142,247,.15);
+      border: 1px solid rgba(79,142,247,.3);
+      color: var(--accent);
+      padding: 5px 16px;
+      border-radius: 999px;
+      font-size: .82rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      max-width: 780px;
+      margin-bottom: 20px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text2);
+      max-width: 560px;
+      margin-bottom: 40px;
+    }
+    .hero-stats {
+      display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 48px;
+    }
+    .hero-stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      text-align: center;
+    }
+    .hero-stat .val { font-size: 1.8rem; font-weight: 800; color: var(--accent2); }
+    .hero-stat .lbl { font-size: .8rem; color: var(--text3); margin-top: 4px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 32px;
+      border-radius: 999px;
+      font-size: 1rem; font-weight: 600;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+      border: none; cursor: pointer;
+    }
+    .btn:hover { background: #3a7de0; transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+    /* SECTIONS */
+    section { padding: clamp(60px,8vw,100px) clamp(16px,5vw,80px); }
+    .section-label {
+      font-size: .78rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 800; letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .section-sub { font-size: 1.05rem; color: var(--text2); max-width: 600px; }
+
+    /* HOW IT WORKS */
+    #jak-to-dziala { background: var(--bg2); }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px; margin-top: 48px;
+    }
+    .step {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      position: relative;
+      transition: border-color .2s;
+    }
+    .step:hover { border-color: var(--accent); }
+    .step-num {
+      width: 36px; height: 36px;
+      background: rgba(79,142,247,.15);
+      border: 1px solid rgba(79,142,247,.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 800; color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .step h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .step p { font-size: .9rem; color: var(--text2); }
+
+    /* EXAMPLE IMPACT */
+    #przyklad { background: var(--bg); }
+    .impact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 48px;
+    }
+    @media(max-width:768px){ .impact-grid { grid-template-columns: 1fr; } }
+    .impact-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .impact-card.highlight { border-color: var(--accent2); }
+    .impact-card h3 { font-size: 1rem; font-weight: 700; color: var(--text2); margin-bottom: 20px; text-transform: uppercase; letter-spacing: .5px; font-size: .82rem; }
+    .impact-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .impact-row:last-child { border-bottom: none; }
+    .impact-row .label { font-size: .9rem; color: var(--text2); }
+    .impact-row .value { font-size: 1rem; font-weight: 700; }
+    .impact-row .value.good { color: var(--accent2); }
+    .impact-row .value.bad { color: var(--danger); }
+    .chart-container { margin-top: 48px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+    .chart-container canvas { max-height: 320px; }
+    .chart-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+
+    /* CALCULATOR */
+    #kalkulator { background: var(--bg2); }
+    .calc-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 48px;
+    }
+    @media(max-width:900px){ .calc-wrapper { grid-template-columns: 1fr; } }
+
+    .calc-form {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-size: .85rem; font-weight: 600; color: var(--text2);
+      margin-bottom: 8px;
+    }
+    .form-group label span { color: var(--text3); font-weight: 400; }
+    .form-group input, .form-group select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: .95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .form-group .hint { font-size: .78rem; color: var(--text3); margin-top: 5px; }
+
+    .input-with-suffix { position: relative; }
+    .input-with-suffix input { padding-right: 50px; }
+    .input-suffix {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      font-size: .85rem; color: var(--text3); pointer-events: none;
+    }
+
+    .form-divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    .slider-group { margin-bottom: 20px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .slider-header label { font-size: .85rem; font-weight: 600; color: var(--text2); }
+    .slider-header .slider-val { font-size: .95rem; font-weight: 700; color: var(--accent); }
+    input[type=range] {
+      width: 100%; height: 4px;
+      -webkit-appearance: none; appearance: none;
+      background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%; background: var(--accent);
+      cursor: pointer; border: 2px solid var(--bg);
+    }
+
+    .calc-btn {
+      width: 100%; padding: 14px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background .2s;
+    }
+    .calc-btn:hover { background: #3a7de0; }
+
+    .calc-results {
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .result-card.highlight-green { border-color: var(--accent2); }
+    .result-card.highlight-blue { border-color: var(--accent); }
+    .result-big { font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
+    .result-big.green { color: var(--accent2); }
+    .result-big.blue { color: var(--accent); }
+    .result-big.orange { color: var(--accent3); }
+    .result-label { font-size: .85rem; color: var(--text2); }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .result-item .r-val { font-size: 1.2rem; font-weight: 700; }
+    .result-item .r-lbl { font-size: .8rem; color: var(--text3); }
+
+    .comparison-bars { margin-top: 16px; }
+    .bar-row { margin-bottom: 12px; }
+    .bar-row .bar-label { display: flex; justify-content: space-between; font-size: .8rem; color: var(--text2); margin-bottom: 5px; }
+    .bar-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+    /* SCHEDULE TABLE */
+    #harmonogram { background: var(--bg); }
+    .table-wrapper {
+      margin-top: 32px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-scroll { overflow-x: auto; max-height: 480px; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    thead th {
+      background: var(--bg3);
+      padding: 12px 14px;
+      text-align: left;
+      font-size: .75rem; font-weight: 700;
+      color: var(--text3); text-transform: uppercase; letter-spacing: .5px;
+      position: sticky; top: 0; z-index: 1;
+      white-space: nowrap;
+    }
+    tbody tr { border-top: 1px solid var(--border); transition: background .15s; }
+    tbody tr:hover { background: rgba(79,142,247,.05); }
+    tbody td { padding: 10px 14px; white-space: nowrap; }
+    .td-green { color: var(--accent2); font-weight: 600; }
+    .td-red { color: #f97316; }
+    .td-muted { color: var(--text3); }
+    .td-overpay { color: var(--accent); font-weight: 600; }
+
+    /* FAQ */
+    #faq { background: var(--bg2); }
+    .faq-list { margin-top: 40px; display: flex; flex-direction: column; gap: 16px; max-width: 800px; }
+    .faq-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .faq-q {
+      padding: 18px 22px;
+      font-weight: 600; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      user-select: none; transition: background .2s;
+    }
+    .faq-q:hover { background: var(--bg3); }
+    .faq-q .arrow { transition: transform .2s; color: var(--accent); font-size: 1.2rem; }
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height .3s ease, padding .3s;
+      padding: 0 22px;
+      color: var(--text2); font-size: .95rem;
+    }
+    .faq-item.open .faq-a { max-height: 400px; padding: 0 22px 18px; }
+    .faq-item.open .arrow { transform: rotate(45deg); }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg3);
+      border-top: 1px solid var(--border);
+      padding: 40px clamp(16px,5vw,80px);
+      text-align: center;
+      color: var(--text3);
+      font-size: .85rem;
+    }
+    footer a { color: var(--text2); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+    .footer-author { margin-top: 10px; font-size: .8rem; }
+
+    /* UTILS */
+    .container { max-width: 1200px; margin: 0 auto; }
+    .flex-gap { display: flex; gap: 16px; flex-wrap: wrap; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+
+    /* Chart wrapper */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 32px;
+    }
+    @media(max-width:768px){ .charts-row { grid-template-columns: 1fr; } }
+    .chart-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .chart-box canvas { max-height: 260px; }
+    .chart-box h4 { font-size: .9rem; font-weight: 700; margin-bottom: 16px; color: var(--text2); }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    .fade-up { animation: fadeUp .6s ease both; }
+    .fade-up.delay-1 { animation-delay: .1s; }
+    .fade-up.delay-2 { animation-delay: .2s; }
+    .fade-up.delay-3 { animation-delay: .3s; }
+
+    .info-box {
+      background: rgba(79,142,247,.08);
+      border: 1px solid rgba(79,142,247,.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-size: .9rem;
+      color: var(--text2);
+      margin-top: 16px;
+    }
+    .info-box strong { color: var(--accent); }
+
+    /* Editable schedule */
+    .overpay-input {
+      width: 90px; padding: 5px 8px;
+      background: rgba(79,142,247,.08);
+      border: 1px solid rgba(79,142,247,.2);
+      border-radius: 5px;
+      color: var(--text); font-size: .85rem;
+      text-align: right; outline: none;
+      transition: border-color .15s, background .15s;
+    }
+    .overpay-input:focus { border-color: var(--accent); background: rgba(79,142,247,.18); }
+    .overpay-input:disabled { opacity:.35; cursor:not-allowed; }
+    .row-paid { opacity:.3; }
+    .schedule-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+      padding: 14px 20px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+    .toolbar-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text2); font-size: .8rem;
+      cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .calc-chart-box { margin-top: 20px; }
+    .calc-chart-box canvas { max-height: 220px; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">💰 Mądra Nadpłata</div>
+  <div class="nav-links">
+    <a href="#jak-to-dziala">Jak to działa</a>
+    <a href="#przyklad">Przykład</a>
+    <a href="#kalkulator">Kalkulator</a>
+    <a href="#harmonogram">Harmonogram</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Edukacja finansowa</div>
+  <h1 class="fade-up">Małe nadpłaty.<br /><span>Gigantyczne oszczędności.</span></h1>
+  <p class="fade-up delay-1">Dowiedz się, jak regularne nadpłacanie kredytu hipotecznego może zaoszczędzić Ci dziesiątki lub nawet setki tysięcy złotych i skrócić kredyt o kilka lat.</p>
+
+  <div class="hero-stats fade-up delay-2">
+    <div class="hero-stat">
+      <div class="val">212 000 zł</div>
+      <div class="lbl">zaoszczędzone odsetki*</div>
+    </div>
+    <div class="hero-stat">
+      <div class="val">5 lat</div>
+      <div class="lbl">szybsza spłata*</div>
+    </div>
+    <div class="hero-stat">
+      <div class="val">1 130 zł</div>
+      <div class="lbl">miesięczna nadpłata*</div>
+    </div>
+  </div>
+
+  <div class="flex-gap fade-up delay-3">
+    <a href="#kalkulator" class="btn">Oblicz swoją nadpłatę →</a>
+    <a href="#jak-to-dziala" class="btn btn-outline">Jak to działa</a>
+  </div>
+
+  <p style="margin-top:24px;font-size:.75rem;color:var(--text3);">* przykład: kredyt 900 000 zł, 20 lat, 6,8%, nadpłata 1 130 zł/mies.</p>
+</section>
+
+<!-- JAK TO DZIAŁA -->
+<section id="jak-to-dziala">
+  <div class="container">
+    <div class="section-label">Podstawy</div>
+    <div class="section-title">Jak działa nadpłata kredytu?</div>
+    <p class="section-sub">Każda złotówka wpłacona ponad ratę bezpośrednio redukuje kapitał – a mniejszy kapitał to mniejsze odsetki każdego kolejnego miesiąca.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Rata = odsetki + kapitał</h3>
+        <p>Miesięczna rata składa się z dwóch części. Na początku kredytu większość to odsetki – dopiero z czasem proporcja się odwraca. Właśnie dlatego nadpłata na początku robi największą różnicę.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Nadpłata spłaca kapitał</h3>
+        <p>Każda nadpłata trafia bezpośrednio w saldo kredytu. Mniejszy kapitał → niższe odsetki w kolejnym miesiącu → więcej pieniędzy idzie w kapitał. Efekt kuli śnieżnej działający na Twoją korzyść.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Dwa sposoby na nadpłatę</h3>
+        <p><strong>Stała kwota do spłaty:</strong> co miesiąc przelewasz tę samą sumę (rata + nadpłata), a harmonogram skraca się automatycznie.<br /><br /><strong>Jednorazowe wpłaty:</strong> nadpłacasz kiedy masz wolne środki – premia, zwrot podatku, oszczędności.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Uwaga na prowizję</h3>
+        <p>Niektóre banki pobierają prowizję za nadpłatę (zazwyczaj 1–3%, przez pierwsze 3 lata). Sprawdź umowę! Nawet z prowizją nadpłata zwykle się opłaca – kalkulator uwzględnia ten koszt.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <h3>Skrócenie vs. obniżenie raty</h3>
+        <p>Po nadpłacie bank może <strong>skrócić okres</strong> kredytu (zalecane!) lub <strong>obniżyć ratę</strong> przy tym samym terminie. Skrócenie daje większe oszczędności na odsetkach.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <h3>Efekt jest skumulowany</h3>
+        <p>Nawet 500 zł miesięcznie przy kredycie na 500 000 zł może zaoszczędzić Ci ponad 80 000 zł i skrócić kredyt o 2–3 lata. Sprawdź sam w kalkulatorze poniżej.</p>
+      </div>
+    </div>
+
+    <div class="info-box mt-24">
+      <strong>Kluczowy wzór:</strong> Odsetki miesięczne = Saldo kredytu × (Oprocentowanie roczne ÷ 12). Im szybciej zredukcujesz saldo, tym mniej zapłacisz odsetek – i to kumuluje się przez całe lata.
+    </div>
+  </div>
+</section>
+
+<!-- PRZYKŁAD REALNY -->
+<section id="przyklad">
+  <div class="container">
+    <div class="section-label">Przykład z życia</div>
+    <div class="section-title">900 000 zł kredytu – co zmienia 1 130 zł miesięcznie?</div>
+    <p class="section-sub">Konkretne liczby dla typowego kredytu hipotecznego. Standardowa rata: 6 870 zł. Nadpłata: tylko 1 130 zł miesięcznie (łącznie 8 000 zł do banku).</p>
+
+    <div class="impact-grid">
+      <div class="impact-card">
+        <h3>Bez nadpłaty</h3>
+        <div class="impact-row">
+          <span class="label">Kwota kredytu</span>
+          <span class="value">900 000 zł</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Okres spłaty</span>
+          <span class="value">20 lat (240 rat)</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Miesięczna rata</span>
+          <span class="value">6 870 zł</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Łączne odsetki</span>
+          <span class="value bad">748 813 zł</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Łącznie do banku</span>
+          <span class="value bad">1 648 813 zł</span>
+        </div>
+      </div>
+      <div class="impact-card highlight">
+        <h3>Z nadpłatą 1 130 zł / mies.</h3>
+        <div class="impact-row">
+          <span class="label">Kwota kredytu</span>
+          <span class="value">900 000 zł</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Okres spłaty</span>
+          <span class="value good">15 lat (180 rat)</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Miesięczna wpłata</span>
+          <span class="value">8 000 zł</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Łączne odsetki</span>
+          <span class="value good">536 621 zł</span>
+        </div>
+        <div class="impact-row">
+          <span class="label">Oszczędność</span>
+          <span class="value good">212 192 zł !</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-box">
+        <h4>Saldo kredytu w czasie</h4>
+        <canvas id="chartBalance"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Odsetki vs. kapitał (podział rat)</h4>
+        <canvas id="chartInterest"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KALKULATOR -->
+<section id="kalkulator">
+  <div class="container">
+    <div class="section-label">Narzędzie</div>
+    <div class="section-title">Kalkulator nadpłaty kredytu</div>
+    <p class="section-sub">Wprowadź dane swojego kredytu i sprawdź, ile możesz zaoszczędzić. Możesz wybrać strategię: stała kwota do spłaty lub stała nadpłata co miesiąc.</p>
+
+    <div class="calc-wrapper">
+      <div class="calc-form">
+        <div class="form-group">
+          <label>Kwota kredytu <span>(pozostałe saldo)</span></label>
+          <div class="input-with-suffix">
+            <input type="number" id="loanAmount" value="500000" min="10000" max="5000000" step="1000" />
+            <span class="input-suffix">PLN</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Oprocentowanie roczne</label>
+          <div class="input-with-suffix">
+            <input type="number" id="interestRate" value="6.8" min="0.1" max="25" step="0.1" />
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Pozostała liczba rat</label>
+          <div class="input-with-suffix">
+            <input type="number" id="loanMonths" value="240" min="12" max="360" step="1" />
+            <span class="input-suffix">mies.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Prowizja za nadpłatę</label>
+          <div class="input-with-suffix">
+            <input type="number" id="prepayFee" value="0" min="0" max="5" step="0.1" />
+            <span class="input-suffix">%</span>
+          </div>
+          <p class="hint">Sprawdź w umowie – często 0% po 3 latach od uruchomienia kredytu</p>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-group">
+          <label>Strategia nadpłaty</label>
+          <select id="strategy">
+            <option value="fixed_total">Stała kwota do banku (rata + nadpłata)</option>
+            <option value="fixed_overpay">Stała miesięczna nadpłata</option>
+            <option value="custom">Własne nadpłaty (wybierz miesiące w harmonogramie)</option>
+          </select>
+        </div>
+
+        <div class="slider-group" id="totalAmountGroup">
+          <div class="slider-header">
+            <label>Łączna kwota do banku</label>
+            <span class="slider-val" id="totalAmountVal">4 500 PLN</span>
+          </div>
+          <input type="range" id="totalAmountSlider" min="0" max="20000" step="100" value="4500" oninput="updateSlider('totalAmount')" />
+          <div class="hint">Standardowa rata: <strong id="stdPaymentDisplay">—</strong> PLN</div>
+        </div>
+
+        <div class="slider-group" id="overpayAmountGroup" style="display:none;">
+          <div class="slider-header">
+            <label>Nadpłata miesięczna</label>
+            <span class="slider-val" id="overpayAmountVal">500 PLN</span>
+          </div>
+          <input type="range" id="overpayAmountSlider" min="0" max="10000" step="100" value="500" oninput="updateSlider('overpayAmount')" />
+        </div>
+
+        <div id="customHintGroup" style="display:none;">
+          <div class="info-box" style="font-size:.85rem;">
+            Po kliknięciu <strong>Oblicz</strong> w harmonogramie pojawią się wszystkie raty z pustymi polami nadpłat. Wpisz dowolną kwotę w wybranym miesiącu – wyniki zaktualizują się automatycznie.
+          </div>
+          <div class="hint" style="margin-top:8px;">Standardowa rata: <strong id="stdPaymentDisplayCustom">—</strong> PLN</div>
+        </div>
+
+        <button class="calc-btn" onclick="calculate()">Oblicz →</button>
+      </div>
+
+      <div class="calc-results">
+        <div id="calcStats">
+          <div class="result-card">
+            <div class="result-label" style="margin-bottom:12px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);">Kliknij "Oblicz" aby zobaczyć wyniki</div>
+            <p style="color:var(--text2);font-size:.9rem;">Wypełnij formularz po lewej i wciśnij przycisk. Wyniki pojawią się tutaj razem z wykresem i harmonogramem spłat.</p>
+          </div>
+        </div>
+        <div class="calc-chart-box" id="calcChartBox" style="display:none;">
+          <canvas id="calcChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HARMONOGRAM -->
+<section id="harmonogram">
+  <div class="container">
+    <div class="section-label">Szczegóły</div>
+    <div class="section-title">Harmonogram spłat</div>
+    <p class="section-sub">Tabela generuje się automatycznie po obliczeniu. Widać dokładnie, ile w każdym miesiącu idzie w kapitał, odsetki i nadpłatę.</p>
+
+    <div class="table-wrapper" id="scheduleWrapper" style="display:none;">
+      <div class="schedule-toolbar" id="scheduleToolbar">
+        <div style="font-size:.85rem;color:var(--text2);" id="toolbarInfo">—</div>
+        <div style="display:flex;gap:8px;">
+          <button class="toolbar-btn" onclick="resetOverpays()">Przywróć domyślne</button>
+          <button class="toolbar-btn" onclick="clearOverpays()">Wyczyść nadpłaty</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="scheduleTable">
+          <thead>
+            <tr>
+              <th>Rata #</th>
+              <th>Saldo przed ratą</th>
+              <th>Odsetki</th>
+              <th>Kapitał</th>
+              <th>Nadpłata (edytuj)</th>
+              <th>Prowizja</th>
+              <th>Łącznie do banku</th>
+              <th>Saldo po racie</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="scheduleEmpty" style="margin-top:24px;color:var(--text3);font-size:.9rem;">
+      Najpierw oblicz wyniki w sekcji Kalkulator powyżej.
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-label">Pytania i odpowiedzi</div>
+    <div class="section-title">Najczęstsze pytania</div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Czy nadpłata zawsze się opłaca? <span class="arrow">+</span>
+        </div>
+        <div class="faq-a">
+          W ogromnej większości przypadków tak – szczególnie przy kredytach ze zmiennym oprocentowaniem. Porównaj oprocentowanie kredytu z potencjalnym zyskiem z inwestycji. Jeśli kredyt kosztuje Cię 6–8%, a bezpieczna lokata daje 4–5%, nadpłata jest racjonalnym wyborem. Wyjątkiem mogą być kredyty na bardzo niskie stopy (historyczne 2–3%) i moment, gdy masz dostęp do inwestycji wyraźnie je bijących.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Kiedy najlepiej zacząć nadpłacać? <span class="arrow">+</span>
+        </div>
+        <div class="faq-a">
+          Im wcześniej, tym lepiej – na początku kredytu odsetki stanowią największą część raty. Każda złotówka nadpłaty w pierwszych latach "zarabia" wielokrotnie więcej niż ta sama złotówka nadpłacona pod koniec. Nie odkładaj na później – zacznij od pierwszego miesiąca, nawet od małych kwot.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Lepiej skrócić okres czy obniżyć ratę po nadpłacie? <span class="arrow">+</span>
+        </div>
+        <div class="faq-a">
+          Finansowo korzystniejsze jest skrócenie okresu – mniej rat oznacza mniej odsetek. Jednak obniżenie raty może mieć sens, jeśli zależy Ci na poprawie płynności (np. masz nieregularne dochody). Możesz też stosować strategię hybrydową: obniżać ratę, ale nadal wpłacać poprzednią kwotę – de facto osiągasz efekt skrócenia bez utraty elastyczności.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Co to jest prowizja za nadpłatę i jak na nią uważać? <span class="arrow">+</span>
+        </div>
+        <div class="faq-a">
+          Prawo bankowe pozwala bankom pobierać prowizję za wcześniejszą spłatę przez pierwsze 36 miesięcy (dla kredytów ze zmienną stopą). Po 3 latach prowizja za nadpłatę jest zazwyczaj niedozwolona lub dobrowolna. Sprawdź dokładnie swoją umowę – wiele banków nie pobiera jej wcale lub stosuje ją tylko przy spłacie całości. Kalkulator powyżej uwzględnia prowizję w kalkulacji, dzięki czemu zobaczysz rzeczywiste oszczędności.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Nadpłata a poduszka finansowa – co pierwsze? <span class="arrow">+</span>
+        </div>
+        <div class="faq-a">
+          Zasada ogólna: najpierw zbuduj poduszkę finansową na 3–6 miesięcy wydatków, dopiero potem nadpłacaj. Brak poduszki to ryzyko, że przy nieoczekiwanym wydatku (utrata pracy, choroba, naprawa auta) sięgniesz po drogi kredyt konsumpcyjny. Z drugiej strony – nawet mała, regularna nadpłata (200–500 zł) równolegle z budowaniem poduszki jest zdrową strategią.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Czy nadpłatę mogę cofnąć lub wycofać? <span class="arrow">+</span>
+        </div>
+        <div class="faq-a">
+          Nie – nadpłata to trwałe zmniejszenie salda kredytu i nie można jej "cofnąć". Dlatego trzymaj poduszkę finansową osobno i nadpłacaj tylko wolne środki, których nie będziesz potrzebować. Niektóre banki oferują tzw. "wakacje kredytowe" lub możliwość zawieszenia rat – to alternatywa na trudniejsze momenty, nie zastępuje jednak braku rezerwy.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Jak poinformować bank o nadpłacie? <span class="arrow">+</span>
+        </div>
+        <div class="faq-a">
+          Procedury różnią się w zależności od banku. Najczęściej wystarczy przelew na numer rachunku kredytowego z odpowiednim tytułem przelewu (np. "nadpłata kredytu nr XXXX – spłata kapitału"). Niektóre banki wymagają złożenia dyspozycji w oddziale lub przez bankowość elektroniczną. Sprawdź regulamin lub zadzwoń na infolinię przed pierwszą nadpłatą.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="font-size:1rem;font-weight:700;color:var(--text2);margin-bottom:8px;">💰 Mądra Nadpłata</div>
+  <p>Strona edukacyjna – nie stanowi porady finansowej. Wyniki kalkulatora mają charakter poglądowy.<br />Przed podjęciem decyzji skonsultuj się z doradcą finansowym lub przeczytaj umowę kredytową.</p>
+  <div class="footer-author" style="margin-top:16px;">
+    Autor kalkulatora: <strong style="color:var(--text2);">Bartłomiej Derda</strong> &nbsp;|&nbsp;
+    <a href="mailto:">Kontakt</a>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const G = {
+  P: 0, r: 0, months: 0, prepayFee: 0, stdPayment: 0,
+  customOverpay: [],    // per-month overpayment (length = months)
+  strategy: '',         // 'fixed_total' | 'fixed_overpay'
+  totalMonthly: 0,      // total amount for fixed_total strategy
+  defaultOverpay: 0,    // constant overpay for fixed_overpay strategy
+  baseInterest: 0,
+  baseMonths: 0,
+  baseBalances: [],     // balance after each base installment
+};
+let calcChart = null;
+
+// ============================================================
+// HELPERS
+// ============================================================
+const fmt = (n, dec=0) => (isFinite(n) ? Math.max(0,n) : 0).toLocaleString('pl-PL', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+const fmtPLN = n => fmt(n, 0) + ' zł';
+
+function calcStdPayment(P, r, n) {
+  if (r === 0) return P / n;
+  return P * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1);
+}
+
+// Build schedule with per-row custom overpayments array.
+// Rata standardowa jest przeliczana co miesiąc (identycznie jak w Excelu):
+//   currentStd = calcStdPayment(aktualne_saldo, r, pozostałe_raty)
+// Dzięki temu nadpłata (przy fixed_total) rośnie co miesiąc gdy odsetki maleją.
+function buildSchedule(P, r, origMonths, prepayFee, customOverpay) {
+  let balance = P;
+  const rows = [];
+  let cumInterest = 0;
+  const n = customOverpay.length;
+
+  for (let i = 0; i < n && balance > 0.005; i++) {
+    const remaining  = origMonths - i;
+    const interest   = balance * r;
+    const currentStd = calcStdPayment(balance, r, remaining); // przeliczona rata miesięczna
+    const regularCap = Math.max(0, Math.min(currentStd - interest, balance));
+    const overpay    = Math.max(0, Math.min(customOverpay[i], balance - regularCap));
+    const totalCap   = regularCap + overpay;
+    const fee        = overpay * prepayFee;
+    const totalPayment = interest + totalCap + fee;
+    const balanceBefore = balance;
+    balance = Math.max(0, balance - totalCap);
+    cumInterest += interest + fee;
+
+    rows.push({ num: i+1, balanceBefore, totalPayment, capital: totalCap, regularCap, interest, overpay, fee, balanceAfter: balance, cumInterest });
+
+    if (balance < 0.005) break;
+  }
+  return rows;
+}
+
+// Dla strategii fixed_total: oblicz naturalne nadpłaty od danego salda i indeksu.
+// Natural overpay[i] = totalMonthly - currentStd(saldo_i, r, remaining_i)
+function naturalOverpaysFromBalance(startBalance, startIdx) {
+  let b = startBalance;
+  const result = [];
+  for (let i = startIdx; i < G.months && b > 0.005; i++) {
+    const remaining  = G.months - i;
+    const interest   = b * G.r;
+    const currentStd = calcStdPayment(b, G.r, remaining);
+    const regularCap = Math.max(0, Math.min(currentStd - interest, b));
+    const overpay    = Math.max(0, G.totalMonthly - currentStd); // to co zostaje po minimalnej racie
+    result.push(overpay);
+    b = Math.max(0, b - regularCap - overpay);
+    if (b < 0.005) break;
+  }
+  while (result.length < G.months - startIdx) result.push(0);
+  return result;
+}
+
+// Build base schedule (no overpayment) – returns per-row balances + total interest
+function buildBaseSchedule(P, r, months, stdPayment) {
+  let balance = P;
+  let totalInterest = 0;
+  const balances = [];
+  for (let i = 0; i < months && balance > 0.005; i++) {
+    const interest = balance * r;
+    const cap = Math.min(stdPayment - interest, balance);
+    balance = Math.max(0, balance - cap);
+    totalInterest += interest;
+    balances.push(balance);
+    if (balance < 0.005) break;
+  }
+  return { balances, totalInterest, count: balances.length };
+}
+
+// ============================================================
+// SLIDER / FORM
+// ============================================================
+function updateSlider(name) {
+  if (name === 'totalAmount') {
+    const v = +document.getElementById('totalAmountSlider').value;
+    document.getElementById('totalAmountVal').textContent = fmt(v) + ' PLN';
+  } else {
+    const v = +document.getElementById('overpayAmountSlider').value;
+    document.getElementById('overpayAmountVal').textContent = fmt(v) + ' PLN';
+  }
+}
+
+document.getElementById('strategy').addEventListener('change', function() {
+  const s = this.value;
+  document.getElementById('totalAmountGroup').style.display   = s === 'fixed_total'  ? '' : 'none';
+  document.getElementById('overpayAmountGroup').style.display = s === 'fixed_overpay' ? '' : 'none';
+  document.getElementById('customHintGroup').style.display    = s === 'custom'        ? '' : 'none';
+  updateStdPayment();
+});
+
+['loanAmount','interestRate','loanMonths'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateStdPayment)
+);
+
+function updateStdPayment() {
+  const P = +document.getElementById('loanAmount').value;
+  const r = +document.getElementById('interestRate').value / 100 / 12;
+  const n = +document.getElementById('loanMonths').value;
+  const std = calcStdPayment(P, r, n);
+  document.getElementById('stdPaymentDisplay').textContent = fmt(std, 0);
+  const stdCustomEl = document.getElementById('stdPaymentDisplayCustom');
+  if (stdCustomEl) stdCustomEl.textContent = fmt(std, 0);
+  const slider = document.getElementById('totalAmountSlider');
+  slider.min = Math.floor(std);
+  slider.max = Math.floor(std * 2.5);
+  if (+slider.value < std) { slider.value = Math.ceil(std * 1.1); updateSlider('totalAmount'); }
+}
+
+updateStdPayment();
+
+// ============================================================
+// MAIN CALCULATE
+// ============================================================
+function calculate() {
+  const P            = +document.getElementById('loanAmount').value;
+  const annualRate   = +document.getElementById('interestRate').value / 100;
+  const months       = +document.getElementById('loanMonths').value;
+  const prepayFee    = +document.getElementById('prepayFee').value / 100;
+  const strategy     = document.getElementById('strategy').value;
+  const r            = annualRate / 12;
+  const stdPayment   = calcStdPayment(P, r, months);
+
+  // Store global state first (naturalOverpaysFromBalance needs these)
+  G.P = P; G.r = r; G.months = months; G.prepayFee = prepayFee;
+  G.stdPayment = stdPayment; G.strategy = strategy;
+
+  if (strategy === 'fixed_total') {
+    G.totalMonthly   = +document.getElementById('totalAmountSlider').value;
+    G.defaultOverpay = G.totalMonthly;
+    G.customOverpay  = naturalOverpaysFromBalance(P, 0);
+  } else if (strategy === 'fixed_overpay') {
+    G.defaultOverpay = +document.getElementById('overpayAmountSlider').value;
+    G.totalMonthly   = 0;
+    G.customOverpay  = Array(months).fill(G.defaultOverpay);
+  } else {
+    // custom – start from zeros, user fills in harmonogram
+    G.defaultOverpay = 0;
+    G.totalMonthly   = 0;
+    G.customOverpay  = Array(months).fill(0);
+  }
+
+  // Base schedule (no overpayment)
+  const base = buildBaseSchedule(P, r, months, stdPayment);
+  G.baseInterest  = base.totalInterest;
+  G.baseMonths    = base.count;
+  G.baseBalances  = base.balances;
+
+  // Overpayment schedule
+  const rows = buildSchedule(P, r, months, prepayFee, G.customOverpay);
+
+  renderStats(rows);
+  renderSchedule(rows);
+  drawCalcChart(rows);
+}
+
+// ============================================================
+// STATS PANEL
+// ============================================================
+function renderStats(rows) {
+  const withInterest = rows.length ? rows[rows.length-1].cumInterest : 0;
+  const withMonths   = rows.length;
+  const savedMoney   = Math.max(0, G.baseInterest - withInterest);
+  const savedMonths  = Math.max(0, G.baseMonths - withMonths);
+  const savedYears   = Math.floor(savedMonths / 12);
+  const savedRem     = savedMonths % 12;
+  const avgOverpay   = G.customOverpay.slice(0, withMonths).reduce((a,b)=>a+b,0) / Math.max(1, withMonths);
+
+  const timeStr = savedYears > 0
+    ? savedYears + ' lat' + (savedRem > 0 ? ' ' + savedRem + ' mies.' : '')
+    : (savedMonths > 0 ? savedMonths + ' mies.' : '0 mies.');
+
+  const pct = G.baseInterest > 0 ? (withInterest / G.baseInterest * 100).toFixed(1) : 0;
+
+  document.getElementById('calcStats').innerHTML = `
+    <div class="result-card highlight-green">
+      <div class="result-big green">${fmtPLN(savedMoney)}</div>
+      <div class="result-label">zaoszczędzone odsetki</div>
+    </div>
+    <div class="result-card highlight-blue">
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="r-val" style="color:var(--accent2)">${timeStr}</div>
+          <div class="r-lbl">szybsza spłata</div>
+        </div>
+        <div class="result-item">
+          <div class="r-val" style="color:var(--accent)">${withMonths} rat</div>
+          <div class="r-lbl">zamiast ${G.baseMonths}</div>
+        </div>
+        <div class="result-item">
+          <div class="r-val" style="color:var(--accent3)">${fmtPLN(avgOverpay)}</div>
+          <div class="r-lbl">śr. nadpłata / mies.</div>
+        </div>
+        <div class="result-item">
+          <div class="r-val">${fmtPLN(withInterest)}</div>
+          <div class="r-lbl">łączne odsetki</div>
+        </div>
+      </div>
+    </div>
+    <div class="result-card">
+      <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:12px;">Porównanie łącznych kosztów</div>
+      <div class="comparison-bars">
+        <div class="bar-row">
+          <div class="bar-label"><span>Bez nadpłaty</span><span>${fmtPLN(G.baseInterest)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--danger);opacity:.7;"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span>Z nadpłatą</span><span>${fmtPLN(withInterest)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--accent2);"></div></div>
+        </div>
+      </div>
+      ${savedMoney > 0 ? `<div class="info-box mt-16" style="font-size:.82rem;">
+        Oszczędzasz <strong>${(100 - +pct).toFixed(1)}%</strong> łącznych odsetek na tle scenariusza bez nadpłaty.
+      </div>` : ''}
+    </div>
+  `;
+}
+
+// ============================================================
+// CHART
+// ============================================================
+function drawCalcChart(rows) {
+  const ctx = document.getElementById('calcChart');
+  if (!ctx) return;
+  document.getElementById('calcChartBox').style.display = '';
+  if (calcChart) { calcChart.destroy(); calcChart = null; }
+
+  const totalLen  = G.baseMonths;
+  const withBals  = Array(totalLen).fill(0);
+  rows.forEach((r, i) => { if (i < totalLen) withBals[i] = r.balanceAfter; });
+
+  calcChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: totalLen}, (_, i) => i+1),
+      datasets: [
+        { label: 'Bez nadpłaty', data: G.baseBalances, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: .4 },
+        { label: 'Z nadpłatą',  data: withBals,        borderColor: '#6ee7b7', backgroundColor: 'rgba(110,231,183,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: .4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { color: '#2e3450' }, ticks: { color: '#64748b', maxTicksLimit: 10 } },
+        y: { grid: { color: '#2e3450' }, ticks: { color: '#64748b', callback: v => fmt(v/1000)+'k' } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// EDITABLE SCHEDULE TABLE
+// ============================================================
+function renderSchedule(rows) {
+  document.getElementById('scheduleWrapper').style.display = '';
+  document.getElementById('scheduleEmpty').style.display = 'none';
+  updateToolbar(rows);
+
+  const tbody = document.getElementById('scheduleBody');
+  tbody.innerHTML = Array.from({length: G.months}, (_, i) => {
+    const row = rows[i];
+    if (!row) {
+      return `<tr class="row-paid" id="tr-${i}">
+        <td class="td-muted">${i+1}</td>
+        <td colspan="7" style="text-align:center;font-size:.8rem;font-style:italic;color:var(--text3);">Kredyt spłacony</td>
+      </tr>`;
+    }
+    return `<tr id="tr-${i}">
+      <td class="td-muted">${row.num}</td>
+      <td id="c-bal-${i}">${fmtPLN(row.balanceBefore)}</td>
+      <td id="c-int-${i}" class="td-red">${fmtPLN(row.interest)}</td>
+      <td id="c-cap-${i}" class="td-green">${fmtPLN(row.regularCap)}</td>
+      <td><input type="number" class="overpay-input" id="oi-${i}" value="${Math.round(row.overpay)}" min="0" step="100"
+        onchange="onOverpayChange(${i}, this.value)"
+        onkeydown="if(event.key==='Enter')this.blur()" /></td>
+      <td id="c-fee-${i}" class="td-muted">${row.fee > 0.5 ? fmtPLN(row.fee) : '—'}</td>
+      <td id="c-total-${i}">${fmtPLN(row.totalPayment)}</td>
+      <td id="c-balafter-${i}" style="color:var(--accent3)">${fmtPLN(row.balanceAfter)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateToolbar(rows) {
+  const totalOverpay = G.customOverpay.slice(0, rows.length).reduce((a,b)=>a+b, 0);
+  document.getElementById('toolbarInfo').innerHTML =
+    `Łącznie nadpłacono: <strong style="color:var(--accent)">${fmtPLN(totalOverpay)}</strong>
+     &nbsp;|&nbsp; Kredyt spłacony w racie: <strong style="color:var(--accent2)">${rows.length}</strong> z ${G.months}`;
+}
+
+// Called when user edits a nadpłata cell
+function onOverpayChange(idx, value) {
+  G.customOverpay[idx] = Math.max(0, parseFloat(value) || 0);
+
+  if (G.strategy === 'fixed_total') {
+    // Simulate balance through months 0..idx (using recalculated std per month)
+    let balance = G.P;
+    for (let i = 0; i <= idx && balance > 0.005; i++) {
+      const remaining  = G.months - i;
+      const interest   = balance * G.r;
+      const currentStd = calcStdPayment(balance, G.r, remaining);
+      const regularCap = Math.max(0, Math.min(currentStd - interest, balance));
+      const overpay    = Math.max(0, Math.min(G.customOverpay[i], balance - regularCap));
+      balance = Math.max(0, balance - regularCap - overpay);
+    }
+    // Recompute natural overpays for months idx+1 onward based on new balance
+    const natural = naturalOverpaysFromBalance(balance, idx + 1);
+    for (let i = idx + 1; i < G.months; i++) {
+      G.customOverpay[i] = natural[i - (idx + 1)];
+      const inp = document.getElementById(`oi-${i}`);
+      if (inp) inp.value = Math.round(G.customOverpay[i]);
+    }
+  }
+  // fixed_overpay and custom: only update this one month, no cascade
+
+  const rows = buildSchedule(G.P, G.r, G.months, G.prepayFee, G.customOverpay);
+  refreshScheduleCells(rows);
+  renderStats(rows);
+  drawCalcChart(rows);
+}
+
+// Update schedule cells without destroying inputs
+function refreshScheduleCells(rows) {
+  updateToolbar(rows);
+  for (let i = 0; i < G.months; i++) {
+    const row = rows[i];
+    const tr = document.getElementById(`tr-${i}`);
+    if (!tr) continue;
+
+    if (!row) {
+      if (!tr.classList.contains('row-paid')) {
+        tr.className = 'row-paid';
+        tr.innerHTML = `<td class="td-muted">${i+1}</td>
+          <td colspan="7" style="text-align:center;font-size:.8rem;font-style:italic;color:var(--text3);">Kredyt spłacony</td>`;
+      }
+      continue;
+    }
+
+    // Row was previously "paid" but now has data again (user reduced overpayments)
+    if (tr.classList.contains('row-paid')) {
+      tr.className = '';
+      tr.innerHTML = `
+        <td class="td-muted">${row.num}</td>
+        <td id="c-bal-${i}">${fmtPLN(row.balanceBefore)}</td>
+        <td id="c-int-${i}" class="td-red">${fmtPLN(row.interest)}</td>
+        <td id="c-cap-${i}" class="td-green">${fmtPLN(row.regularCap)}</td>
+        <td><input type="number" class="overpay-input" id="oi-${i}" value="${Math.round(row.overpay)}" min="0" step="100"
+          onchange="onOverpayChange(${i}, this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()" /></td>
+        <td id="c-fee-${i}" class="td-muted">${row.fee > 0.5 ? fmtPLN(row.fee) : '—'}</td>
+        <td id="c-total-${i}">${fmtPLN(row.totalPayment)}</td>
+        <td id="c-balafter-${i}" style="color:var(--accent3)">${fmtPLN(row.balanceAfter)}</td>`;
+      continue;
+    }
+
+    // Normal update – set cell values without touching the input
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set(`c-bal-${i}`,     fmtPLN(row.balanceBefore));
+    set(`c-int-${i}`,     fmtPLN(row.interest));
+    set(`c-cap-${i}`,     fmtPLN(row.regularCap));
+    set(`c-fee-${i}`,     row.fee > 0.5 ? fmtPLN(row.fee) : '—');
+    set(`c-total-${i}`,   fmtPLN(row.totalPayment));
+    set(`c-balafter-${i}`, fmtPLN(row.balanceAfter));
+  }
+}
+
+function resetOverpays() {
+  if (G.strategy === 'fixed_total') {
+    G.customOverpay = naturalOverpaysFromBalance(G.P, 0);
+  } else if (G.strategy === 'custom') {
+    G.customOverpay = Array(G.months).fill(0);
+  } else {
+    G.customOverpay = Array(G.months).fill(G.defaultOverpay);
+  }
+  for (let i = 0; i < G.months; i++) {
+    const inp = document.getElementById(`oi-${i}`);
+    if (inp) inp.value = Math.round(G.customOverpay[i] || 0);
+  }
+  const rows = buildSchedule(G.P, G.r, G.months, G.prepayFee, G.customOverpay);
+  refreshScheduleCells(rows);
+  renderStats(rows);
+  drawCalcChart(rows);
+}
+
+function clearOverpays() {
+  G.customOverpay = Array(G.months).fill(0);
+  for (let i = 0; i < G.months; i++) {
+    const inp = document.getElementById(`oi-${i}`);
+    if (inp) inp.value = 0;
+  }
+  const rows = buildSchedule(G.P, G.r, G.months, G.prepayFee, G.customOverpay);
+  refreshScheduleCells(rows);
+  renderStats(rows);
+  drawCalcChart(rows);
+}
+
+// ============================================================
+// EXAMPLE CHARTS (sekcja "Przykład z życia")
+// ============================================================
+function buildExampleCharts() {
+  const P = 900000, rate = 0.068, months = 240, totalMonthly = 8000;
+  const r = rate / 12;
+  const std = calcStdPayment(P, r, months);
+
+  let b = P;
+  const baseBalances = [], baseInterests = [], baseCaps = [];
+  for (let i = 0; i < months; i++) {
+    const interest = b * r;
+    const cap = Math.min(std - interest, b);
+    b = Math.max(0, b - cap);
+    baseBalances.push(b);
+    baseInterests.push(interest);
+    baseCaps.push(cap);
+  }
+
+  b = P;
+  const withBalances = [], withInterests = [], withCaps = [];
+  while (b > 0.01 && withBalances.length < 360) {
+    const interest = b * r;
+    const cap = Math.min(totalMonthly - interest, b);
+    b = Math.max(0, b - cap);
+    withBalances.push(b);
+    withInterests.push(interest);
+    withCaps.push(cap);
+  }
+
+  const labels = Array.from({length: months}, (_, i) => i+1);
+
+  new Chart(document.getElementById('chartBalance'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Bez nadpłaty', data: baseBalances, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.07)', borderWidth: 2, pointRadius: 0, fill: true, tension: .4 },
+        { label: 'Z nadpłatą',  data: labels.map((_,i) => i < withBalances.length ? withBalances[i] : 0), borderColor: '#6ee7b7', backgroundColor: 'rgba(110,231,183,.07)', borderWidth: 2, pointRadius: 0, fill: true, tension: .4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { color: '#2e3450' }, ticks: { color: '#64748b', maxTicksLimit: 8, callback: (_, i) => i % 24 === 0 ? `rok ${Math.floor(i/12)+1}` : '' } },
+        y: { grid: { color: '#2e3450' }, ticks: { color: '#64748b', callback: v => fmt(v/1000)+'k zł' } }
+      }
+    }
+  });
+
+  const yearLabels = [], yiBase = [], ycBase = [], yiWith = [], ycWith = [];
+  for (let y = 0; y < 20; y++) {
+    const si = y*12, ei = si+12;
+    yearLabels.push(`Rok ${y+1}`);
+    yiBase.push(baseInterests.slice(si,ei).reduce((a,b)=>a+b,0));
+    ycBase.push(baseCaps.slice(si,ei).reduce((a,b)=>a+b,0));
+    yiWith.push(withInterests.slice(si,Math.min(ei,withInterests.length)).reduce((a,b)=>a+b,0));
+    ycWith.push(withCaps.slice(si,Math.min(ei,withCaps.length)).reduce((a,b)=>a+b,0));
+  }
+
+  new Chart(document.getElementById('chartInterest'), {
+    type: 'bar',
+    data: {
+      labels: yearLabels,
+      datasets: [
+        { label: 'Odsetki (bez nadpłaty)', data: yiBase, backgroundColor: 'rgba(239,68,68,.6)', stack: 'base' },
+        { label: 'Kapitał (bez nadpłaty)', data: ycBase, backgroundColor: 'rgba(100,116,139,.3)', stack: 'base' },
+        { label: 'Odsetki (z nadpłatą)',  data: yiWith, backgroundColor: 'rgba(79,142,247,.7)',  stack: 'over' },
+        { label: 'Kapitał (z nadpłatą)',  data: ycWith, backgroundColor: 'rgba(110,231,183,.4)', stack: 'over' },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } } },
+      scales: {
+        x: { stacked: true, grid: { color: '#2e3450' }, ticks: { color: '#64748b', maxRotation: 45, font: { size: 10 } } },
+        y: { stacked: true, grid: { color: '#2e3450' }, ticks: { color: '#64748b', callback: v => fmt(v/1000)+'k' } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// FAQ
+// ============================================================
+function toggleFaq(el) {
+  el.parentElement.classList.toggle('open');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+buildExampleCharts();
+updateSlider('totalAmount');
+updateSlider('overpayAmount');
+</script>
+</body>
+</html>
