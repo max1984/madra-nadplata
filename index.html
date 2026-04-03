@@ -499,8 +499,8 @@
 <section id="przyklad">
   <div class="container">
     <div class="section-label" data-i18n="ex_label">Przykład z życia</div>
-    <div class="section-title" id="ex-title" data-i18n="ex_title_text">500 000 zł kredytu – co zmienia 1 000 zł miesięcznie?</div>
-    <p class="section-sub" id="ex-sub" data-i18n="ex_sub_text">Konkretne liczby dla typowego kredytu hipotecznego. Standardowa rata: <span id="ex-std-display">—</span>. Nadpłata: 1 000 zł miesięcznie.</p>
+    <div class="section-title" id="ex-title" data-i18n="ex_title_text">800 000 zł kredytu – co zmienia stała wpłata 7 000 zł miesięcznie?</div>
+    <p class="section-sub" id="ex-sub" data-i18n="ex_sub_text">Strategia: stała kwota do banku. Standardowa rata: <span id="ex-std-display">—</span>. Łącznie do banku: 7 000 zł/mies. (rata + nadpłata).</p>
 
     <div class="impact-grid">
       <div class="impact-card">
@@ -527,7 +527,7 @@
         </div>
       </div>
       <div class="impact-card highlight">
-        <h3 id="ex-with-header" data-i18n="ex_with_header">Z nadpłatą 1 000 zł / mies.</h3>
+        <h3 id="ex-with-header" data-i18n="ex_with_header">Stała kwota 7 000 zł / mies.</h3>
         <div class="impact-row">
           <span class="label" data-i18n="impact_loan">Kwota kredytu</span>
           <span class="value" id="ex-loan-amount2">500 000 zł</span>
@@ -639,7 +639,7 @@
         <div class="form-group">
           <label data-i18n="form_loan_amount_html">Kwota kredytu <span>(pozostałe saldo)</span></label>
           <div class="input-with-suffix">
-            <input type="number" id="loanAmount" value="500000" min="10000" max="5000000" step="1000" />
+            <input type="number" id="loanAmount" value="800000" min="10000" max="5000000" step="1000" />
             <span class="input-suffix">PLN</span>
           </div>
         </div>
@@ -655,7 +655,7 @@
         <div class="form-group">
           <label data-i18n="form_months_html">Pozostała liczba rat <span>(mies.)</span></label>
           <div class="input-with-suffix">
-            <input type="number" id="loanMonths" value="300" min="12" max="360" step="1" />
+            <input type="number" id="loanMonths" value="360" min="12" max="360" step="1" />
             <span class="input-suffix" data-i18n="form_months_unit">mies.</span>
           </div>
         </div>
@@ -686,7 +686,7 @@
             <label data-i18n="slider_total">Łączna kwota do banku</label>
             <span class="slider-val" id="totalAmountVal">4 500 PLN</span>
           </div>
-          <input type="range" id="totalAmountSlider" min="0" max="20000" step="100" value="4500" oninput="updateSlider('totalAmount')" />
+          <input type="range" id="totalAmountSlider" min="0" max="20000" step="100" value="7000" oninput="updateSlider('totalAmount')" />
           <div class="hint"><span data-i18n="slider_std">Standardowa rata:</span> <strong id="stdPaymentDisplay">—</strong> PLN</div>
         </div>
 
@@ -795,7 +795,7 @@ const LANGS = {
     hero_badge:'Edukacja finansowa',
     hero_h1_full:'Małe nadpłaty.<br /><span>Gigantyczne oszczędności.</span>',
     hero_p:'Dowiedz się, jak regularne nadpłacanie kredytu hipotecznego może zaoszczędzić Ci dziesiątki lub nawet setki tysięcy złotych i skrócić kredyt o kilka lat.',
-    hero_stat1_lbl:'zaoszczędzone odsetki*', hero_stat2_lbl:'szybsza spłata*', hero_stat3_lbl:'miesięczna nadpłata*',
+    hero_stat1_lbl:'zaoszczędzone odsetki*', hero_stat2_lbl:'szybsza spłata*', hero_stat3_lbl:'łącznie do banku / mies.*',
     hero_btn1:'Oblicz swoją nadpłatę →', hero_btn2:'Jak to działa',
     how_label:'Podstawy', how_title:'Jak działa nadpłata kredytu?',
     how_sub:'Każda złotówka wpłacona ponad ratę bezpośrednio redukuje kapitał – a mniejszy kapitał to mniejsze odsetki każdego kolejnego miesiąca.',
@@ -813,9 +813,9 @@ const LANGS = {
     step6_p:'Nawet 500 zł miesięcznie przy kredycie na 500 000 zł może zaoszczędzić Ci ponad 80 000 zł i skrócić kredyt o 2–3 lata. Sprawdź sam w kalkulatorze poniżej.',
     how_formula:'<strong>Kluczowy wzór:</strong> Odsetki miesięczne = Saldo kredytu × (Oprocentowanie roczne ÷ 12). Im szybciej zredukcujesz saldo, tym mniej zapłacisz odsetek – i to kumuluje się przez całe lata.',
     ex_label:'Przykład z życia',
-    ex_title_text:'500 000 zł kredytu – co zmienia 1 000 zł miesięcznie?',
-    ex_sub_text:'Konkretne liczby dla typowego kredytu hipotecznego. Standardowa rata: <span id="ex-std-display">—</span>. Nadpłata: 1 000 zł miesięcznie.',
-    ex_without:'Bez nadpłaty', ex_with_header:'Z nadpłatą 1 000 zł / mies.',
+    ex_title_text:'800 000 zł kredytu – co zmienia stała wpłata 7 000 zł miesięcznie?',
+    ex_sub_text:'Strategia: stała kwota do banku. Standardowa rata: <span id="ex-std-display">—</span>. Łącznie do banku: 7 000 zł/mies. (rata + nadpłata).',
+    ex_without:'Bez nadpłaty', ex_with_header:'Stała kwota 7 000 zł / mies.',
     impact_loan:'Kwota kredytu', impact_period:'Okres spłaty', impact_payment:'Miesięczna rata',
     impact_monthly_total:'Miesięczna wpłata', impact_interest_total:'Łączne odsetki',
     impact_total:'Łącznie do banku', impact_saved:'Oszczędność',
@@ -883,7 +883,7 @@ const LANGS = {
     hero_badge:'Financial Education',
     hero_h1_full:'Small overpayments.<br /><span>Massive savings.</span>',
     hero_p:'Discover how regular mortgage overpayments can save you tens or hundreds of thousands and pay off your loan years early.',
-    hero_stat1_lbl:'interest saved*', hero_stat2_lbl:'faster payoff*', hero_stat3_lbl:'monthly overpayment*',
+    hero_stat1_lbl:'interest saved*', hero_stat2_lbl:'faster payoff*', hero_stat3_lbl:'total to bank / mo.*',
     hero_btn1:'Calculate your savings →', hero_btn2:'How it works',
     how_label:'Basics', how_title:'How does overpaying work?',
     how_sub:'Every unit of currency paid above the required amount directly reduces your principal — a smaller principal means less interest each month.',
@@ -901,9 +901,9 @@ const LANGS = {
     step6_p:'Even 500 PLN/month on a 500,000 PLN loan can save you over 80,000 PLN and shorten the loan by 2–3 years. Try it yourself in the calculator below.',
     how_formula:'<strong>Key formula:</strong> Monthly interest = Loan balance × (Annual rate ÷ 12). The faster you reduce the balance, the less interest you pay — and this compounds over years.',
     ex_label:'Real example',
-    ex_title_text:'500,000 PLN mortgage – what does 1,000 PLN/month change?',
-    ex_sub_text:'Concrete numbers for a typical mortgage. Standard payment: <span id="ex-std-display">—</span>. Overpayment: 1,000 PLN per month.',
-    ex_without:'Without overpayment', ex_with_header:'With 1,000 PLN/month overpayment',
+    ex_title_text:'800,000 PLN mortgage – what does a fixed 7,000 PLN/month change?',
+    ex_sub_text:'Strategy: fixed total to bank. Standard payment: <span id="ex-std-display">—</span>. Fixed total to bank: 7,000 PLN/mo. (payment + overpayment).',
+    ex_without:'Without overpayment', ex_with_header:'Fixed total 7,000 PLN/month',
     impact_loan:'Loan amount', impact_period:'Repayment period', impact_payment:'Monthly payment',
     impact_monthly_total:'Monthly total', impact_interest_total:'Total interest',
     impact_total:'Total to bank', impact_saved:'Savings',
@@ -1514,37 +1514,53 @@ function clearOverpays() {
 // ============================================================
 // EXAMPLE SECTION (computed dynamically)
 // ============================================================
-const EX = { P: 500000, annualRate: 0.075, months: 300, overpay: 1000 };
+const EX = { P: 800000, annualRate: 0.075, months: 360, totalMonthly: 7000 };
 
 function computeExampleStats() {
-  const { P, annualRate, months, overpay } = EX;
+  const { P, annualRate, months, totalMonthly } = EX;
   const r   = annualRate / 12;
   const std = calcStdPayment(P, r, months);
   const rates = Array(months).fill(r);
 
+  // Compute fixed_total overpays inline (no G dependency)
+  let b = P;
+  const overpays = [];
+  for (let i = 0; i < months && b > 0.005; i++) {
+    const remaining  = months - i;
+    const interest   = b * r;
+    const currentStd = calcStdPayment(b, r, remaining);
+    const regularCap = Math.max(0, Math.min(currentStd - interest, b));
+    const overpay    = Math.max(0, totalMonthly - currentStd);
+    overpays.push(overpay);
+    b = Math.max(0, b - regularCap - overpay);
+    if (b < 0.005) break;
+  }
+  while (overpays.length < months) overpays.push(0);
+
   const base = buildBaseSchedule(P, rates, months);
-  const overpays = Array(months).fill(overpay);
   const rows = buildSchedule(P, rates, months, 0, overpays);
 
-  const withInterest = rows.length ? rows[rows.length-1].cumInterest : 0;
-  const withMonths   = rows.length;
+  const withInterest  = rows.length ? rows[rows.length-1].cumInterest : 0;
+  const withMonths    = rows.length;
   const savedInterest = Math.round(base.totalInterest - withInterest);
   const savedMonths   = months - withMonths;
   const savedYears    = Math.floor(savedMonths / 12);
   const savedRemMo    = savedMonths % 12;
+  // avg overpay for hero stat
+  const avgOverpay = Math.round(overpays.slice(0, withMonths).reduce((a,v)=>a+v,0) / Math.max(1, withMonths));
 
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  const setH = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v; };
+  const set  = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const setH = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML  = v; };
 
   // Hero stats
   set('hero-stat-1', fmtC(savedInterest));
   set('hero-stat-2', savedYears + ' ' + t('years') + (savedRemMo > 0 ? ' ' + savedRemMo + ' ' + t('months_short') : ''));
-  set('hero-stat-3', fmtC(overpay));
+  set('hero-stat-3', fmtC(totalMonthly));
 
   // Hero note
   set('hero-note', `* ${LANG === 'en'
-    ? `example: ${fmt(P)} PLN, ${months/12} years, ${annualRate*100}%, overpayment ${fmt(overpay)} PLN/mo.`
-    : `przykład: kredyt ${fmt(P)} zł, ${months/12} lat, ${annualRate*100}%, nadpłata ${fmt(overpay)} zł/mies.`}`);
+    ? `example: ${fmt(P)} PLN, ${months/12} years, ${annualRate*100}%, fixed total ${fmt(totalMonthly)} PLN/mo.`
+    : `przykład: kredyt ${fmt(P)} zł, ${months/12} lat, ${annualRate*100}%, łącznie ${fmt(totalMonthly)} zł/mies. do banku`}`);
 
   // Example section
   const yrs = Math.floor(withMonths/12);
@@ -1561,7 +1577,7 @@ function computeExampleStats() {
   set('ex-base-interest', fmtC(base.totalInterest));
   set('ex-base-total',    fmtC(base.totalInterest + P));
   set('ex-with-period',   periodStr);
-  set('ex-with-total',    fmtC(std + overpay));
+  set('ex-with-total',    fmtC(totalMonthly));
   set('ex-with-interest', fmtC(withInterest));
   set('ex-saved',         fmtC(savedInterest) + ' !');
 
@@ -1577,11 +1593,11 @@ function buildExampleCharts() {
   if (chartBalEx) { chartBalEx.destroy(); chartBalEx = null; }
   if (chartIntEx) { chartIntEx.destroy(); chartIntEx = null; }
 
-  const { P, annualRate, months, overpay } = EX;
+  const { P, annualRate, months, totalMonthly } = EX;
   const r   = annualRate / 12;
   const std = calcStdPayment(P, r, months);
 
-  // Base schedule
+  // Base schedule (no overpayment)
   let b = P;
   const baseBalances = [], baseInterests = [], baseCaps = [];
   for (let i = 0; i < months; i++) {
@@ -1593,16 +1609,20 @@ function buildExampleCharts() {
     baseCaps.push(cap);
   }
 
-  // Overpay schedule
+  // Overpay schedule using fixed_total logic
   b = P;
   const withBalances = [], withInterests = [], withCaps = [];
-  while (b > 0.01 && withBalances.length < 360) {
-    const interest = b * r;
-    const cap = Math.min(std + overpay - interest, b);
+  for (let i = 0; b > 0.01 && i < months; i++) {
+    const remaining  = months - i;
+    const interest   = b * r;
+    const currentStd = calcStdPayment(b, r, remaining);
+    const regularCap = Math.min(currentStd - interest, b);
+    const overpay    = Math.max(0, totalMonthly - currentStd);
+    const cap        = Math.min(regularCap + overpay, b);
     b = Math.max(0, b - cap);
     withBalances.push(b);
     withInterests.push(interest);
-    withCaps.push(cap - Math.min(0, cap)); // cap is already capped
+    withCaps.push(cap);
   }
 
   const labels = Array.from({length: months}, (_, i) => i+1);
