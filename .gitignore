@@ -1,3 +1,5 @@
 # Mądra Nadpłata
 *.xlsx
 .DS_Store
+node_modules/
+dist/
