@@ -8,13 +8,14 @@ import ExampleSection from './components/ExampleSection';
 import FAQ from './components/FAQ';
 import Calculator from './components/Calculator';
 import Schedule from './components/Schedule';
+import StrategyComparison from './components/StrategyComparison';
 import Footer from './components/Footer';
 
 function AppInner() {
   const { t } = useLang();
   const {
-    inputs, setInputs, calcState, calculate,
-    onOverpayChange, onRateChange,
+    inputs, setInputs, calcState, calcError, calculate,
+    onOverpayChange, onRateChange, onCustomEffectChange,
     resetOverpays, clearOverpays, resetRates,
   } = useCalculator();
 
@@ -24,9 +25,7 @@ function AppInner() {
       <Hero />
       <HowItWorks />
       <ExampleSection />
-      <section id="faq-wrapper" style={{ display: 'contents' }}>
-        <FAQ />
-      </section>
+      <FAQ />
 
       <div className="tools-divider">
         <div className="tools-divider-line" />
@@ -42,11 +41,14 @@ function AppInner() {
         setInputs={setInputs}
         calcState={calcState}
         onCalculate={calculate}
+        calcError={calcError}
       />
+      {calcState && <StrategyComparison inputs={inputs} calcState={calcState} />}
       <Schedule
         calcState={calcState}
         onOverpayChange={onOverpayChange}
         onRateChange={onRateChange}
+        onCustomEffectChange={onCustomEffectChange}
         onResetOverpays={resetOverpays}
         onClearOverpays={clearOverpays}
         onResetRates={resetRates}

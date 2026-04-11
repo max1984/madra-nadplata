@@ -25,9 +25,11 @@ export type TranslationKey =
   | 'calc_label' | 'calc_title' | 'calc_sub'
   | 'form_loan_amount' | 'form_interest' | 'form_months' | 'form_months_unit'
   | 'form_fee' | 'form_fee_hint' | 'form_strategy'
+  | 'strategy_reduce_payment'
   | 'strategy_fixed_total' | 'strategy_fixed_overpay'
   | 'strategy_shorten' | 'strategy_custom'
   | 'slider_total' | 'slider_overpay' | 'slider_std'
+  | 'reduce_payment_hint'
   | 'calc_btn' | 'calc_placeholder' | 'calc_placeholder_sub'
   | 'shorten_hint' | 'custom_hint'
   | 'stats_saved' | 'stats_faster' | 'stats_payments_instead'
@@ -40,12 +42,24 @@ export type TranslationKey =
   | 'sch_col_fee' | 'sch_col_total' | 'sch_col_bal_after'
   | 'toolbar_total' | 'toolbar_paid_at' | 'toolbar_of'
   | 'toolbar_reset' | 'toolbar_clear' | 'toolbar_reset_rates'
+  | 'custom_effect_label' | 'custom_effect_shorten' | 'custom_effect_reduce'
   | 'paid_off' | 'schedule_empty'
   | 'footer_disclaimer' | 'footer_author'
   | 'chart_without' | 'chart_with'
   | 'chart_interest_without' | 'chart_capital_without'
   | 'chart_interest_with' | 'chart_capital_with'
-  | 'chart_year' | 'currency' | 'years' | 'years1' | 'months_short';
+  | 'chart_year' | 'currency' | 'years' | 'years1' | 'months_short'
+  | 'hero_note'
+  | 'error_loan_amount' | 'error_months' | 'error_rate'
+  | 'copy_link' | 'copy_link_copied'
+  | 'csv_export'
+  | 'overpay_start_label' | 'overpay_start_hint'
+  | 'compare_section_label' | 'compare_section_title' | 'compare_section_sub'
+  | 'compare_col_strategy' | 'compare_col_months_total' | 'compare_col_months_saved' | 'compare_col_saved'
+  | 'compare_row_reduce' | 'compare_row_fixed_overpay' | 'compare_row_shorten'
+  | 'invest_section_title' | 'invest_rate_label' | 'invest_gain_label' | 'invest_saved_label'
+  | 'invest_verdict_overpay' | 'invest_verdict_invest'
+  | 'breakeven_label' | 'breakeven_result' | 'breakeven_never';
 
 type Translations = Record<TranslationKey, string>;
 
@@ -71,7 +85,7 @@ const pl: Translations = {
   step5_h: 'Zmienne oprocentowanie',
   step5_p: 'Kredyty ze zmienną stopą reagują na decyzje banku centralnego. Kalkulator pozwala zmienić oprocentowanie dla dowolnego miesiąca w harmonogramie – zobaczysz skutki zmiany stóp od razu.',
   step6_h: 'Efekt jest skumulowany',
-  step6_p: 'Nawet 500 zł miesięcznie przy kredycie na 500 000 zł może zaoszczędzić Ci ponad 80 000 zł i skrócić kredyt o 2–3 lata. Sprawdź sam w kalkulatorze poniżej.',
+  step6_p: 'Nawet 500 zł powyżej raty miesięcznie przy kredycie na 500 000 zł (6,5%, 30 lat) może zaoszczędzić Ci ponad 225 000 zł i skrócić kredyt o ponad 9 lat. Sprawdź sam w kalkulatorze poniżej.',
   how_formula: '<strong>Kluczowy wzór:</strong> Odsetki miesięczne = Saldo kredytu × (Oprocentowanie roczne ÷ 12). Im szybciej zredukcujesz saldo, tym mniej zapłacisz odsetek – i to kumuluje się przez całe lata.',
   ex_label: 'Przykład z życia',
   ex_title_text: '800 000 zł kredytu – co zmienia stała wpłata 7 000 zł miesięcznie?',
@@ -103,12 +117,14 @@ const pl: Translations = {
   form_months_unit: 'mies.', form_fee: 'Prowizja za nadpłatę',
   form_fee_hint: 'Sprawdź w umowie – często 0% po 3 latach od uruchomienia kredytu',
   form_strategy: 'Strategia nadpłaty',
+  strategy_reduce_payment: 'Stała kwota do banku / Zmniejszenie raty',
   strategy_fixed_total: 'Stała kwota do banku (rata + nadpłata)',
   strategy_fixed_overpay: 'Stała miesięczna nadpłata',
   strategy_shorten: 'Skrócenie okresu (stała rata, zmienna długość)',
   strategy_custom: 'Własne nadpłaty (wybierz miesiące w harmonogramie)',
   slider_total: 'Łączna kwota do banku', slider_overpay: 'Nadpłata miesięczna',
   slider_std: 'Standardowa rata:',
+  reduce_payment_hint: 'Ustal stałą kwotę, którą chcesz co miesiąc wpłacać do banku. Każda nadwyżka ponad wymaganą ratę obniża saldo – bank co miesiąc wylicza nową, niższą ratę wymaganą, a Ty nadal płacisz tę samą kwotę. Różnica rośnie, kredyt spłaca się coraz szybciej.',
   calc_btn: 'Oblicz →',
   calc_placeholder: 'Kliknij "Oblicz" aby zobaczyć wyniki',
   calc_placeholder_sub: 'Wypełnij formularz po lewej i wciśnij przycisk. Wyniki pojawią się tutaj razem z wykresem i harmonogramem spłat.',
@@ -128,6 +144,9 @@ const pl: Translations = {
   toolbar_total: 'Łącznie nadpłacono:', toolbar_paid_at: 'Kredyt spłacony w racie:',
   toolbar_of: 'z', toolbar_reset: 'Przywróć domyślne', toolbar_clear: 'Wyczyść nadpłaty',
   toolbar_reset_rates: 'Przywróć oprocentowanie',
+  custom_effect_label: 'Efekt nadpłaty',
+  custom_effect_shorten: 'Skrócenie okresu',
+  custom_effect_reduce: 'Zmniejszenie raty',
   paid_off: 'Kredyt spłacony',
   schedule_empty: 'Najpierw oblicz wyniki w sekcji Kalkulator powyżej.',
   footer_disclaimer: 'Strona edukacyjna – nie stanowi porady finansowej. Wyniki kalkulatora mają charakter poglądowy.<br />Przed podjęciem decyzji skonsultuj się z doradcą finansowym lub przeczytaj umowę kredytową.',
@@ -136,6 +155,34 @@ const pl: Translations = {
   chart_interest_without: 'Odsetki (bez nadpłaty)', chart_capital_without: 'Kapitał (bez nadpłaty)',
   chart_interest_with: 'Odsetki (z nadpłatą)', chart_capital_with: 'Kapitał (z nadpłatą)',
   chart_year: 'Rok', currency: 'zł', years: 'lat', years1: 'rok', months_short: 'mies.',
+  hero_note: '* przykład: kredyt {amount} zł, {years} lat, {rate}%, łącznie {total} zł/mies. do banku',
+  error_loan_amount: 'Kwota kredytu musi wynosić od 1 000 do 10 000 000 zł.',
+  error_months: 'Liczba rat musi wynosić od 12 do 360.',
+  error_rate: 'Oprocentowanie musi wynosić od 0,1% do 25%.',
+  copy_link: 'Kopiuj link',
+  copy_link_copied: '✓ Skopiowano!',
+  csv_export: 'Pobierz CSV',
+  overpay_start_label: 'Zacznij nadpłacać od miesiąca',
+  overpay_start_hint: 'Miesiąc 0 = od razu. Przydatne, gdy nadpłatę planujesz za kilka miesięcy (np. po wykończeniu mieszkania).',
+  compare_section_label: 'Analiza',
+  compare_section_title: 'Porównanie strategii nadpłaty',
+  compare_section_sub: 'Przy tej samej kwocie nadpłaty: {amount} / mies.',
+  compare_col_strategy: 'Strategia',
+  compare_col_months_total: 'Liczba rat',
+  compare_col_months_saved: 'Skrócenie',
+  compare_col_saved: 'Zaoszczędzone odsetki',
+  compare_row_reduce: 'Zmniejszenie raty',
+  compare_row_fixed_overpay: 'Stała nadpłata',
+  compare_row_shorten: 'Skrócenie okresu',
+  invest_section_title: 'Co gdybyś inwestował zamiast nadpłacać?',
+  invest_rate_label: 'Zakładana roczna stopa zwrotu',
+  invest_gain_label: 'Zysk z inwestycji (wartość końcowa – wpłacone)',
+  invest_saved_label: 'Oszczędność na odsetkach (nadpłata)',
+  invest_verdict_overpay: 'Nadpłata korzystniejsza o',
+  invest_verdict_invest: 'Inwestycja korzystniejsza o',
+  breakeven_label: 'Opłacalność prowizji za nadpłatę',
+  breakeven_result: 'Prowizja zwraca się po miesiącu',
+  breakeven_never: 'Prowizja pochłania więcej niż zaoszczędzone odsetki',
 };
 
 const en: Translations = {
@@ -160,7 +207,7 @@ const en: Translations = {
   step5_h: 'Variable interest rates',
   step5_p: "Variable rate mortgages respond to central bank decisions. The calculator lets you change the interest rate for any month in the schedule — you'll see the effect of rate changes immediately.",
   step6_h: 'The effect compounds',
-  step6_p: 'Even 500 PLN/month on a 500,000 PLN loan can save you over 80,000 PLN and shorten the loan by 2–3 years. Try it yourself in the calculator below.',
+  step6_p: 'Even 500 PLN above your monthly payment on a 500,000 PLN loan (6.5%, 30 years) can save you over 225,000 PLN and shorten the loan by more than 9 years. Try it yourself in the calculator below.',
   how_formula: '<strong>Key formula:</strong> Monthly interest = Loan balance × (Annual rate ÷ 12). The faster you reduce the balance, the less interest you pay — and this compounds over years.',
   ex_label: 'Real example',
   ex_title_text: '800,000 PLN mortgage – what does a fixed 7,000 PLN/month change?',
@@ -192,12 +239,14 @@ const en: Translations = {
   form_months_unit: 'mo.', form_fee: 'Prepayment fee',
   form_fee_hint: 'Check your contract – often 0% after 3 years from loan origination',
   form_strategy: 'Overpayment strategy',
+  strategy_reduce_payment: 'Fixed total to bank / Reduce installment',
   strategy_fixed_total: 'Fixed total to bank (payment + overpayment)',
   strategy_fixed_overpay: 'Fixed monthly overpayment',
   strategy_shorten: 'Shorten period (fixed payment, shorter term)',
   strategy_custom: 'Custom overpayments (edit in schedule)',
   slider_total: 'Total monthly to bank', slider_overpay: 'Monthly overpayment',
   slider_std: 'Standard payment:',
+  reduce_payment_hint: 'Set a fixed amount you want to pay to the bank each month. Every surplus above the required installment reduces the principal — the bank recalculates a new, lower required installment each month, while you keep paying the same amount. The surplus grows and the loan is repaid faster and faster.',
   calc_btn: 'Calculate →',
   calc_placeholder: 'Click "Calculate" to see results',
   calc_placeholder_sub: 'Fill in the form on the left and press the button. Results will appear here along with a chart and repayment schedule.',
@@ -217,6 +266,9 @@ const en: Translations = {
   toolbar_total: 'Total overpaid:', toolbar_paid_at: 'Loan paid off at payment:',
   toolbar_of: 'of', toolbar_reset: 'Reset to defaults', toolbar_clear: 'Clear overpayments',
   toolbar_reset_rates: 'Reset rates',
+  custom_effect_label: 'Overpayment effect',
+  custom_effect_shorten: 'Shorten term',
+  custom_effect_reduce: 'Reduce installment',
   paid_off: 'Loan paid off',
   schedule_empty: 'First calculate results in the Calculator section above.',
   footer_disclaimer: 'Educational website — does not constitute financial advice. Calculator results are for illustrative purposes only.<br />Before making a decision, consult a financial advisor or read your loan agreement.',
@@ -225,6 +277,34 @@ const en: Translations = {
   chart_interest_without: 'Interest (no overpayment)', chart_capital_without: 'Principal (no overpayment)',
   chart_interest_with: 'Interest (with overpayment)', chart_capital_with: 'Principal (with overpayment)',
   chart_year: 'Year', currency: 'PLN', years: 'years', years1: 'year', months_short: 'mo.',
+  hero_note: '* example: {amount} PLN, {years} years, {rate}%, fixed total {total} PLN/mo.',
+  error_loan_amount: 'Loan amount must be between 1,000 and 10,000,000.',
+  error_months: 'Months must be between 12 and 360.',
+  error_rate: 'Interest rate must be between 0.1% and 25%.',
+  copy_link: 'Copy link',
+  copy_link_copied: '✓ Copied!',
+  csv_export: 'Download CSV',
+  overpay_start_label: 'Start overpaying from month',
+  overpay_start_hint: 'Month 0 = immediately. Useful if you plan to start overpaying after a few months.',
+  compare_section_label: 'Analysis',
+  compare_section_title: 'Overpayment strategy comparison',
+  compare_section_sub: 'With the same monthly overpayment: {amount} / mo.',
+  compare_col_strategy: 'Strategy',
+  compare_col_months_total: 'Total payments',
+  compare_col_months_saved: 'Time saved',
+  compare_col_saved: 'Interest saved',
+  compare_row_reduce: 'Reduce installment',
+  compare_row_fixed_overpay: 'Fixed overpayment',
+  compare_row_shorten: 'Shorten term',
+  invest_section_title: 'What if you invested instead of overpaying?',
+  invest_rate_label: 'Expected annual investment return',
+  invest_gain_label: 'Investment gain (final value – invested)',
+  invest_saved_label: 'Interest savings (overpayment)',
+  invest_verdict_overpay: 'Overpaying wins by',
+  invest_verdict_invest: 'Investing wins by',
+  breakeven_label: 'Prepayment fee profitability',
+  breakeven_result: 'Fee pays off after month',
+  breakeven_never: 'Fees exceed interest savings over loan term',
 };
 
 export const LANGS: Record<Lang, Translations> = { pl, en };

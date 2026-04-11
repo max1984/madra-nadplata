@@ -16,6 +16,7 @@ export interface BaseScheduleResult {
   balances: number[];
   totalInterest: number;
   count: number;
+  cumInterestByMonth: number[];
 }
 
 export function calcStdPayment(P: number, r: number, n: number): number {
@@ -52,7 +53,7 @@ export function buildSchedule(
     const totalPayment = interest + totalCap + fee;
     const balanceBefore = balance;
     balance = Math.max(0, balance - totalCap);
-    cumInterest += interest + fee;
+    cumInterest += interest;
 
     rows.push({
       num: i + 1,
@@ -67,8 +68,6 @@ export function buildSchedule(
       cumInterest,
       annualRate: r * 12,
     });
-
-    if (balance < 0.005) break;
   }
   return rows;
 }
@@ -80,22 +79,45 @@ export function buildBaseSchedule(
   globalR: number
 ): BaseScheduleResult {
   let balance = P;
-  let totalInterest = 0;
+  let cumInterest = 0;
   const balances: number[] = [];
+  const cumInterestByMonth: number[] = [];
 
   for (let i = 0; i < months && balance > 0.005; i++) {
     const r = customRates[i] ?? globalR;
     const remaining = months - i;
     const interest = balance * r;
     const std = calcStdPayment(balance, r, remaining);
-    const cap = Math.min(std - interest, balance);
+    const cap = Math.max(0, Math.min(std - interest, balance));
     balance = Math.max(0, balance - cap);
-    totalInterest += interest;
+    cumInterest += interest;
     balances.push(balance);
-    if (balance < 0.005) break;
+    cumInterestByMonth.push(cumInterest);
   }
 
-  return { balances, totalInterest, count: balances.length };
+  return { balances, totalInterest: cumInterest, count: balances.length, cumInterestByMonth };
+}
+
+// Returns the remaining balance after applying overpays up to and including upToIdx.
+export function balanceAt(
+  P: number,
+  customRates: number[],
+  origMonths: number,
+  customOverpay: number[],
+  upToIdx: number,
+  globalR: number
+): number {
+  let balance = P;
+  for (let i = 0; i <= upToIdx && balance > 0.005; i++) {
+    const r = customRates[i] ?? globalR;
+    const remaining = origMonths - i;
+    const interest = balance * r;
+    const std = calcStdPayment(balance, r, remaining);
+    const regularCap = Math.max(0, Math.min(std - interest, balance));
+    const overpay = Math.max(0, Math.min(customOverpay[i] ?? 0, balance - regularCap));
+    balance = Math.max(0, balance - regularCap - overpay);
+  }
+  return balance;
 }
 
 export function naturalOverpaysFromBalance(
@@ -118,7 +140,6 @@ export function naturalOverpaysFromBalance(
     const overpay = Math.max(0, totalMonthly - currentStd);
     result.push(overpay);
     b = Math.max(0, b - regularCap - overpay);
-    if (b < 0.005) break;
   }
 
   const needed = months - startIdx;
