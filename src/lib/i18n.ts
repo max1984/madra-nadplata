@@ -59,7 +59,9 @@ export type TranslationKey =
   | 'compare_row_reduce' | 'compare_row_fixed_overpay' | 'compare_row_shorten'
   | 'invest_section_title' | 'invest_rate_label' | 'invest_gain_label' | 'invest_saved_label'
   | 'invest_verdict_overpay' | 'invest_verdict_invest'
-  | 'breakeven_label' | 'breakeven_result' | 'breakeven_never';
+  | 'breakeven_label' | 'breakeven_result' | 'breakeven_never'
+  | 'no_overpay_title' | 'no_overpay_sub'
+  | 'sch_yearly_toggle' | 'sch_monthly_toggle' | 'sch_col_year';
 
 type Translations = Record<TranslationKey, string>;
 
@@ -183,6 +185,11 @@ const pl: Translations = {
   breakeven_label: 'Opłacalność prowizji za nadpłatę',
   breakeven_result: 'Prowizja zwraca się po miesiącu',
   breakeven_never: 'Prowizja pochłania więcej niż zaoszczędzone odsetki',
+  no_overpay_title: 'Brak nadpłaty',
+  no_overpay_sub: 'Ustaw kwotę wyższą niż standardowa rata, aby zobaczyć oszczędności.',
+  sch_yearly_toggle: 'Widok roczny',
+  sch_monthly_toggle: 'Widok miesięczny',
+  sch_col_year: 'Rok',
 };
 
 const en: Translations = {
@@ -276,7 +283,7 @@ const en: Translations = {
   chart_without: 'Without overpayment', chart_with: 'With overpayment',
   chart_interest_without: 'Interest (no overpayment)', chart_capital_without: 'Principal (no overpayment)',
   chart_interest_with: 'Interest (with overpayment)', chart_capital_with: 'Principal (with overpayment)',
-  chart_year: 'Year', currency: 'PLN', years: 'years', years1: 'year', months_short: 'mo.',
+  chart_year: 'Year', currency: '$', years: 'years', years1: 'year', months_short: 'mo.',
   hero_note: '* example: {amount} PLN, {years} years, {rate}%, fixed total {total} PLN/mo.',
   error_loan_amount: 'Loan amount must be between 1,000 and 10,000,000.',
   error_months: 'Months must be between 12 and 360.',
@@ -305,6 +312,11 @@ const en: Translations = {
   breakeven_label: 'Prepayment fee profitability',
   breakeven_result: 'Fee pays off after month',
   breakeven_never: 'Fees exceed interest savings over loan term',
+  no_overpay_title: 'No overpayment set',
+  no_overpay_sub: 'Set an amount above the standard payment to see your savings.',
+  sch_yearly_toggle: 'Yearly view',
+  sch_monthly_toggle: 'Monthly view',
+  sch_col_year: 'Year',
 };
 
 export const LANGS: Record<Lang, Translations> = { pl, en };

@@ -48,7 +48,7 @@ const DEFAULT_INPUTS: CalcInputs = {
   interestRate: 6.5,
   loanMonths: 360,
   prepayFee: 0,
-  strategy: 'reduce_payment',
+  strategy: 'fixed_total',
   totalMonthlySlider: 7000,
   overpayAmountSlider: 1000,
   shortenAmountSlider: 1000,
@@ -63,7 +63,9 @@ function parseUrlInputs(): Partial<CalcInputs> {
   if (sp.has('months')) patch.loanMonths = +sp.get('months')!;
   if (sp.has('fee')) patch.prepayFee = +sp.get('fee')!;
   const strat = sp.get('strategy');
-  if (strat && ['reduce_payment', 'fixed_total', 'fixed_overpay', 'shorten_period', 'custom'].includes(strat)) {
+  if (strat === 'reduce_payment') {
+    patch.strategy = 'fixed_total'; // reduce_payment was removed; it was identical to fixed_total
+  } else if (strat && ['fixed_total', 'fixed_overpay', 'shorten_period', 'custom'].includes(strat)) {
     patch.strategy = strat as Strategy;
   }
   if (sp.has('total')) patch.totalMonthlySlider = +sp.get('total')!;

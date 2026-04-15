@@ -1,4 +1,4 @@
-import { useRef, useEffect, memo } from 'react';
+import { useRef, useEffect, memo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -33,7 +33,7 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
   const rateRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (overpayRef.current) overpayRef.current.value = String(Math.round(overpay));
+    if (overpayRef.current) overpayRef.current.value = overpay.toFixed(2);
   }, [overpay]);
 
   useEffect(() => {
@@ -64,8 +64,8 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           ref={overpayRef}
           type="number"
           className="overpay-input"
-          defaultValue={Math.round(overpay)}
-          min={0} step={100}
+          defaultValue={overpay.toFixed(2)}
+          min={0} step={1}
           onBlur={(e) => onOverpayChange(idx, e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
         />
@@ -76,6 +76,40 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
     </tr>
   );
 });
+
+interface YearRow {
+  year: number;
+  startPayment: number;
+  endPayment: number;
+  totalInterest: number;
+  totalRegularCap: number;
+  totalOverpay: number;
+  totalFee: number;
+  totalPayment: number;
+  endBalance: number;
+}
+
+function buildYearlyRows(calcState: CalcState): YearRow[] {
+  const rows = calcState.rows;
+  const years: YearRow[] = [];
+  for (let y = 0; y * 12 < rows.length; y++) {
+    const start = y * 12;
+    const end = Math.min((y + 1) * 12, rows.length);
+    const slice = rows.slice(start, end);
+    years.push({
+      year: y + 1,
+      startPayment: start + 1,
+      endPayment: end,
+      totalInterest: slice.reduce((s, r) => s + r.interest, 0),
+      totalRegularCap: slice.reduce((s, r) => s + r.regularCap, 0),
+      totalOverpay: slice.reduce((s, r) => s + r.overpay, 0),
+      totalFee: slice.reduce((s, r) => s + r.fee, 0),
+      totalPayment: slice.reduce((s, r) => s + r.totalPayment, 0),
+      endBalance: slice[slice.length - 1]!.balanceAfter,
+    });
+  }
+  return years;
+}
 
 function exportCSV(calcState: CalcState) {
   const sep = ';';
@@ -103,6 +137,7 @@ function exportCSV(calcState: CalcState) {
 
 export default function Schedule({ calcState, onOverpayChange, onRateChange, onCustomEffectChange, onResetOverpays, onClearOverpays, onResetRates }: Props) {
   const { t, fmtC } = useLang();
+  const [yearlyView, setYearlyView] = useState(false);
 
   if (!calcState) {
     return (
@@ -162,6 +197,11 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                   <div className="toolbar-divider" />
                 </>
               )}
+              <button
+                className={`toolbar-btn${yearlyView ? ' active' : ''}`}
+                onClick={() => setYearlyView((v) => !v)}
+              >{yearlyView ? t('sch_monthly_toggle') : t('sch_yearly_toggle')}</button>
+              <div className="toolbar-divider" />
               <button className="toolbar-btn" onClick={onResetOverpays}>{t('toolbar_reset')}</button>
               <button className="toolbar-btn" onClick={onClearOverpays}>{t('toolbar_clear')}</button>
               <button className="toolbar-btn" onClick={onResetRates}>{t('toolbar_reset_rates')}</button>
@@ -170,44 +210,75 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
           </div>
 
           <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{t('sch_col_num')}</th>
-                  <th>{t('sch_col_bal_before')}</th>
-                  <th>{t('sch_col_rate')}</th>
-                  <th>{t('sch_col_interest')}</th>
-                  <th>{t('sch_col_capital')}</th>
-                  <th>{t('sch_col_overpay')}</th>
-                  <th>{t('sch_col_fee')}</th>
-                  <th>{t('sch_col_total')}</th>
-                  <th>{t('sch_col_bal_after')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calcState.rows.map((row, i) => (
-                  <ScheduleRowItem
-                    key={row.num}
-                    idx={i}
-                    row={row}
-                    overpay={calcState.customOverpay[i] ?? 0}
-                    rate={calcState.customRates[i] ?? calcState.r}
-                    globalR={calcState.r}
-                    onOverpayChange={onOverpayChange}
-                    onRateChange={onRateChange}
-                    fmtC={fmtC}
-                  />
-                ))}
-                {paidOffCount > 0 && (
-                  <tr className="row-paid">
-                    <td className="td-muted">{calcState.rows.length + 1}–{calcState.months}</td>
-                    <td colSpan={8} style={{ textAlign: 'center', fontSize: '.8rem', fontStyle: 'italic', color: 'var(--text3)' }}>
-                      {t('paid_off')} ({paidOffCount} {t('stats_payments_label')})
-                    </td>
+            {yearlyView ? (
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('sch_col_year')}</th>
+                    <th>{t('sch_col_interest')}</th>
+                    <th>{t('sch_col_capital')}</th>
+                    <th>{t('sch_col_overpay')}</th>
+                    <th>{t('sch_col_fee')}</th>
+                    <th>{t('sch_col_total')}</th>
+                    <th>{t('sch_col_bal_after')}</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {buildYearlyRows(calcState).map((yr) => (
+                    <tr key={yr.year}>
+                      <td className="td-muted">
+                        {yr.year} <span style={{ fontSize: '.75rem', color: 'var(--text3)' }}>({yr.startPayment}–{yr.endPayment})</span>
+                      </td>
+                      <td className="td-red">{fmtC(yr.totalInterest)}</td>
+                      <td className="td-green">{fmtC(yr.totalRegularCap)}</td>
+                      <td>{yr.totalOverpay > 0.5 ? fmtC(yr.totalOverpay) : '—'}</td>
+                      <td className="td-muted">{yr.totalFee > 0.5 ? fmtC(yr.totalFee) : '—'}</td>
+                      <td>{fmtC(yr.totalPayment)}</td>
+                      <td style={{ color: 'var(--accent3)' }}>{fmtC(yr.endBalance)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('sch_col_num')}</th>
+                    <th>{t('sch_col_bal_before')}</th>
+                    <th>{t('sch_col_rate')}</th>
+                    <th>{t('sch_col_interest')}</th>
+                    <th>{t('sch_col_capital')}</th>
+                    <th>{t('sch_col_overpay')}</th>
+                    <th>{t('sch_col_fee')}</th>
+                    <th>{t('sch_col_total')}</th>
+                    <th>{t('sch_col_bal_after')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {calcState.rows.map((row, i) => (
+                    <ScheduleRowItem
+                      key={row.num}
+                      idx={i}
+                      row={row}
+                      overpay={calcState.customOverpay[i] ?? 0}
+                      rate={calcState.customRates[i] ?? calcState.r}
+                      globalR={calcState.r}
+                      onOverpayChange={onOverpayChange}
+                      onRateChange={onRateChange}
+                      fmtC={fmtC}
+                    />
+                  ))}
+                  {paidOffCount > 0 && (
+                    <tr className="row-paid">
+                      <td className="td-muted">{calcState.rows.length + 1}–{calcState.months}</td>
+                      <td colSpan={8} style={{ textAlign: 'center', fontSize: '.8rem', fontStyle: 'italic', color: 'var(--text3)' }}>
+                        {t('paid_off')} ({paidOffCount} {t('stats_payments_label')})
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </motion.div>
       </div>

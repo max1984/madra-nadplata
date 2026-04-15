@@ -8,7 +8,7 @@ interface LangContextValue {
   setLang: (lang: Lang) => void;
   t: (key: TranslationKey) => string;
   fmt: (n: number, dec?: number) => string;
-  fmtC: (n: number) => string;
+  fmtC: (n: number, dec?: number) => string;
 }
 
 const LangContext = createContext<LangContextValue | null>(null);
@@ -29,7 +29,7 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     setLang,
     t: (key) => translate(lang, key),
     fmt: (n, dec = 0) => formatNum(n, dec, lang),
-    fmtC: (n) => formatCurrency(n, lang),
+    fmtC: (n, dec = 0) => formatCurrency(n, lang, dec),
   }), [lang]);
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
