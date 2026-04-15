@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
 import { useLang } from '../contexts/LangContext';
@@ -27,8 +27,26 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     inputs.loanMonths
   );
 
-  const sliderMax = Math.floor(stdPayment * 2.5);
-  const sliderMin = Math.ceil(stdPayment) + 1;
+  // Snap slider bounds to multiples of 100 so all positions are round numbers
+  const sliderMin = Math.ceil((Math.ceil(stdPayment) + 1) / 100) * 100;
+  const sliderMax = Math.floor(stdPayment * 2.5 / 100) * 100;
+
+  // Refs for the manual number inputs (uncontrolled, synced via useEffect)
+  const totalMonthlyRef = useRef<HTMLInputElement>(null);
+  const overpayAmountRef = useRef<HTMLInputElement>(null);
+  const shortenAmountRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (totalMonthlyRef.current) totalMonthlyRef.current.value = String(inputs.totalMonthlySlider);
+  }, [inputs.totalMonthlySlider]);
+
+  useEffect(() => {
+    if (overpayAmountRef.current) overpayAmountRef.current.value = String(inputs.overpayAmountSlider);
+  }, [inputs.overpayAmountSlider]);
+
+  useEffect(() => {
+    if (shortenAmountRef.current) shortenAmountRef.current.value = String(inputs.shortenAmountSlider);
+  }, [inputs.shortenAmountSlider]);
 
   useEffect(() => {
     if (
@@ -151,8 +169,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
 
             <div className="form-group">
               <label>{t('form_strategy')}</label>
-              <select value={inputs.strategy} onChange={(e) => setInputs({ strategy: e.target.value as Strategy })}>
-                <option value="reduce_payment">{t('strategy_reduce_payment')}</option>
+              <select value={inputs.strategy === 'reduce_payment' ? 'fixed_total' : inputs.strategy} onChange={(e) => setInputs({ strategy: e.target.value as Strategy })}>
                 <option value="fixed_total">{t('strategy_fixed_total')}</option>
                 <option value="fixed_overpay">{t('strategy_fixed_overpay')}</option>
                 <option value="shorten_period">{t('strategy_shorten')}</option>
@@ -164,13 +181,24 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <div className="slider-group">
                 <div className="slider-header">
                   <label>{t('slider_total')}</label>
-                  <span className="slider-val">{fmtC(inputs.totalMonthlySlider)}</span>
+                  <input
+                    ref={totalMonthlyRef}
+                    type="number"
+                    className="slider-val-input"
+                    defaultValue={inputs.totalMonthlySlider}
+                    min={1}
+                    onBlur={(e) => {
+                      const v = Math.max(1, Math.min(sliderMax, Math.round(+e.target.value) || 1));
+                      setInputs({ totalMonthlySlider: v });
+                    }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                  />
                 </div>
                 <input type="range" min={sliderMin} max={sliderMax} step={100}
                   value={Math.max(inputs.totalMonthlySlider, sliderMin)}
                   onChange={(e) => setInputs({ totalMonthlySlider: +e.target.value })} />
-                <div className="hint">{t('slider_std')} <strong>{fmtC(stdPayment)}</strong></div>
-                {inputs.strategy === 'reduce_payment' && (
+                <div className="hint">{t('slider_std')} <strong>{fmtC(stdPayment, 2)}</strong></div>
+                {(inputs.strategy === 'fixed_total' || inputs.strategy === 'reduce_payment') && (
                   <div className="info-box" style={{ fontSize: '.85rem', marginTop: 8 }}>{t('reduce_payment_hint')}</div>
                 )}
               </div>
@@ -180,7 +208,18 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <div className="slider-group">
                 <div className="slider-header">
                   <label>{t('slider_overpay')}</label>
-                  <span className="slider-val">{fmtC(inputs.overpayAmountSlider)}</span>
+                  <input
+                    ref={overpayAmountRef}
+                    type="number"
+                    className="slider-val-input"
+                    defaultValue={inputs.overpayAmountSlider}
+                    min={0}
+                    onBlur={(e) => {
+                      const v = Math.max(0, Math.min(10000, Math.round(+e.target.value) || 0));
+                      setInputs({ overpayAmountSlider: v });
+                    }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                  />
                 </div>
                 <input type="range" min={0} max={10000} step={100} value={inputs.overpayAmountSlider}
                   onChange={(e) => setInputs({ overpayAmountSlider: +e.target.value })} />
@@ -191,7 +230,18 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <div className="slider-group">
                 <div className="slider-header">
                   <label>{t('slider_overpay')}</label>
-                  <span className="slider-val">{fmtC(inputs.shortenAmountSlider)}</span>
+                  <input
+                    ref={shortenAmountRef}
+                    type="number"
+                    className="slider-val-input"
+                    defaultValue={inputs.shortenAmountSlider}
+                    min={0}
+                    onBlur={(e) => {
+                      const v = Math.max(0, Math.min(10000, Math.round(+e.target.value) || 0));
+                      setInputs({ shortenAmountSlider: v });
+                    }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                  />
                 </div>
                 <input type="range" min={0} max={10000} step={100} value={inputs.shortenAmountSlider}
                   onChange={(e) => setInputs({ shortenAmountSlider: +e.target.value })} />
@@ -202,7 +252,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             {inputs.strategy === 'custom' && (
               <div>
                 <div className="info-box" style={{ fontSize: '.85rem' }} dangerouslySetInnerHTML={{ __html: t('custom_hint') }} />
-                <div className="hint" style={{ marginTop: 8 }}>{t('slider_std')} <strong>{fmtC(stdPayment)}</strong></div>
+                <div className="hint" style={{ marginTop: 8 }}>{t('slider_std')} <strong>{fmtC(stdPayment, 2)}</strong></div>
               </div>
             )}
 
@@ -244,7 +294,21 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.6, delay: 0.15 }}
           >
-            {stats ? (
+            {!calcState ? (
+              <div className="result-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 200 }}>
+                <div className="result-label" style={{ marginBottom: 12, fontSize: '.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--text3)' }}>
+                  {t('calc_placeholder')}
+                </div>
+                <p style={{ color: 'var(--text2)', fontSize: '.9rem' }}>{t('calc_placeholder_sub')}</p>
+              </div>
+            ) : !stats ? (
+              <div className="result-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 120 }}>
+                <div style={{ fontSize: '.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--text3)', marginBottom: 8 }}>
+                  {t('no_overpay_title')}
+                </div>
+                <p style={{ color: 'var(--text2)', fontSize: '.9rem' }}>{t('no_overpay_sub')}</p>
+              </div>
+            ) : (
               <>
                 {stats}
 
@@ -266,13 +330,6 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   <canvas ref={chartRef} />
                 </div>
               </>
-            ) : (
-              <div className="result-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 200 }}>
-                <div className="result-label" style={{ marginBottom: 12, fontSize: '.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--text3)' }}>
-                  {t('calc_placeholder')}
-                </div>
-                <p style={{ color: 'var(--text2)', fontSize: '.9rem' }}>{t('calc_placeholder_sub')}</p>
-              </div>
             )}
           </motion.div>
         </div>
@@ -285,9 +342,12 @@ function renderStats(
   cs: CalcState,
   t: (key: TranslationKey) => string,
   fmtC: (n: number) => string
-) {
+): React.ReactElement | null {
   const withInterest = cs.rows.length ? cs.rows[cs.rows.length - 1]!.cumInterest : 0;
   const withMonths = cs.rows.length;
+
+  const totalOverpay = cs.customOverpay.slice(0, withMonths).reduce((acc, v) => acc + v, 0);
+  if (totalOverpay < 1) return null;
   const savedMoney = Math.max(0, cs.baseInterest - withInterest);
   const savedMonths = Math.max(0, cs.baseMonths - withMonths);
   const savedYears = Math.floor(savedMonths / 12);
