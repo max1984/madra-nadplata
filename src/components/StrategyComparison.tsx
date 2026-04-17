@@ -31,7 +31,7 @@ const cardVariant = {
 export default function StrategyComparison({ inputs, calcState }: Props) {
   const { t, fmtC } = useLang();
 
-  const { rows } = useMemo(() => {
+  const { rows, overpayAmount } = useMemo(() => {
     const P = inputs.loanAmount;
     const r = inputs.interestRate / 100 / 12;
     const months = inputs.loanMonths;
@@ -53,7 +53,7 @@ export default function StrategyComparison({ inputs, calcState }: Props) {
         : 0;
     }
 
-    if (overpayAmount <= 0) return { rows: [] };
+    if (overpayAmount <= 0) return { rows: [], overpayAmount: 0 };
 
     const ovs1 = Array<number>(months).fill(overpayAmount);
     const s1 = buildSchedule(P, rates, months, fee, ovs1, r);
@@ -72,17 +72,17 @@ export default function StrategyComparison({ inputs, calcState }: Props) {
       {
         key: 'reduce',
         labelKey: 'compare_row_reduce',
-        months: s3.length,
-        savedMonths: calcState.baseMonths - s3.length,
-        savedInterest: Math.max(0, calcState.baseInterest - getInt(s3)),
+        months: s1.length,
+        savedMonths: calcState.baseMonths - s1.length,
+        savedInterest: Math.max(0, calcState.baseInterest - getInt(s1)),
         isActive: activeStrategy === 'reduce_payment' || activeStrategy === 'fixed_total',
       },
       {
         key: 'fixed_overpay',
         labelKey: 'compare_row_fixed_overpay',
-        months: s1.length,
-        savedMonths: calcState.baseMonths - s1.length,
-        savedInterest: Math.max(0, calcState.baseInterest - getInt(s1)),
+        months: s3.length,
+        savedMonths: calcState.baseMonths - s3.length,
+        savedInterest: Math.max(0, calcState.baseInterest - getInt(s3)),
         isActive: activeStrategy === 'fixed_overpay',
       },
       {
@@ -95,10 +95,10 @@ export default function StrategyComparison({ inputs, calcState }: Props) {
       },
     ];
 
-    return { rows: stratRows };
+    return { rows: stratRows, overpayAmount };
   }, [inputs, calcState]);
 
-  if (!rows.length) return null;
+  if (!rows || !rows.length) return null;
 
   const maxSaved = Math.max(...rows.map((r) => r.savedInterest));
 
@@ -143,6 +143,11 @@ export default function StrategyComparison({ inputs, calcState }: Props) {
               >
                 {row.isActive && <div className="compare-badge">{t('nav_calc')}</div>}
                 <div className="compare-card-title">{t(row.labelKey)}</div>
+                {row.key === 'reduce' && overpayAmount != null && (
+                  <div style={{ fontSize: '.75rem', color: 'var(--text3)', marginBottom: 4 }}>
+                    {t('compare_reduce_starting').replace('{amount}', fmtC(overpayAmount))}
+                  </div>
+                )}
                 <div className="compare-stat">
                   <div className="compare-stat-val" style={{ color: 'var(--accent2)' }}>{fmtC(row.savedInterest)}</div>
                   <div className="compare-stat-lbl">{t('compare_col_saved')}</div>

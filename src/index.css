@@ -631,3 +631,45 @@ footer a:hover { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* COOKIE BANNER */
+.cookie-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+  background: var(--bg3); border-top: 1px solid rgba(79,142,247,.2);
+  box-shadow: 0 -8px 32px rgba(0,0,0,.5);
+}
+.cookie-banner-inner {
+  max-width: 900px; margin: 0 auto; padding: 16px 24px;
+  display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap;
+}
+.cookie-text { flex: 1; min-width: 260px; }
+.cookie-text strong { font-size: .95rem; color: var(--text); }
+.cookie-text p { font-size: .82rem; color: var(--text2); margin: 4px 0 0; line-height: 1.5; }
+.cookie-details-text { color: var(--text3) !important; margin-top: 6px !important; }
+.cookie-details-toggle {
+  background: none; border: none; color: var(--accent); font-size: .78rem;
+  cursor: pointer; padding: 0; margin-top: 6px;
+}
+.cookie-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; padding-top: 2px; }
+.cookie-btn {
+  padding: 8px 20px; border-radius: 8px; font-size: .85rem; font-weight: 600;
+  cursor: pointer; border: 1px solid transparent; transition: all .2s;
+}
+.cookie-btn-accept {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.cookie-btn-accept:hover { filter: brightness(1.1); }
+.cookie-btn-decline {
+  background: transparent; color: var(--text2); border-color: rgba(255,255,255,.15);
+}
+.cookie-btn-decline:hover { border-color: var(--text2); color: var(--text); }
+
+/* FOOTER DONATE */
+.footer-donate {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px; padding: 8px 18px;
+  background: rgba(255,214,0,.08); border: 1px solid rgba(255,214,0,.2);
+  border-radius: 24px; color: #ffd60a; font-size: .85rem; font-weight: 600;
+  text-decoration: none; transition: all .2s;
+}
+.footer-donate:hover { background: rgba(255,214,0,.15); border-color: rgba(255,214,0,.4); color: #ffd60a !important; }

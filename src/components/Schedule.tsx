@@ -1,6 +1,7 @@
 import { useRef, useEffect, memo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
+import type { TranslationKey } from '../lib/i18n';
 import type { ScheduleRow } from '../lib/mortgage';
 import type { CalcState } from '../hooks/useCalculator';
 
@@ -9,6 +10,7 @@ interface Props {
   onOverpayChange: (idx: number, value: string) => void;
   onRateChange: (idx: number, value: string) => void;
   onCustomEffectChange: (effect: 'shorten' | 'reduce') => void;
+  onRowEffectChange: (idx: number, effect: 'shorten' | 'reduce') => void;
   onResetOverpays: () => void;
   onClearOverpays: () => void;
   onResetRates: () => void;
@@ -20,20 +22,24 @@ interface RowProps {
   overpay: number;
   rate: number;
   globalR: number;
+  isCustom: boolean;
+  rowEffect: 'shorten' | 'reduce';
   onOverpayChange: (idx: number, value: string) => void;
   onRateChange: (idx: number, value: string) => void;
+  onRowEffectChange: (idx: number, effect: 'shorten' | 'reduce') => void;
   fmtC: (n: number) => string;
+  t: (key: TranslationKey) => string;
 }
 
 const ScheduleRowItem = memo(function ScheduleRowItem({
-  idx, row, overpay, rate, globalR,
-  onOverpayChange, onRateChange, fmtC,
+  idx, row, overpay, rate, globalR, isCustom, rowEffect,
+  onOverpayChange, onRateChange, onRowEffectChange, fmtC, t,
 }: RowProps) {
   const overpayRef = useRef<HTMLInputElement>(null);
   const rateRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (overpayRef.current) overpayRef.current.value = overpay.toFixed(2);
+    if (overpayRef.current) overpayRef.current.value = String(Math.round(overpay));
   }, [overpay]);
 
   useEffect(() => {
@@ -64,11 +70,25 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           ref={overpayRef}
           type="number"
           className="overpay-input"
-          defaultValue={overpay.toFixed(2)}
+          defaultValue={String(Math.round(overpay))}
           min={0} step={1}
           onBlur={(e) => onOverpayChange(idx, e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
         />
+        {isCustom && (
+          <div style={{ display: 'flex', gap: 2, marginTop: 2 }}>
+            <button
+              className={`toolbar-btn${rowEffect === 'shorten' ? ' active' : ''}`}
+              style={{ fontSize: '.65rem', padding: '1px 5px' }}
+              onClick={() => onRowEffectChange(idx, 'shorten')}
+            >{t('row_effect_shorten')}</button>
+            <button
+              className={`toolbar-btn${rowEffect === 'reduce' ? ' active' : ''}`}
+              style={{ fontSize: '.65rem', padding: '1px 5px' }}
+              onClick={() => onRowEffectChange(idx, 'reduce')}
+            >{t('row_effect_reduce')}</button>
+          </div>
+        )}
       </td>
       <td className="td-muted">{row.fee > 0.5 ? fmtC(row.fee) : '—'}</td>
       <td>{fmtC(row.totalPayment)}</td>
@@ -135,7 +155,7 @@ function exportCSV(calcState: CalcState) {
   URL.revokeObjectURL(url);
 }
 
-export default function Schedule({ calcState, onOverpayChange, onRateChange, onCustomEffectChange, onResetOverpays, onClearOverpays, onResetRates }: Props) {
+export default function Schedule({ calcState, onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange, onResetOverpays, onClearOverpays, onResetRates }: Props) {
   const { t, fmtC } = useLang();
   const [yearlyView, setYearlyView] = useState(false);
 
@@ -263,9 +283,13 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                       overpay={calcState.customOverpay[i] ?? 0}
                       rate={calcState.customRates[i] ?? calcState.r}
                       globalR={calcState.r}
+                      isCustom={calcState.strategy === 'custom'}
+                      rowEffect={calcState.customPerRowEffects[i] ?? calcState.customEffect}
                       onOverpayChange={onOverpayChange}
                       onRateChange={onRateChange}
+                      onRowEffectChange={onRowEffectChange}
                       fmtC={fmtC}
+                      t={t}
                     />
                   ))}
                   {paidOffCount > 0 && (

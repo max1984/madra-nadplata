@@ -12,6 +12,16 @@ export default function Footer() {
       <div className="footer-author" style={{ marginTop: 16 }}>
         {t('footer_author')} <strong style={{ color: 'var(--text2)' }}>Bartłomiej Derda</strong>
       </div>
+      <div style={{ marginTop: 12 }}>
+        <a
+          href="https://buymeacoffee.com/bderda"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-donate"
+        >
+          {t('footer_donate')}
+        </a>
+      </div>
     </footer>
   );
 }
