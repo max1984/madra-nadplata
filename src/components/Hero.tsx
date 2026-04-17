@@ -5,7 +5,7 @@ import { EX, EXAMPLE_DATA } from '../lib/example';
 
 const Hero3D = lazy(() => import('./Hero3D'));
 
-const { savedInterest, withMonths } = EXAMPLE_DATA;
+const { savedInterest, withMonths, totalMonthly: exTotalMonthly } = EXAMPLE_DATA;
 const savedMonths = EX.months - withMonths;
 const savedYears = Math.floor(savedMonths / 12);
 const savedRemMo = savedMonths % 12;
@@ -27,7 +27,7 @@ export default function Hero() {
     .replace('{amount}', fmt(EX.P))
     .replace('{years}', String(EX.months / 12))
     .replace('{rate}', String(EX.annualRate * 100))
-    .replace('{total}', fmt(EX.totalMonthly));
+    .replace('{total}', fmt(exTotalMonthly));
 
   return (
     <section className="hero">
@@ -48,7 +48,7 @@ export default function Hero() {
           {[
             { val: fmtC(savedInterest), lbl: t('hero_stat1_lbl') },
             { val: timeStr, lbl: t('hero_stat2_lbl') },
-            { val: fmtC(EX.totalMonthly), lbl: t('hero_stat3_lbl') },
+            { val: fmtC(exTotalMonthly), lbl: t('hero_stat3_lbl') },
           ].map((s, i) => (
             <motion.div
               key={i}

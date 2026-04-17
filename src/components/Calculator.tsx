@@ -36,6 +36,15 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const overpayAmountRef = useRef<HTMLInputElement>(null);
   const shortenAmountRef = useRef<HTMLInputElement>(null);
 
+  // Refs for the main form inputs (uncontrolled to avoid leading-zero / cursor issues)
+  const loanAmountRef = useRef<HTMLInputElement>(null);
+  const interestRateRef = useRef<HTMLInputElement>(null);
+  const loanMonthsRef = useRef<HTMLInputElement>(null);
+  const prepayFeeRef = useRef<HTMLInputElement>(null);
+
+  // Track previous sliderMin so we can preserve the overpay amount when loan params change
+  const prevSliderMinRef = useRef(sliderMin);
+
   useEffect(() => {
     if (totalMonthlyRef.current) totalMonthlyRef.current.value = String(inputs.totalMonthlySlider);
   }, [inputs.totalMonthlySlider]);
@@ -48,13 +57,34 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     if (shortenAmountRef.current) shortenAmountRef.current.value = String(inputs.shortenAmountSlider);
   }, [inputs.shortenAmountSlider]);
 
+  // Sync form inputs when props change externally (e.g. URL params on load), but not while focused
   useEffect(() => {
-    if (
-      (inputs.strategy === 'reduce_payment' || inputs.strategy === 'fixed_total') &&
-      inputs.totalMonthlySlider < sliderMin
-    ) {
-      setInputs({ totalMonthlySlider: sliderMin });
-    }
+    if (loanAmountRef.current && document.activeElement !== loanAmountRef.current)
+      loanAmountRef.current.value = String(inputs.loanAmount);
+  }, [inputs.loanAmount]);
+  useEffect(() => {
+    if (interestRateRef.current && document.activeElement !== interestRateRef.current)
+      interestRateRef.current.value = String(inputs.interestRate);
+  }, [inputs.interestRate]);
+  useEffect(() => {
+    if (loanMonthsRef.current && document.activeElement !== loanMonthsRef.current)
+      loanMonthsRef.current.value = String(inputs.loanMonths);
+  }, [inputs.loanMonths]);
+  useEffect(() => {
+    if (prepayFeeRef.current && document.activeElement !== prepayFeeRef.current)
+      prepayFeeRef.current.value = String(inputs.prepayFee);
+  }, [inputs.prepayFee]);
+
+  // When stdPayment changes (loan amount / rate / months edited), preserve the overpay amount
+  // rather than keeping the old total which no longer makes sense for the new loan.
+  useEffect(() => {
+    const prevMin = prevSliderMinRef.current;
+    prevSliderMinRef.current = sliderMin;
+    if (!(inputs.strategy === 'reduce_payment' || inputs.strategy === 'fixed_total')) return;
+    if (sliderMin === prevMin) return;
+    const prevOverpay = Math.max(0, inputs.totalMonthlySlider - prevMin);
+    const newTotal = Math.min(sliderMax, Math.max(sliderMin, sliderMin + prevOverpay));
+    setInputs({ totalMonthlySlider: newTotal });
   }, [sliderMin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -131,8 +161,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <div className="form-group">
               <label>{t('form_loan_amount')}</label>
               <div className="input-with-suffix">
-                <input type="number" value={inputs.loanAmount} min={1000} max={10000000} step={1000}
-                  onChange={(e) => setInputs({ loanAmount: +e.target.value })} />
+                <input
+                  ref={loanAmountRef}
+                  type="number" defaultValue={inputs.loanAmount} min={1000} max={10000000} step={1000}
+                  onBlur={(e) => {
+                    const raw = parseFloat(e.target.value);
+                    const v = isFinite(raw) ? Math.max(1000, Math.min(10000000, raw)) : inputs.loanAmount;
+                    e.target.value = String(v);
+                    setInputs({ loanAmount: v });
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                />
                 <span className="input-suffix">{t('currency')}</span>
               </div>
             </div>
@@ -140,8 +179,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <div className="form-group">
               <label>{t('form_interest')}</label>
               <div className="input-with-suffix">
-                <input type="number" value={inputs.interestRate} min={0.1} max={25} step={0.1}
-                  onChange={(e) => setInputs({ interestRate: +e.target.value })} />
+                <input
+                  ref={interestRateRef}
+                  type="number" defaultValue={inputs.interestRate} min={0.1} max={25} step={0.1}
+                  onBlur={(e) => {
+                    const raw = parseFloat(e.target.value);
+                    const v = isFinite(raw) ? Math.max(0.1, Math.min(25, raw)) : inputs.interestRate;
+                    e.target.value = String(v);
+                    setInputs({ interestRate: v });
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                />
                 <span className="input-suffix">%</span>
               </div>
             </div>
@@ -149,8 +197,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <div className="form-group">
               <label>{t('form_months')}</label>
               <div className="input-with-suffix">
-                <input type="number" value={inputs.loanMonths} min={12} max={360} step={1}
-                  onChange={(e) => setInputs({ loanMonths: +e.target.value })} />
+                <input
+                  ref={loanMonthsRef}
+                  type="number" defaultValue={inputs.loanMonths} min={12} max={360} step={1}
+                  onBlur={(e) => {
+                    const raw = parseInt(e.target.value, 10);
+                    const v = isFinite(raw) ? Math.max(12, Math.min(360, raw)) : inputs.loanMonths;
+                    e.target.value = String(v);
+                    setInputs({ loanMonths: v });
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                />
                 <span className="input-suffix">{t('form_months_unit')}</span>
               </div>
             </div>
@@ -158,8 +215,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <div className="form-group">
               <label>{t('form_fee')}</label>
               <div className="input-with-suffix">
-                <input type="number" value={inputs.prepayFee} min={0} max={5} step={0.1}
-                  onChange={(e) => setInputs({ prepayFee: +e.target.value })} />
+                <input
+                  ref={prepayFeeRef}
+                  type="number" defaultValue={inputs.prepayFee} min={0} max={5} step={0.1}
+                  onBlur={(e) => {
+                    const raw = parseFloat(e.target.value);
+                    const v = isFinite(raw) ? Math.max(0, Math.min(5, raw)) : inputs.prepayFee;
+                    e.target.value = String(v);
+                    setInputs({ prepayFee: v });
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                />
                 <span className="input-suffix">%</span>
               </div>
               <p className="hint">{t('form_fee_hint')}</p>

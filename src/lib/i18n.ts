@@ -44,7 +44,10 @@ export type TranslationKey =
   | 'toolbar_reset' | 'toolbar_clear' | 'toolbar_reset_rates'
   | 'custom_effect_label' | 'custom_effect_shorten' | 'custom_effect_reduce'
   | 'paid_off' | 'schedule_empty'
-  | 'footer_disclaimer' | 'footer_author'
+  | 'footer_disclaimer' | 'footer_author' | 'footer_donate'
+  | 'cookie_title' | 'cookie_desc' | 'cookie_details'
+  | 'cookie_accept' | 'cookie_decline'
+  | 'cookie_show_details' | 'cookie_hide_details'
   | 'chart_without' | 'chart_with'
   | 'chart_interest_without' | 'chart_capital_without'
   | 'chart_interest_with' | 'chart_capital_with'
@@ -57,6 +60,8 @@ export type TranslationKey =
   | 'compare_section_label' | 'compare_section_title' | 'compare_section_sub'
   | 'compare_col_strategy' | 'compare_col_months_total' | 'compare_col_months_saved' | 'compare_col_saved'
   | 'compare_row_reduce' | 'compare_row_fixed_overpay' | 'compare_row_shorten'
+  | 'compare_reduce_starting'
+  | 'row_effect_shorten' | 'row_effect_reduce'
   | 'invest_section_title' | 'invest_rate_label' | 'invest_gain_label' | 'invest_saved_label'
   | 'invest_verdict_overpay' | 'invest_verdict_invest'
   | 'breakeven_label' | 'breakeven_result' | 'breakeven_never'
@@ -87,11 +92,11 @@ const pl: Translations = {
   step5_h: 'Zmienne oprocentowanie',
   step5_p: 'Kredyty ze zmienną stopą reagują na decyzje banku centralnego. Kalkulator pozwala zmienić oprocentowanie dla dowolnego miesiąca w harmonogramie – zobaczysz skutki zmiany stóp od razu.',
   step6_h: 'Efekt jest skumulowany',
-  step6_p: 'Nawet 500 zł powyżej raty miesięcznie przy kredycie na 500 000 zł (6,5%, 30 lat) może zaoszczędzić Ci ponad 225 000 zł i skrócić kredyt o ponad 9 lat. Sprawdź sam w kalkulatorze poniżej.',
+  step6_p: 'Nawet 500 zł powyżej raty miesięcznie przy kredycie na 300 000 zł (6%, 30 lat) może zaoszczędzić Ci ponad 80 000 zł i skrócić kredyt o kilka lat. Sprawdź sam w kalkulatorze poniżej.',
   how_formula: '<strong>Kluczowy wzór:</strong> Odsetki miesięczne = Saldo kredytu × (Oprocentowanie roczne ÷ 12). Im szybciej zredukcujesz saldo, tym mniej zapłacisz odsetek – i to kumuluje się przez całe lata.',
   ex_label: 'Przykład z życia',
-  ex_title_text: '800 000 zł kredytu – co zmienia stała wpłata 7 000 zł miesięcznie?',
-  ex_sub_text: 'Strategia: stała kwota do banku. Standardowa rata: {std}. Łącznie do banku: 7 000 zł/mies. (rata + nadpłata).',
+  ex_title_text: '300 000 zł kredytu – co zmienia stała nadpłata 500 zł miesięcznie?',
+  ex_sub_text: 'Strategia: stała kwota do banku. Standardowa rata: {std}. Startowa nadpłata: 500 zł/mies.',
   ex_without: 'Bez nadpłaty', ex_with_header: 'Stała kwota 7 000 zł / mies.',
   impact_loan: 'Kwota kredytu', impact_period: 'Okres spłaty', impact_payment: 'Miesięczna rata',
   impact_monthly_total: 'Miesięczna wpłata', impact_interest_total: 'Łączne odsetki',
@@ -153,6 +158,14 @@ const pl: Translations = {
   schedule_empty: 'Najpierw oblicz wyniki w sekcji Kalkulator powyżej.',
   footer_disclaimer: 'Strona edukacyjna – nie stanowi porady finansowej. Wyniki kalkulatora mają charakter poglądowy.<br />Przed podjęciem decyzji skonsultuj się z doradcą finansowym lub przeczytaj umowę kredytową.',
   footer_author: 'Autor kalkulatora:',
+  footer_donate: 'Postaw mi kawę ☕',
+  cookie_title: 'Ta strona używa plików cookie',
+  cookie_desc: 'Używamy Google Analytics (po Twojej zgodzie) wyłącznie do analizy ruchu – bez reklam, bez profilowania. Możesz odrzucić i korzystać ze strony normalnie.',
+  cookie_details: 'Ciasteczka analityczne (Google Analytics) pomagają nam zrozumieć, które funkcje są najczęściej używane i jak możemy ulepszyć kalkulator. Nie zbieramy danych osobowych. Twój wybór jest zapamiętywany w lokalnym magazynie przeglądarki (localStorage).',
+  cookie_accept: 'Akceptuję',
+  cookie_decline: 'Odrzuć',
+  cookie_show_details: 'Szczegóły ▾',
+  cookie_hide_details: 'Ukryj ▴',
   chart_without: 'Bez nadpłaty', chart_with: 'Z nadpłatą',
   chart_interest_without: 'Odsetki (bez nadpłaty)', chart_capital_without: 'Kapitał (bez nadpłaty)',
   chart_interest_with: 'Odsetki (z nadpłatą)', chart_capital_with: 'Kapitał (z nadpłatą)',
@@ -176,6 +189,9 @@ const pl: Translations = {
   compare_row_reduce: 'Zmniejszenie raty',
   compare_row_fixed_overpay: 'Stała nadpłata',
   compare_row_shorten: 'Skrócenie okresu',
+  compare_reduce_starting: 'startowo {amount}/mies.',
+  row_effect_shorten: 'Skrócenie',
+  row_effect_reduce: 'Zmniejszenie',
   invest_section_title: 'Co gdybyś inwestował zamiast nadpłacać?',
   invest_rate_label: 'Zakładana roczna stopa zwrotu',
   invest_gain_label: 'Zysk z inwestycji (wartość końcowa – wpłacone)',
@@ -214,11 +230,11 @@ const en: Translations = {
   step5_h: 'Variable interest rates',
   step5_p: "Variable rate mortgages respond to central bank decisions. The calculator lets you change the interest rate for any month in the schedule — you'll see the effect of rate changes immediately.",
   step6_h: 'The effect compounds',
-  step6_p: 'Even 500 PLN above your monthly payment on a 500,000 PLN loan (6.5%, 30 years) can save you over 225,000 PLN and shorten the loan by more than 9 years. Try it yourself in the calculator below.',
+  step6_p: 'Even 500 PLN above your monthly payment on a 300,000 PLN loan (6%, 30 years) can save you over 80,000 PLN and shorten the loan by several years. Try it yourself in the calculator below.',
   how_formula: '<strong>Key formula:</strong> Monthly interest = Loan balance × (Annual rate ÷ 12). The faster you reduce the balance, the less interest you pay — and this compounds over years.',
   ex_label: 'Real example',
-  ex_title_text: '800,000 PLN mortgage – what does a fixed 7,000 PLN/month change?',
-  ex_sub_text: 'Strategy: fixed total to bank. Standard payment: {std}. Fixed total to bank: 7,000 PLN/mo. (payment + overpayment).',
+  ex_title_text: '300,000 PLN mortgage – what does a fixed 500 PLN/month overpayment change?',
+  ex_sub_text: 'Strategy: fixed total to bank. Standard payment: {std}. Starting overpayment: 500 PLN/mo.',
   ex_without: 'Without overpayment', ex_with_header: 'Fixed total 7,000 PLN/month',
   impact_loan: 'Loan amount', impact_period: 'Repayment period', impact_payment: 'Monthly payment',
   impact_monthly_total: 'Monthly total', impact_interest_total: 'Total interest',
@@ -280,6 +296,14 @@ const en: Translations = {
   schedule_empty: 'First calculate results in the Calculator section above.',
   footer_disclaimer: 'Educational website — does not constitute financial advice. Calculator results are for illustrative purposes only.<br />Before making a decision, consult a financial advisor or read your loan agreement.',
   footer_author: 'Calculator author:',
+  footer_donate: 'Buy me a coffee ☕',
+  cookie_title: 'This site uses cookies',
+  cookie_desc: 'We use Google Analytics (with your consent) for traffic analysis only — no ads, no profiling. You can decline and still use the site normally.',
+  cookie_details: 'Analytics cookies (Google Analytics) help us understand which features are used most and how we can improve the calculator. No personal data is collected. Your choice is stored in your browser\'s localStorage.',
+  cookie_accept: 'Accept',
+  cookie_decline: 'Decline',
+  cookie_show_details: 'Details ▾',
+  cookie_hide_details: 'Hide ▴',
   chart_without: 'Without overpayment', chart_with: 'With overpayment',
   chart_interest_without: 'Interest (no overpayment)', chart_capital_without: 'Principal (no overpayment)',
   chart_interest_with: 'Interest (with overpayment)', chart_capital_with: 'Principal (with overpayment)',
@@ -303,6 +327,9 @@ const en: Translations = {
   compare_row_reduce: 'Reduce installment',
   compare_row_fixed_overpay: 'Fixed overpayment',
   compare_row_shorten: 'Shorten term',
+  compare_reduce_starting: 'starting {amount}/mo.',
+  row_effect_shorten: 'Shorten',
+  row_effect_reduce: 'Reduce',
   invest_section_title: 'What if you invested instead of overpaying?',
   invest_rate_label: 'Expected annual investment return',
   invest_gain_label: 'Investment gain (final value – invested)',

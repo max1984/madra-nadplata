@@ -10,12 +10,13 @@ import Calculator from './components/Calculator';
 import Schedule from './components/Schedule';
 import StrategyComparison from './components/StrategyComparison';
 import Footer from './components/Footer';
+import CookieBanner from './components/CookieBanner';
 
 function AppInner() {
   const { t } = useLang();
   const {
     inputs, setInputs, calcState, calcError, calculate,
-    onOverpayChange, onRateChange, onCustomEffectChange,
+    onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange,
     resetOverpays, clearOverpays, resetRates,
   } = useCalculator();
 
@@ -49,11 +50,13 @@ function AppInner() {
         onOverpayChange={onOverpayChange}
         onRateChange={onRateChange}
         onCustomEffectChange={onCustomEffectChange}
+        onRowEffectChange={onRowEffectChange}
         onResetOverpays={resetOverpays}
         onClearOverpays={clearOverpays}
         onResetRates={resetRates}
       />
       <Footer />
+      <CookieBanner />
     </>
   );
 }

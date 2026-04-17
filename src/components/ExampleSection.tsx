@@ -11,7 +11,7 @@ export default function ExampleSection() {
   const balChart = useRef<Chart | null>(null);
   const intChart = useRef<Chart | null>(null);
 
-  const { std, baseRows, withRows, baseInterest, withInterest, withMonths, savedInterest } = EXAMPLE_DATA;
+  const { std, totalMonthly, baseRows, withRows, baseInterest, withInterest, withMonths, savedInterest } = EXAMPLE_DATA;
   const { P, months } = EX;
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export default function ExampleSection() {
             <h3>{t('ex_with_header')}</h3>
             <div className="impact-row"><span className="label">{t('impact_loan')}</span><span className="value">{fmtC(P)}</span></div>
             <div className="impact-row"><span className="label">{t('impact_period')}</span><span className="value good">{periodStr}</span></div>
-            <div className="impact-row"><span className="label">{t('impact_monthly_total')}</span><span className="value">{fmtC(EX.totalMonthly)}</span></div>
+            <div className="impact-row"><span className="label">{t('impact_monthly_total')}</span><span className="value">{fmtC(totalMonthly)}</span></div>
             <div className="impact-row"><span className="label">{t('impact_interest_total')}</span><span className="value good">{fmtC(withInterest)}</span></div>
             <div className="impact-row"><span className="label">{t('impact_saved')}</span><span className="value good">{fmtC(savedInterest)} !</span></div>
           </div>

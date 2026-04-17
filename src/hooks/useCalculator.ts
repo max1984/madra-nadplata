@@ -34,6 +34,7 @@ export interface CalcState {
   customRates: number[];
   strategy: Strategy;
   customEffect: 'shorten' | 'reduce';
+  customPerRowEffects: ('shorten' | 'reduce')[];
   totalMonthly: number;
   defaultOverpay: number;
   baseInterest: number;
@@ -44,14 +45,14 @@ export interface CalcState {
 }
 
 const DEFAULT_INPUTS: CalcInputs = {
-  loanAmount: 800000,
-  interestRate: 6.5,
+  loanAmount: 300000,
+  interestRate: 6,
   loanMonths: 360,
   prepayFee: 0,
   strategy: 'fixed_total',
-  totalMonthlySlider: 7000,
-  overpayAmountSlider: 1000,
-  shortenAmountSlider: 1000,
+  totalMonthlySlider: 2300,
+  overpayAmountSlider: 500,
+  shortenAmountSlider: 500,
   overpayStartMonth: 0,
 };
 
@@ -139,11 +140,13 @@ function computeCalcState(inp: CalcInputs): CalcState {
 
   const base = buildBaseSchedule(P, customRates, months, r);
   const fixedStd = strategy === 'shorten_period' ? stdPayment : null;
+  const customPerRowEffects = Array<'shorten' | 'reduce'>(months).fill('reduce');
   const rows = buildSchedule(P, customRates, months, fee, customOverpay, r, fixedStd);
 
   return {
     P, r, months, prepayFee: fee, stdPayment, origStdPayment: stdPayment,
-    customOverpay, customRates, strategy, customEffect: 'shorten' as const, totalMonthly, defaultOverpay,
+    customOverpay, customRates, strategy, customEffect: 'shorten' as const,
+    customPerRowEffects, totalMonthly, defaultOverpay,
     baseInterest: base.totalInterest, baseMonths: base.count, baseBalances: base.balances,
     baseCumInterestByMonth: base.cumInterestByMonth,
     rows,
@@ -262,9 +265,21 @@ export function useCalculator() {
   const onCustomEffectChange = useCallback((effect: 'shorten' | 'reduce') => {
     setCalcState((prev) => {
       if (!prev || prev.strategy !== 'custom') return prev;
-      const fixedStd = effect === 'shorten' ? prev.origStdPayment : null;
-      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, prev.customOverpay, prev.r, fixedStd);
-      return { ...prev, customEffect: effect, rows };
+      const newPerRowEffects = Array<'shorten' | 'reduce'>(prev.months).fill(effect);
+      const perRowFixed = newPerRowEffects.map((e) => e === 'shorten' ? prev.origStdPayment : null);
+      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, prev.customOverpay, prev.r, null, perRowFixed);
+      return { ...prev, customEffect: effect, customPerRowEffects: newPerRowEffects, rows };
+    });
+  }, []);
+
+  const onRowEffectChange = useCallback((idx: number, effect: 'shorten' | 'reduce') => {
+    setCalcState((prev) => {
+      if (!prev || prev.strategy !== 'custom') return prev;
+      const newPerRowEffects = [...prev.customPerRowEffects];
+      newPerRowEffects[idx] = effect;
+      const perRowFixed = newPerRowEffects.map((e) => e === 'shorten' ? prev.origStdPayment : null);
+      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, prev.customOverpay, prev.r, null, perRowFixed);
+      return { ...prev, customPerRowEffects: newPerRowEffects, rows };
     });
   }, []);
 
@@ -299,6 +314,7 @@ export function useCalculator() {
     onOverpayChange,
     onRateChange,
     onCustomEffectChange,
+    onRowEffectChange,
     resetOverpays,
     clearOverpays,
     resetRates,

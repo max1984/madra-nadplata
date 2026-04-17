@@ -1,10 +1,11 @@
 import { calcStdPayment, buildSchedule, naturalOverpaysFromBalance } from './mortgage';
 import type { ScheduleRow } from './mortgage';
 
-export const EX = { P: 800000, annualRate: 0.075, months: 360, totalMonthly: 7000 } as const;
+export const EX = { P: 300000, annualRate: 0.06, months: 360 } as const;
 
 export interface ExampleData {
   std: number;
+  totalMonthly: number;
   baseRows: ScheduleRow[];
   withRows: ScheduleRow[];
   baseInterest: number;
@@ -14,9 +15,10 @@ export interface ExampleData {
 }
 
 function computeExample(): ExampleData {
-  const { P, annualRate, months, totalMonthly } = EX;
+  const { P, annualRate, months } = EX;
   const r = annualRate / 12;
   const std = calcStdPayment(P, r, months);
+  const totalMonthly = Math.ceil(std) + 500;
   const rates = Array<number>(months).fill(r);
   const overpays = naturalOverpaysFromBalance(P, 0, rates, months, totalMonthly, r);
   const baseRows = buildSchedule(P, rates, months, 0, Array<number>(months).fill(0), r);
@@ -25,7 +27,7 @@ function computeExample(): ExampleData {
   const withInterest = withRows.length ? withRows[withRows.length - 1]!.cumInterest : 0;
   const withMonths = withRows.length;
   const savedInterest = Math.round(baseInterest - withInterest);
-  return { std, baseRows, withRows, baseInterest, withInterest, withMonths, savedInterest };
+  return { std, totalMonthly, baseRows, withRows, baseInterest, withInterest, withMonths, savedInterest };
 }
 
 export const EXAMPLE_DATA: ExampleData = computeExample();

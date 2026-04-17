@@ -31,7 +31,8 @@ export function buildSchedule(
   prepayFee: number,
   customOverpay: number[],
   globalR: number,
-  fixedStdPayment: number | null = null
+  fixedStdPayment: number | null = null,
+  perRowFixed?: (number | null)[]
 ): ScheduleRow[] {
   let balance = P;
   const rows: ScheduleRow[] = [];
@@ -42,9 +43,10 @@ export function buildSchedule(
     const r = customRates[i] ?? globalR;
     const remaining = origMonths - i;
     const interest = balance * r;
+    const rowFixedStd = perRowFixed ? (perRowFixed[i] ?? fixedStdPayment) : fixedStdPayment;
     const currentStd =
-      fixedStdPayment !== null
-        ? Math.max(fixedStdPayment, interest)
+      rowFixedStd !== null
+        ? Math.max(rowFixedStd, interest)
         : calcStdPayment(balance, r, remaining);
     const regularCap = Math.max(0, Math.min(currentStd - interest, balance));
     const overpay = Math.max(0, Math.min(customOverpay[i] ?? 0, balance - regularCap));
