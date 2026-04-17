@@ -1,5 +1,4 @@
-// Replace G-XXXXXXXXXX with your actual GA4 Measurement ID
-export const GA_ID = 'G-XXXXXXXXXX';
+export const GA_ID = 'G-28E2EQV3KY';
 
 type ConsentChoice = 'granted' | 'denied';
 
@@ -17,15 +16,8 @@ function gtag(...args: unknown[]) {
 window.gtag = gtag;
 
 export function initConsentMode() {
-  gtag('consent', 'default', {
-    analytics_storage: 'denied',
-    ad_storage: 'denied',
-    ad_user_data: 'denied',
-    ad_personalization: 'denied',
-    wait_for_update: 500,
-  });
-  gtag('js', new Date());
-  gtag('config', GA_ID, { anonymize_ip: true });
+  // consent default + gtag init are already in index.html
+  // this function only applies stored consent on page load
 }
 
 export function updateConsent(analytics: ConsentChoice, ads: ConsentChoice) {
