@@ -13,7 +13,6 @@ const Calculator = lazy(() => import('./components/Calculator'));
 const Schedule = lazy(() => import('./components/Schedule'));
 const StrategyComparison = lazy(() => import('./components/StrategyComparison'));
 const Footer = lazy(() => import('./components/Footer'));
-const CookieBanner = lazy(() => import('./components/CookieBanner'));
 
 function AppInner() {
   const { t } = useLang();
@@ -60,7 +59,6 @@ function AppInner() {
           onResetRates={resetRates}
         />
         <Footer />
-        <CookieBanner />
       </Suspense>
     </>
   );
