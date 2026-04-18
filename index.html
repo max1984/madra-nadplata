@@ -7,9 +7,10 @@
     <meta name="description" content="Kalkulator nadpłaty kredytu hipotecznego. Sprawdź ile zaoszczędzisz i o ile skrócisz kredyt dzięki regularnym nadpłatom." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-28E2EQV3KY"></script>
+    <!-- Non-blocking font load: preload + swap on load -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" /></noscript>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
@@ -17,6 +18,13 @@
       gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500});
       gtag('js', new Date());
       gtag('config', 'G-28E2EQV3KY');
+      /* Load GA script after page is fully loaded to avoid main-thread jank */
+      window.addEventListener('load', function() {
+        var s = document.createElement('script');
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-28E2EQV3KY';
+        s.async = true;
+        document.head.appendChild(s);
+      });
     </script>
   </head>
   <body>

@@ -1,6 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MantineProvider } from '@mantine/core';
 import {
   Chart,
   LineElement, BarElement, PointElement,
@@ -8,10 +7,8 @@ import {
   CategoryScale, LinearScale,
   Filler, Legend, Tooltip,
 } from 'chart.js';
-import '@mantine/core/styles.css';
 import './index.css';
 import App from './App.tsx';
-import { theme } from './theme.ts';
 
 Chart.register(
   LineElement, BarElement, PointElement,
@@ -22,8 +19,6 @@ Chart.register(
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider theme={theme} forceColorScheme="dark">
-      <App />
-    </MantineProvider>
+    <App />
   </StrictMode>,
 );

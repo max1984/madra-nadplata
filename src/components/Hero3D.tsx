@@ -1,51 +1,3 @@
-import { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float } from '@react-three/drei';
-import * as THREE from 'three';
-
-function Scene() {
-  const torusRef = useRef<THREE.Mesh>(null);
-
-  useFrame((_, delta) => {
-    if (torusRef.current) {
-      torusRef.current.rotation.z += delta * 0.15;
-    }
-  });
-
-  return (
-    <>
-      <ambientLight intensity={0.4} />
-      <pointLight position={[5, 5, 5]} color="#4f8ef7" intensity={2} />
-      <pointLight position={[-5, -3, 5]} color="#a78bfa" intensity={1.5} />
-
-      <Float speed={1.5} rotationIntensity={0.5} floatIntensity={1.5}>
-        <mesh>
-          <icosahedronGeometry args={[1.8, 1]} />
-          <meshStandardMaterial
-            wireframe
-            color="#4f8ef7"
-            opacity={0.55}
-            transparent
-          />
-        </mesh>
-      </Float>
-
-      <mesh
-        ref={torusRef}
-        rotation={[Math.PI / 3, Math.PI / 6, 0]}
-      >
-        <torusGeometry args={[2.5, 0.04, 16, 80]} />
-        <meshStandardMaterial color="#a78bfa" opacity={0.3} transparent />
-      </mesh>
-
-      <mesh rotation={[Math.PI / 5, Math.PI / 4, Math.PI / 8]}>
-        <torusGeometry args={[3.2, 0.02, 12, 60]} />
-        <meshStandardMaterial color="#06b6d4" opacity={0.18} transparent />
-      </mesh>
-    </>
-  );
-}
-
 export default function Hero3D() {
   return (
     <div
@@ -54,15 +6,68 @@ export default function Hero3D() {
         inset: 0,
         pointerEvents: 'none',
         zIndex: 0,
+        overflow: 'hidden',
       }}
+      aria-hidden="true"
     >
-      <Canvas
-        camera={{ position: [0, 0, 6], fov: 50 }}
-        style={{ background: 'transparent' }}
-        gl={{ alpha: true, antialias: true }}
+      <svg
+        viewBox="0 0 600 600"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(600px, 100vw)',
+          height: 'min(600px, 100vh)',
+          opacity: 0.55,
+        }}
       >
-        <Scene />
-      </Canvas>
+        {/* Outer torus ring – slow spin */}
+        <g style={{ transformOrigin: '300px 300px', animation: 'hero3d-spin-slow 18s linear infinite' }}>
+          <ellipse cx="300" cy="300" rx="230" ry="75" fill="none" stroke="#a78bfa" strokeWidth="1.2" opacity="0.35" />
+          <ellipse cx="300" cy="300" rx="230" ry="75" fill="none" stroke="#a78bfa" strokeWidth="0.6" opacity="0.15"
+            transform="rotate(60 300 300)" />
+        </g>
+        {/* Inner torus ring – opposite spin */}
+        <g style={{ transformOrigin: '300px 300px', animation: 'hero3d-spin-rev 12s linear infinite' }}>
+          <ellipse cx="300" cy="300" rx="175" ry="55" fill="none" stroke="#06b6d4" strokeWidth="0.8" opacity="0.22" />
+          <ellipse cx="300" cy="300" rx="175" ry="55" fill="none" stroke="#06b6d4" strokeWidth="0.5" opacity="0.12"
+            transform="rotate(90 300 300)" />
+        </g>
+        {/* Wireframe icosahedron approximation – floating */}
+        <g style={{ transformOrigin: '300px 300px', animation: 'hero3d-float 5s ease-in-out infinite' }}>
+          {/* top cap */}
+          <line x1="300" y1="190" x2="245" y2="268" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.6" />
+          <line x1="300" y1="190" x2="300" y2="258" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.6" />
+          <line x1="300" y1="190" x2="355" y2="268" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.6" />
+          {/* middle band */}
+          <line x1="245" y1="268" x2="300" y2="258" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.5" />
+          <line x1="300" y1="258" x2="355" y2="268" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.5" />
+          <line x1="245" y1="268" x2="230" y2="330" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.5" />
+          <line x1="245" y1="268" x2="300" y2="340" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.45" />
+          <line x1="300" y1="258" x2="300" y2="340" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.45" />
+          <line x1="355" y1="268" x2="300" y2="340" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.45" />
+          <line x1="355" y1="268" x2="370" y2="330" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.5" />
+          <line x1="230" y1="330" x2="300" y2="340" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.4" />
+          <line x1="370" y1="330" x2="300" y2="340" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.4" />
+          <line x1="230" y1="330" x2="370" y2="330" stroke="#4f8ef7" strokeWidth="0.6" opacity="0.3" />
+          {/* bottom cap */}
+          <line x1="300" y1="340" x2="300" y2="415" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.5" />
+          <line x1="230" y1="330" x2="300" y2="415" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.4" />
+          <line x1="370" y1="330" x2="300" y2="415" stroke="#4f8ef7" strokeWidth="0.9" opacity="0.4" />
+        </g>
+      </svg>
+      <style>{`
+        @keyframes hero3d-spin-slow { to { transform: rotate(360deg); } }
+        @keyframes hero3d-spin-rev  { to { transform: rotate(-360deg); } }
+        @keyframes hero3d-float {
+          0%,100% { transform: translateY(0px); }
+          50%      { transform: translateY(-14px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [style*="hero3d"] { animation: none !important; }
+        }
+      `}</style>
     </div>
   );
 }
