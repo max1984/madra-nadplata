@@ -22,6 +22,17 @@ export default function Footer() {
           {t('footer_donate')}
         </a>
       </div>
+      <div style={{ marginTop: 12 }}>
+        <a
+          href="mailto:bartlomiej.derda@gmail.com"
+          style={{ color: 'var(--text3)', fontSize: '0.8rem', textDecoration: 'none', opacity: 0.7 }}
+        >
+          bartlomiej.derda@gmail.com
+        </a>
+      </div>
+      <div style={{ marginTop: 8, fontSize: '0.7rem', color: 'var(--text3)', opacity: 0.4 }}>
+        v{__APP_VERSION__}
+      </div>
     </footer>
   );
 }
