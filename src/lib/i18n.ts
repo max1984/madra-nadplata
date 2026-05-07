@@ -69,6 +69,7 @@ export type TranslationKey =
   | 'sch_yearly_toggle' | 'sch_monthly_toggle' | 'sch_col_year'
   | 'custom_base_title' | 'custom_base_hint'
   | 'overpay_day_tip'
+  | 'ad_consent_text' | 'ad_consent_accept' | 'ad_consent_decline' | 'ad_consent_policy'
   | 'strategy_refinance'
   | 'refi_hint' | 'refi_month_label' | 'refi_remaining_hint'
   | 'refi_new_rate_label' | 'refi_new_months_label'
@@ -219,6 +220,10 @@ const pl: Translations = {
   custom_base_title: 'Koszty bazowe kredytu',
   custom_base_hint: 'Dodaj nadpłaty w harmonogramie poniżej – wyniki zaktualizują się automatycznie.',
   overpay_day_tip: '💡 Najlepszym dniem na nadpłatę jest dzień spłaty raty kapitałowo-odsetkowej – ze względu na różne podejścia banków do naliczania odsetek, wpłata w tym dniu jest zawsze bezpieczna.',
+  ad_consent_text: 'Ta strona wyświetla reklamy Google. Bez zgody mogą się pojawić reklamy niespersonalizowane. Dane nie są sprzedawane osobom trzecim.',
+  ad_consent_accept: 'Akceptuj',
+  ad_consent_decline: 'Odrzuć',
+  ad_consent_policy: 'Polityka prywatności Google',
   strategy_refinance: 'Refinansowanie (nowy kredyt na inne warunki)',
   refi_hint: 'Symuluje zamknięcie obecnego kredytu i zaciągnięcie nowego na wybranych warunkach. Prowizja i opłaty jednorazowe naliczane są od salda w momencie refinansowania.',
   refi_month_label: 'Refinansuj po miesiącu',
@@ -378,6 +383,10 @@ const en: Translations = {
   custom_base_title: 'Base loan costs',
   custom_base_hint: 'Add overpayments in the schedule below — results update automatically.',
   overpay_day_tip: '💡 The best day to make an overpayment is your installment due date — due to varying bank approaches to interest calculation, paying on the due date is always safe.',
+  ad_consent_text: 'This site displays Google ads. Without consent, non-personalized ads may appear. Your data is not sold to third parties.',
+  ad_consent_accept: 'Accept',
+  ad_consent_decline: 'Decline',
+  ad_consent_policy: 'Google Privacy Policy',
   strategy_refinance: 'Refinancing (new loan on different terms)',
   refi_hint: 'Simulates closing the current loan and taking a new one on different terms. The origination fee and other one-time costs are applied to the outstanding balance at the time of refinancing.',
   refi_month_label: 'Refinance after month',
