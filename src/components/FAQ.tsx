@@ -30,7 +30,7 @@ export default function FAQ() {
         >
           {FAQ_KEYS.map((n) => (
             <div key={n} className={`faq-item${open === n ? ' open' : ''}`}>
-              <button className="faq-q" onClick={() => setOpen(open === n ? null : n)}>
+              <button type="button" className="faq-q" aria-expanded={open === n} onClick={() => setOpen(open === n ? null : n)}>
                 <span>{t(`faq_q${n}`)}</span>
                 <span className="arrow">+</span>
               </button>

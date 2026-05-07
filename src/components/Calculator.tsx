@@ -47,6 +47,12 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const refiOriginationFeeRef = useRef<HTMLInputElement>(null);
   const refiFlatRef = useRef<HTMLInputElement>(null);
 
+  // Clamp refiMonth when loanMonths shrinks below it
+  useEffect(() => {
+    const max = Math.min(120, inputs.loanMonths - 1);
+    if (inputs.refiMonth > max) setInputs({ refiMonth: max });
+  }, [inputs.loanMonths]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Sync refi inputs when inputs change externally
   useEffect(() => {
     if (refiRateRef.current && document.activeElement !== refiRateRef.current)
@@ -415,9 +421,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   <label>{t('refi_flat_fee_label')}</label>
                   <div className="input-with-suffix">
                     <input ref={refiFlatRef} type="number" defaultValue={inputs.refiFlat}
-                      min={0} step={100}
+                      min={0} max={10000000} step={100}
                       onBlur={(e) => {
-                        const v = Math.max(0, +e.target.value || 0);
+                        const v = Math.max(0, Math.min(10000000, +e.target.value || 0));
                         e.target.value = String(v);
                         setInputs({ refiFlat: v });
                       }}
@@ -489,7 +495,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <>
                 {stats}
 
-                <div className="result-card">
+                {calcState.strategy !== 'refinance' && <div className="result-card">
                   <div className="result-card-label">{t('invest_section_title')}</div>
                   <div className="slider-group" style={{ marginBottom: 12 }}>
                     <div className="slider-header">
@@ -501,7 +507,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                       onChange={(e) => setInvestRate(+e.target.value)} />
                   </div>
                   {investCard}
-                </div>
+                </div>}
 
                 <div className="calc-chart-box">
                   <canvas ref={chartRef} />
@@ -542,7 +548,7 @@ function renderStats(
           </div>
           <div className="result-item">
             <div className="r-val">{cs.baseMonths} {t('stats_payments_label')}</div>
-            <div className="r-lbl">{t('stats_faster')}</div>
+            <div className="r-lbl">{t('stats_loan_duration')}</div>
           </div>
         </div>
         <div className="info-box" style={{ fontSize: '.85rem', marginTop: 12 }}>{t('custom_base_hint')}</div>

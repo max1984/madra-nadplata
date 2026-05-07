@@ -7,6 +7,7 @@ import Nav from './components/Nav';
 import Hero from './components/Hero';
 import AdConsent from './components/AdConsent';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const ExampleSection = lazy(() => import('./components/ExampleSection'));
@@ -68,10 +69,12 @@ function AppInner() {
 
 export default function App() {
   return (
-    <LazyMotion features={domAnimation} strict>
-      <LangProvider>
-        <AppInner />
-      </LangProvider>
-    </LazyMotion>
+    <ErrorBoundary>
+      <LazyMotion features={domAnimation} strict>
+        <LangProvider>
+          <AppInner />
+        </LangProvider>
+      </LazyMotion>
+    </ErrorBoundary>
   );
 }

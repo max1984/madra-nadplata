@@ -135,6 +135,14 @@ function validateInputs(inp: CalcInputs): TranslationKey | null {
   if (!isFinite(inp.interestRate) || inp.interestRate < 0.01 || inp.interestRate > 25) {
     return 'error_rate';
   }
+  if (inp.strategy === 'refinance') {
+    if (!isFinite(inp.refiRate) || inp.refiRate < 0.01 || inp.refiRate > 25) {
+      return 'error_refi_rate';
+    }
+    if (!isFinite(inp.refiMonths) || inp.refiMonths < 12 || inp.refiMonths > 360) {
+      return 'error_refi_months';
+    }
+  }
   return null;
 }
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import type { Lang } from '../lib/i18n';
 import { t as translate, type TranslationKey } from '../lib/i18n';
 import { fmt as formatNum, fmtC as formatCurrency } from '../lib/format';
@@ -23,6 +23,10 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('lang', l);
     setLangState(l);
   };
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const value = useMemo<LangContextValue>(() => ({
     lang,

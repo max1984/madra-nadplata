@@ -25,7 +25,6 @@ export type TranslationKey =
   | 'calc_label' | 'calc_title' | 'calc_sub'
   | 'form_loan_amount' | 'form_interest' | 'form_months' | 'form_months_unit'
   | 'form_fee' | 'form_fee_hint' | 'form_strategy'
-  | 'strategy_reduce_payment'
   | 'strategy_fixed_total' | 'strategy_fixed_overpay'
   | 'strategy_shorten' | 'strategy_custom'
   | 'slider_total' | 'slider_overpay' | 'slider_std'
@@ -35,7 +34,7 @@ export type TranslationKey =
   | 'stats_saved' | 'stats_faster' | 'stats_payments_instead'
   | 'stats_avg_overpay' | 'stats_total_interest' | 'stats_comparison'
   | 'stats_without' | 'stats_with' | 'stats_saving_prefix' | 'stats_saving_suffix'
-  | 'stats_payments_label'
+  | 'stats_payments_label' | 'stats_loan_duration'
   | 'sch_label' | 'sch_title' | 'sch_sub'
   | 'sch_col_num' | 'sch_col_bal_before' | 'sch_col_rate'
   | 'sch_col_interest' | 'sch_col_capital' | 'sch_col_overpay'
@@ -45,22 +44,16 @@ export type TranslationKey =
   | 'custom_effect_label' | 'custom_effect_shorten' | 'custom_effect_reduce'
   | 'paid_off' | 'schedule_empty'
   | 'footer_disclaimer' | 'footer_author' | 'footer_donate'
-  | 'cookie_title' | 'cookie_desc' | 'cookie_details'
-  | 'cookie_accept' | 'cookie_decline'
-  | 'cookie_show_details' | 'cookie_hide_details'
   | 'chart_without' | 'chart_with'
   | 'chart_interest_without' | 'chart_capital_without'
   | 'chart_interest_with' | 'chart_capital_with'
   | 'chart_year' | 'currency' | 'years' | 'years1' | 'months_short'
   | 'hero_note'
   | 'error_loan_amount' | 'error_months' | 'error_rate'
+  | 'error_refi_rate' | 'error_refi_months'
   | 'copy_link' | 'copy_link_copied'
   | 'csv_export'
   | 'overpay_start_label' | 'overpay_start_hint'
-  | 'compare_section_label' | 'compare_section_title' | 'compare_section_sub'
-  | 'compare_col_strategy' | 'compare_col_months_total' | 'compare_col_months_saved' | 'compare_col_saved'
-  | 'compare_row_reduce' | 'compare_row_fixed_overpay' | 'compare_row_shorten'
-  | 'compare_reduce_starting'
   | 'row_effect_shorten' | 'row_effect_reduce'
   | 'invest_section_title' | 'invest_rate_label' | 'invest_gain_label' | 'invest_saved_label'
   | 'invest_verdict_overpay' | 'invest_verdict_invest'
@@ -135,7 +128,6 @@ const pl: Translations = {
   form_months_unit: 'mies.', form_fee: 'Prowizja za nadpłatę',
   form_fee_hint: 'Sprawdź w umowie – często 0% po 3 latach od uruchomienia kredytu',
   form_strategy: 'Strategia nadpłaty',
-  strategy_reduce_payment: 'Stała kwota do banku / Zmniejszenie raty',
   strategy_fixed_total: 'Stała kwota do banku (rata + nadpłata)',
   strategy_fixed_overpay: 'Stała miesięczna nadpłata',
   strategy_shorten: 'Skrócenie okresu (stała rata, zmienna długość)',
@@ -154,6 +146,7 @@ const pl: Translations = {
   stats_without: 'Bez nadpłaty', stats_with: 'Z nadpłatą',
   stats_saving_prefix: 'Oszczędzasz', stats_saving_suffix: 'łącznych odsetek na tle scenariusza bez nadpłaty.',
   stats_payments_label: 'rat',
+  stats_loan_duration: 'czas trwania kredytu',
   sch_label: 'Szczegóły', sch_title: 'Harmonogram spłat',
   sch_sub: 'Tabela generuje się automatycznie po obliczeniu. Edytuj nadpłatę lub oprocentowanie dla dowolnego miesiąca – zmiany propagują się automatycznie.',
   sch_col_num: 'Rata #', sch_col_bal_before: 'Saldo przed ratą', sch_col_rate: 'Oprocent. %',
@@ -170,13 +163,6 @@ const pl: Translations = {
   footer_disclaimer: 'Strona edukacyjna – nie stanowi porady finansowej. Wyniki kalkulatora mają charakter poglądowy.<br />Przed podjęciem decyzji skonsultuj się z doradcą finansowym lub przeczytaj umowę kredytową.',
   footer_author: 'Autor kalkulatora:',
   footer_donate: 'Postaw mi kawę ☕',
-  cookie_title: 'Ta strona używa plików cookie',
-  cookie_desc: 'Używamy Google Analytics (po Twojej zgodzie) wyłącznie do analizy ruchu – bez reklam, bez profilowania. Możesz odrzucić i korzystać ze strony normalnie.',
-  cookie_details: 'Ciasteczka analityczne (Google Analytics) pomagają nam zrozumieć, które funkcje są najczęściej używane i jak możemy ulepszyć kalkulator. Nie zbieramy danych osobowych. Twój wybór jest zapamiętywany w lokalnym magazynie przeglądarki (localStorage).',
-  cookie_accept: 'Akceptuję',
-  cookie_decline: 'Odrzuć',
-  cookie_show_details: 'Szczegóły ▾',
-  cookie_hide_details: 'Ukryj ▴',
   chart_without: 'Bez nadpłaty', chart_with: 'Z nadpłatą',
   chart_interest_without: 'Odsetki (bez nadpłaty)', chart_capital_without: 'Kapitał (bez nadpłaty)',
   chart_interest_with: 'Odsetki (z nadpłatą)', chart_capital_with: 'Kapitał (z nadpłatą)',
@@ -185,22 +171,13 @@ const pl: Translations = {
   error_loan_amount: 'Kwota kredytu musi wynosić od 1 000 do 10 000 000 zł.',
   error_months: 'Liczba rat musi wynosić od 12 do 360.',
   error_rate: 'Oprocentowanie musi wynosić od 0,01% do 25%.',
+  error_refi_rate: 'Oprocentowanie nowego kredytu musi wynosić od 0,01% do 25%.',
+  error_refi_months: 'Okres nowego kredytu musi wynosić od 12 do 360 miesięcy.',
   copy_link: 'Kopiuj link',
   copy_link_copied: '✓ Skopiowano!',
   csv_export: 'Pobierz CSV',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
   overpay_start_hint: 'Miesiąc 0 = od razu. Przydatne, gdy nadpłatę planujesz za kilka miesięcy (np. po wykończeniu mieszkania).',
-  compare_section_label: 'Analiza',
-  compare_section_title: 'Porównanie strategii nadpłaty',
-  compare_section_sub: 'Przy tej samej kwocie nadpłaty: {amount} / mies.',
-  compare_col_strategy: 'Strategia',
-  compare_col_months_total: 'Liczba rat',
-  compare_col_months_saved: 'Skrócenie',
-  compare_col_saved: 'Zaoszczędzone odsetki',
-  compare_row_reduce: 'Zmniejszenie raty',
-  compare_row_fixed_overpay: 'Stała nadpłata',
-  compare_row_shorten: 'Skrócenie okresu',
-  compare_reduce_starting: 'startowo {amount}/mies.',
   row_effect_shorten: 'Skrócenie',
   row_effect_reduce: 'Zmniejszenie',
   invest_section_title: 'Co gdybyś inwestował zamiast nadpłacać?',
@@ -298,7 +275,6 @@ const en: Translations = {
   form_months_unit: 'mo.', form_fee: 'Prepayment fee',
   form_fee_hint: 'Check your contract – often 0% after 3 years from loan origination',
   form_strategy: 'Overpayment strategy',
-  strategy_reduce_payment: 'Fixed total to bank / Reduce installment',
   strategy_fixed_total: 'Fixed total to bank (payment + overpayment)',
   strategy_fixed_overpay: 'Fixed monthly overpayment',
   strategy_shorten: 'Shorten period (fixed payment, shorter term)',
@@ -317,6 +293,7 @@ const en: Translations = {
   stats_without: 'Without overpayment', stats_with: 'With overpayment',
   stats_saving_prefix: 'You save', stats_saving_suffix: 'of total interest vs. no overpayment.',
   stats_payments_label: 'payments',
+  stats_loan_duration: 'loan duration',
   sch_label: 'Details', sch_title: 'Repayment Schedule',
   sch_sub: 'The table is generated automatically after calculating. Edit the overpayment or interest rate for any month — changes propagate automatically.',
   sch_col_num: 'Payment #', sch_col_bal_before: 'Balance before', sch_col_rate: 'Rate %',
@@ -333,13 +310,6 @@ const en: Translations = {
   footer_disclaimer: 'Educational website — does not constitute financial advice. Calculator results are for illustrative purposes only.<br />Before making a decision, consult a financial advisor or read your loan agreement.',
   footer_author: 'Calculator author:',
   footer_donate: 'Buy me a coffee ☕',
-  cookie_title: 'This site uses cookies',
-  cookie_desc: 'We use Google Analytics (with your consent) for traffic analysis only — no ads, no profiling. You can decline and still use the site normally.',
-  cookie_details: 'Analytics cookies (Google Analytics) help us understand which features are used most and how we can improve the calculator. No personal data is collected. Your choice is stored in your browser\'s localStorage.',
-  cookie_accept: 'Accept',
-  cookie_decline: 'Decline',
-  cookie_show_details: 'Details ▾',
-  cookie_hide_details: 'Hide ▴',
   chart_without: 'Without overpayment', chart_with: 'With overpayment',
   chart_interest_without: 'Interest (no overpayment)', chart_capital_without: 'Principal (no overpayment)',
   chart_interest_with: 'Interest (with overpayment)', chart_capital_with: 'Principal (with overpayment)',
@@ -348,22 +318,13 @@ const en: Translations = {
   error_loan_amount: 'Loan amount must be between 1,000 and 10,000,000.',
   error_months: 'Months must be between 12 and 360.',
   error_rate: 'Interest rate must be between 0.01% and 25%.',
+  error_refi_rate: 'New loan interest rate must be between 0.01% and 25%.',
+  error_refi_months: 'New loan period must be between 12 and 360 months.',
   copy_link: 'Copy link',
   copy_link_copied: '✓ Copied!',
   csv_export: 'Download CSV',
   overpay_start_label: 'Start overpaying from month',
   overpay_start_hint: 'Month 0 = immediately. Useful if you plan to start overpaying after a few months.',
-  compare_section_label: 'Analysis',
-  compare_section_title: 'Overpayment strategy comparison',
-  compare_section_sub: 'With the same monthly overpayment: {amount} / mo.',
-  compare_col_strategy: 'Strategy',
-  compare_col_months_total: 'Total payments',
-  compare_col_months_saved: 'Time saved',
-  compare_col_saved: 'Interest saved',
-  compare_row_reduce: 'Reduce installment',
-  compare_row_fixed_overpay: 'Fixed overpayment',
-  compare_row_shorten: 'Shorten term',
-  compare_reduce_starting: 'starting {amount}/mo.',
   row_effect_shorten: 'Shorten',
   row_effect_reduce: 'Reduce',
   invest_section_title: 'What if you invested instead of overpaying?',

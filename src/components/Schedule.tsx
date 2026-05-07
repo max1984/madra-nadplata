@@ -112,15 +112,19 @@ interface YearRow {
   totalFee: number;
   totalPayment: number;
   endBalance: number;
+  isRefiStart: boolean;
 }
 
 function buildYearlyRows(calcState: CalcState): YearRow[] {
   const rows = calcState.rows;
   const years: YearRow[] = [];
+  let refiStarted = false;
   for (let y = 0; y * 12 < rows.length; y++) {
     const start = y * 12;
     const end = Math.min((y + 1) * 12, rows.length);
     const slice = rows.slice(start, end);
+    const isRefiStart = !refiStarted && slice.some(r => r.isRefiRow);
+    if (isRefiStart) refiStarted = true;
     years.push({
       year: y + 1,
       startPayment: start + 1,
@@ -131,6 +135,7 @@ function buildYearlyRows(calcState: CalcState): YearRow[] {
       totalFee: slice.reduce((s, r) => s + r.fee, 0),
       totalPayment: slice.reduce((s, r) => s + r.totalPayment, 0),
       endBalance: slice[slice.length - 1]!.balanceAfter,
+      isRefiStart,
     });
   }
   return years;
@@ -254,17 +259,36 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                 </thead>
                 <tbody>
                   {buildYearlyRows(calcState).map((yr) => (
-                    <tr key={yr.year}>
-                      <td className="td-muted">
-                        {yr.year} <span style={{ fontSize: '.75rem', color: 'var(--text3)' }}>({yr.startPayment}–{yr.endPayment})</span>
-                      </td>
-                      <td className="td-red">{fmtC(yr.totalInterest)}</td>
-                      <td className="td-green">{fmtC(yr.totalRegularCap)}</td>
-                      <td>{yr.totalOverpay > 0.5 ? fmtC(yr.totalOverpay) : '—'}</td>
-                      <td className="td-muted">{yr.totalFee > 0.5 ? fmtC(yr.totalFee) : '—'}</td>
-                      <td>{fmtC(yr.totalPayment)}</td>
-                      <td style={{ color: 'var(--accent3)' }}>{fmtC(yr.endBalance)}</td>
-                    </tr>
+                    <Fragment key={yr.year}>
+                      {yr.isRefiStart && calcState.refiData && (
+                        <tr>
+                          <td colSpan={7} style={{
+                            textAlign: 'center', fontSize: '.78rem', fontWeight: 700,
+                            color: 'var(--accent2)', background: 'rgba(110,231,183,.07)',
+                            padding: '6px 12px', letterSpacing: '.5px',
+                          }}>
+                            {t('refi_separator')}
+                            <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 8 }}>
+                              {t('refi_balance_label')}: <strong style={{ color: 'var(--accent3)' }}>{fmtC(calcState.refiData.balance)}</strong>
+                              {calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount > 0 && (
+                                <> &nbsp;|&nbsp; {t('refi_fees_label')}: <strong style={{ color: 'var(--danger)' }}>{fmtC(calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount)}</strong></>
+                              )}
+                            </span>
+                          </td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td className="td-muted">
+                          {yr.year} <span style={{ fontSize: '.75rem', color: 'var(--text3)' }}>({yr.startPayment}–{yr.endPayment})</span>
+                        </td>
+                        <td className="td-red">{fmtC(yr.totalInterest)}</td>
+                        <td className="td-green">{fmtC(yr.totalRegularCap)}</td>
+                        <td>{yr.totalOverpay > 0.5 ? fmtC(yr.totalOverpay) : '—'}</td>
+                        <td className="td-muted">{yr.totalFee > 0.5 ? fmtC(yr.totalFee) : '—'}</td>
+                        <td>{fmtC(yr.totalPayment)}</td>
+                        <td style={{ color: 'var(--accent3)' }}>{fmtC(yr.endBalance)}</td>
+                      </tr>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

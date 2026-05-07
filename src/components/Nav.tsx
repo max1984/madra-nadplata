@@ -9,7 +9,6 @@ export default function Nav() {
 
   const handleLang = (l: Lang) => {
     setLang(l);
-    document.documentElement.lang = l;
   };
 
   const links = (
@@ -21,7 +20,6 @@ export default function Nav() {
       <div className="nav-sep" />
       <span className="nav-sec-label">{t('nav_tools')}</span>
       <a href="#calculator" onClick={() => setMenuOpen(false)}>{t('nav_calc')}</a>
-      <a href="#comparison" onClick={() => setMenuOpen(false)}>{t('compare_section_label')}</a>
       <a href="#schedule" onClick={() => setMenuOpen(false)}>{t('nav_schedule')}</a>
       <div className="lang-toggle">
         <button
