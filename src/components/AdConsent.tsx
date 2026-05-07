@@ -46,9 +46,7 @@ export default function AdConsent() {
       <p style={{ flex: 1, minWidth: 240, fontSize: '.82rem', color: 'var(--text2)', margin: 0, lineHeight: 1.5 }}>
         {t('ad_consent_text')}{' '}
         <a
-          href="https://policies.google.com/privacy"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#privacy"
           style={{ color: 'var(--accent)', textDecoration: 'underline', fontSize: '.8rem' }}
         >
           {t('ad_consent_policy')}

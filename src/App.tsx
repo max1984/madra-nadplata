@@ -6,6 +6,7 @@ import { useCalculator } from './hooks/useCalculator';
 import Nav from './components/Nav';
 import Hero from './components/Hero';
 import AdConsent from './components/AdConsent';
+import PrivacyPolicy from './components/PrivacyPolicy';
 
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const ExampleSection = lazy(() => import('./components/ExampleSection'));
@@ -25,6 +26,7 @@ function AppInner() {
   return (
     <>
       <AdConsent />
+      <PrivacyPolicy />
       <Nav />
       <Hero />
       <Suspense fallback={null}>

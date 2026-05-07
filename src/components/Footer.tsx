@@ -30,6 +30,14 @@ export default function Footer() {
           bartlomiej.derda@gmail.com
         </a>
       </div>
+      <div style={{ marginTop: 12 }}>
+        <a
+          href="#privacy"
+          style={{ color: 'var(--text3)', fontSize: '0.75rem', textDecoration: 'none', opacity: 0.6 }}
+        >
+          Polityka prywatności / Privacy Policy
+        </a>
+      </div>
       <div style={{ marginTop: 8, fontSize: '0.7rem', color: 'var(--text3)', opacity: 0.4 }}>
         v{__APP_VERSION__}
       </div>
