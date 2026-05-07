@@ -181,10 +181,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <div className="input-with-suffix">
                 <input
                   ref={interestRateRef}
-                  type="number" defaultValue={inputs.interestRate} min={0.1} max={25} step={0.1}
+                  type="number" defaultValue={inputs.interestRate} min={0.01} max={25} step={0.01}
                   onBlur={(e) => {
                     const raw = parseFloat(e.target.value);
-                    const v = isFinite(raw) ? Math.max(0.1, Math.min(25, raw)) : inputs.interestRate;
+                    const v = isFinite(raw) ? Math.max(0.01, Math.min(25, raw)) : inputs.interestRate;
                     e.target.value = String(v);
                     setInputs({ interestRate: v });
                   }}
@@ -340,6 +340,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             )}
 
             <motion.button
+              type="button"
               className="calc-btn"
               onClick={onCalculate}
               whileHover={{ scale: 1.02 }}
@@ -347,9 +348,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             >
               {t('calc_btn')}
             </motion.button>
-            <button className="copy-link-btn" onClick={handleCopy}>
+            <button type="button" className="copy-link-btn" onClick={handleCopy}>
               {copied ? t('copy_link_copied') : t('copy_link')}
             </button>
+            <div className="info-box" style={{ fontSize: '.82rem', marginTop: 12 }}>{t('overpay_day_tip')}</div>
           </motion.div>
 
           {/* RESULTS */}
@@ -413,7 +415,27 @@ function renderStats(
   const withMonths = cs.rows.length;
 
   const totalOverpay = cs.customOverpay.slice(0, withMonths).reduce((acc, v) => acc + v, 0);
-  if (totalOverpay < 1) return null;
+  if (totalOverpay < 1) {
+    if (cs.strategy !== 'custom') return null;
+    return (
+      <div className="result-card">
+        <div style={{ fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--text3)', marginBottom: 14 }}>
+          {t('custom_base_title')}
+        </div>
+        <div className="result-grid">
+          <div className="result-item">
+            <div className="r-val" style={{ color: 'var(--danger)' }}>{fmtC(cs.baseInterest)}</div>
+            <div className="r-lbl">{t('stats_total_interest')}</div>
+          </div>
+          <div className="result-item">
+            <div className="r-val">{cs.baseMonths} {t('stats_payments_label')}</div>
+            <div className="r-lbl">{t('stats_faster')}</div>
+          </div>
+        </div>
+        <div className="info-box" style={{ fontSize: '.85rem', marginTop: 12 }}>{t('custom_base_hint')}</div>
+      </div>
+    );
+  }
   const savedMoney = Math.max(0, cs.baseInterest - withInterest);
   const savedMonths = Math.max(0, cs.baseMonths - withMonths);
   const savedYears = Math.floor(savedMonths / 12);

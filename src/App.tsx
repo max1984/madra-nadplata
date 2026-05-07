@@ -11,7 +11,6 @@ const ExampleSection = lazy(() => import('./components/ExampleSection'));
 const FAQ = lazy(() => import('./components/FAQ'));
 const Calculator = lazy(() => import('./components/Calculator'));
 const Schedule = lazy(() => import('./components/Schedule'));
-const StrategyComparison = lazy(() => import('./components/StrategyComparison'));
 const Footer = lazy(() => import('./components/Footer'));
 
 function AppInner() {
@@ -47,7 +46,6 @@ function AppInner() {
           onCalculate={calculate}
           calcError={calcError}
         />
-        {calcState && <StrategyComparison inputs={inputs} calcState={calcState} />}
         <Schedule
           calcState={calcState}
           onOverpayChange={onOverpayChange}

@@ -97,7 +97,7 @@ function validateInputs(inp: CalcInputs): TranslationKey | null {
   if (!isFinite(inp.loanMonths) || inp.loanMonths < 12 || inp.loanMonths > 360) {
     return 'error_months';
   }
-  if (!isFinite(inp.interestRate) || inp.interestRate < 0.1 || inp.interestRate > 25) {
+  if (!isFinite(inp.interestRate) || inp.interestRate < 0.01 || inp.interestRate > 25) {
     return 'error_rate';
   }
   return null;

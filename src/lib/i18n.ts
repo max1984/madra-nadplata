@@ -66,7 +66,9 @@ export type TranslationKey =
   | 'invest_verdict_overpay' | 'invest_verdict_invest'
   | 'breakeven_label' | 'breakeven_result' | 'breakeven_never'
   | 'no_overpay_title' | 'no_overpay_sub'
-  | 'sch_yearly_toggle' | 'sch_monthly_toggle' | 'sch_col_year';
+  | 'sch_yearly_toggle' | 'sch_monthly_toggle' | 'sch_col_year'
+  | 'custom_base_title' | 'custom_base_hint'
+  | 'overpay_day_tip';
 
 type Translations = Record<TranslationKey, string>;
 
@@ -173,7 +175,7 @@ const pl: Translations = {
   hero_note: '* przykład: kredyt {amount} zł, {years} lat, {rate}%, łącznie {total} zł/mies. do banku',
   error_loan_amount: 'Kwota kredytu musi wynosić od 1 000 do 10 000 000 zł.',
   error_months: 'Liczba rat musi wynosić od 12 do 360.',
-  error_rate: 'Oprocentowanie musi wynosić od 0,1% do 25%.',
+  error_rate: 'Oprocentowanie musi wynosić od 0,01% do 25%.',
   copy_link: 'Kopiuj link',
   copy_link_copied: '✓ Skopiowano!',
   csv_export: 'Pobierz CSV',
@@ -206,6 +208,9 @@ const pl: Translations = {
   sch_yearly_toggle: 'Widok roczny',
   sch_monthly_toggle: 'Widok miesięczny',
   sch_col_year: 'Rok',
+  custom_base_title: 'Koszty bazowe kredytu',
+  custom_base_hint: 'Dodaj nadpłaty w harmonogramie poniżej – wyniki zaktualizują się automatycznie.',
+  overpay_day_tip: '💡 Najlepszym dniem na nadpłatę jest dzień spłaty raty kapitałowo-odsetkowej – ze względu na różne podejścia banków do naliczania odsetek, wpłata w tym dniu jest zawsze bezpieczna.',
 };
 
 const en: Translations = {
@@ -311,7 +316,7 @@ const en: Translations = {
   hero_note: '* example: {amount} PLN, {years} years, {rate}%, fixed total {total} PLN/mo.',
   error_loan_amount: 'Loan amount must be between 1,000 and 10,000,000.',
   error_months: 'Months must be between 12 and 360.',
-  error_rate: 'Interest rate must be between 0.1% and 25%.',
+  error_rate: 'Interest rate must be between 0.01% and 25%.',
   copy_link: 'Copy link',
   copy_link_copied: '✓ Copied!',
   csv_export: 'Download CSV',
@@ -344,6 +349,9 @@ const en: Translations = {
   sch_yearly_toggle: 'Yearly view',
   sch_monthly_toggle: 'Monthly view',
   sch_col_year: 'Year',
+  custom_base_title: 'Base loan costs',
+  custom_base_hint: 'Add overpayments in the schedule below — results update automatically.',
+  overpay_day_tip: '💡 The best day to make an overpayment is your installment due date — due to varying bank approaches to interest calculation, paying on the due date is always safe.',
 };
 
 export const LANGS: Record<Lang, Translations> = { pl, en };
