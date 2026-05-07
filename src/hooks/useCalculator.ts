@@ -3,13 +3,14 @@ import {
   calcStdPayment,
   buildSchedule,
   buildBaseSchedule,
+  buildRefinanceSchedule,
   naturalOverpaysFromBalance,
   balanceAt,
   type ScheduleRow,
 } from '../lib/mortgage';
 import type { TranslationKey } from '../lib/i18n';
 
-export type Strategy = 'reduce_payment' | 'fixed_total' | 'fixed_overpay' | 'shorten_period' | 'custom';
+export type Strategy = 'reduce_payment' | 'fixed_total' | 'fixed_overpay' | 'shorten_period' | 'custom' | 'refinance';
 
 export interface CalcInputs {
   loanAmount: number;
@@ -21,6 +22,22 @@ export interface CalcInputs {
   overpayAmountSlider: number;
   shortenAmountSlider: number;
   overpayStartMonth: number;
+  refiMonth: number;
+  refiRate: number;
+  refiMonths: number;
+  refiOriginationFee: number;
+  refiFlat: number;
+}
+
+export interface RefiData {
+  month: number;
+  balance: number;
+  originationFeeAmount: number;
+  flatFeeAmount: number;
+  phase1Interest: number;
+  phase2Interest: number;
+  newRate: number;
+  newMonths: number;
 }
 
 export interface CalcState {
@@ -42,6 +59,7 @@ export interface CalcState {
   baseBalances: number[];
   baseCumInterestByMonth: number[];
   rows: ScheduleRow[];
+  refiData?: RefiData;
 }
 
 const DEFAULT_INPUTS: CalcInputs = {
@@ -54,6 +72,11 @@ const DEFAULT_INPUTS: CalcInputs = {
   overpayAmountSlider: 500,
   shortenAmountSlider: 500,
   overpayStartMonth: 0,
+  refiMonth: 12,
+  refiRate: 5,
+  refiMonths: 300,
+  refiOriginationFee: 2,
+  refiFlat: 0,
 };
 
 function parseUrlInputs(): Partial<CalcInputs> {
@@ -73,6 +96,11 @@ function parseUrlInputs(): Partial<CalcInputs> {
   if (sp.has('overpay')) patch.overpayAmountSlider = +sp.get('overpay')!;
   if (sp.has('shorten')) patch.shortenAmountSlider = +sp.get('shorten')!;
   if (sp.has('start')) patch.overpayStartMonth = +sp.get('start')!;
+  if (sp.has('refiMonth')) patch.refiMonth = +sp.get('refiMonth')!;
+  if (sp.has('refiRate')) patch.refiRate = +sp.get('refiRate')!;
+  if (sp.has('refiMonths')) patch.refiMonths = +sp.get('refiMonths')!;
+  if (sp.has('refiOFee')) patch.refiOriginationFee = +sp.get('refiOFee')!;
+  if (sp.has('refiFlat')) patch.refiFlat = +sp.get('refiFlat')!;
   return patch;
 }
 
@@ -87,6 +115,13 @@ function buildUrlParams(inp: CalcInputs): string {
   if (inp.strategy === 'fixed_overpay') sp.set('overpay', String(inp.overpayAmountSlider));
   if (inp.strategy === 'shorten_period') sp.set('shorten', String(inp.shortenAmountSlider));
   if (inp.overpayStartMonth > 0) sp.set('start', String(inp.overpayStartMonth));
+  if (inp.strategy === 'refinance') {
+    sp.set('refiMonth', String(inp.refiMonth));
+    sp.set('refiRate', String(inp.refiRate));
+    sp.set('refiMonths', String(inp.refiMonths));
+    sp.set('refiOFee', String(inp.refiOriginationFee));
+    if (inp.refiFlat > 0) sp.set('refiFlat', String(inp.refiFlat));
+  }
   return sp.toString();
 }
 
@@ -134,14 +169,40 @@ function computeCalcState(inp: CalcInputs): CalcState {
     defaultOverpay = inp.shortenAmountSlider;
     customOverpay = Array<number>(months).fill(defaultOverpay);
     for (let i = 0; i < startMonth && i < months; i++) customOverpay[i] = 0;
+  } else if (strategy === 'refinance') {
+    customOverpay = Array<number>(months).fill(0);
   } else {
     customOverpay = Array<number>(months).fill(0);
   }
 
   const base = buildBaseSchedule(P, customRates, months, r);
-  const fixedStd = strategy === 'shorten_period' ? stdPayment : null;
   const customPerRowEffects = Array<'shorten' | 'reduce'>(months).fill('reduce');
-  const rows = buildSchedule(P, customRates, months, fee, customOverpay, r, fixedStd);
+
+  let rows: ScheduleRow[];
+  let refiData: RefiData | undefined;
+
+  if (strategy === 'refinance') {
+    const result = buildRefinanceSchedule(
+      P, customRates, months, r,
+      inp.refiMonth, inp.refiRate, inp.refiMonths,
+      inp.refiOriginationFee, inp.refiFlat,
+    );
+    rows = result.rows;
+    refiData = {
+      month: inp.refiMonth,
+      balance: result.refiBalance,
+      originationFeeAmount: result.originationFeeAmount,
+      flatFeeAmount: result.flatFeeAmount,
+      phase1Interest: result.phase1Interest,
+      phase2Interest: result.phase2Interest,
+      newRate: inp.refiRate,
+      newMonths: inp.refiMonths,
+    };
+  } else {
+    const fixedStd = strategy === 'shorten_period' ? stdPayment : null;
+    rows = buildSchedule(P, customRates, months, fee, customOverpay, r, fixedStd);
+    refiData = undefined;
+  }
 
   return {
     P, r, months, prepayFee: fee, stdPayment, origStdPayment: stdPayment,
@@ -149,7 +210,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
     customPerRowEffects, totalMonthly, defaultOverpay,
     baseInterest: base.totalInterest, baseMonths: base.count, baseBalances: base.balances,
     baseCumInterestByMonth: base.cumInterestByMonth,
-    rows,
+    rows, refiData,
   };
 }
 
@@ -193,7 +254,7 @@ export function useCalculator() {
 
   const onOverpayChange = useCallback((idx: number, value: string) => {
     setCalcState((prev) => {
-      if (!prev) return prev;
+      if (!prev || prev.strategy === 'refinance') return prev;
       const newOverpay = [...prev.customOverpay];
       newOverpay[idx] = Math.max(0, parseFloat(value) || 0);
 
@@ -212,7 +273,7 @@ export function useCalculator() {
 
   const onRateChange = useCallback((idx: number, annualRateValue: string) => {
     setCalcState((prev) => {
-      if (!prev) return prev;
+      if (!prev || prev.strategy === 'refinance') return prev;
       const newRate = Math.max(0.001, parseFloat(annualRateValue) || 0) / 100 / 12;
       const newRates = [...prev.customRates];
       for (let i = idx; i < prev.months; i++) newRates[i] = newRate;

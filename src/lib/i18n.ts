@@ -68,7 +68,15 @@ export type TranslationKey =
   | 'no_overpay_title' | 'no_overpay_sub'
   | 'sch_yearly_toggle' | 'sch_monthly_toggle' | 'sch_col_year'
   | 'custom_base_title' | 'custom_base_hint'
-  | 'overpay_day_tip';
+  | 'overpay_day_tip'
+  | 'strategy_refinance'
+  | 'refi_hint' | 'refi_month_label' | 'refi_remaining_hint'
+  | 'refi_new_rate_label' | 'refi_new_months_label'
+  | 'refi_origination_fee_label' | 'refi_origination_fee_hint' | 'refi_flat_fee_label'
+  | 'refi_balance_label' | 'refi_fees_label'
+  | 'refi_phase1_int_label' | 'refi_phase2_int_label'
+  | 'refi_net_saving' | 'refi_net_cost'
+  | 'refi_break_even' | 'refi_separator' | 'refi_new_payment_label';
 
 type Translations = Record<TranslationKey, string>;
 
@@ -211,6 +219,24 @@ const pl: Translations = {
   custom_base_title: 'Koszty bazowe kredytu',
   custom_base_hint: 'Dodaj nadpłaty w harmonogramie poniżej – wyniki zaktualizują się automatycznie.',
   overpay_day_tip: '💡 Najlepszym dniem na nadpłatę jest dzień spłaty raty kapitałowo-odsetkowej – ze względu na różne podejścia banków do naliczania odsetek, wpłata w tym dniu jest zawsze bezpieczna.',
+  strategy_refinance: 'Refinansowanie (nowy kredyt na inne warunki)',
+  refi_hint: 'Symuluje zamknięcie obecnego kredytu i zaciągnięcie nowego na wybranych warunkach. Prowizja i opłaty jednorazowe naliczane są od salda w momencie refinansowania.',
+  refi_month_label: 'Refinansuj po miesiącu',
+  refi_remaining_hint: 'Pozostałe raty bez refinansowania:',
+  refi_new_rate_label: 'Oprocentowanie nowego kredytu',
+  refi_new_months_label: 'Okres nowego kredytu',
+  refi_origination_fee_label: 'Prowizja za udzielenie kredytu',
+  refi_origination_fee_hint: '% od salda w dniu refinansowania',
+  refi_flat_fee_label: 'Inne opłaty jednorazowe',
+  refi_balance_label: 'Saldo do refinansowania',
+  refi_fees_label: 'Łączne opłaty jednorazowe',
+  refi_phase1_int_label: 'Odsetki – stary kredyt',
+  refi_phase2_int_label: 'Odsetki – nowy kredyt',
+  refi_net_saving: 'Oszczędność netto refinansowania',
+  refi_net_cost: 'Dodatkowy koszt refinansowania',
+  refi_break_even: 'Opłaty zwracają się po miesiącu:',
+  refi_separator: '↓ Refinansowanie',
+  refi_new_payment_label: 'Nowa rata po refinansowaniu',
 };
 
 const en: Translations = {
@@ -352,6 +378,24 @@ const en: Translations = {
   custom_base_title: 'Base loan costs',
   custom_base_hint: 'Add overpayments in the schedule below — results update automatically.',
   overpay_day_tip: '💡 The best day to make an overpayment is your installment due date — due to varying bank approaches to interest calculation, paying on the due date is always safe.',
+  strategy_refinance: 'Refinancing (new loan on different terms)',
+  refi_hint: 'Simulates closing the current loan and taking a new one on different terms. The origination fee and other one-time costs are applied to the outstanding balance at the time of refinancing.',
+  refi_month_label: 'Refinance after month',
+  refi_remaining_hint: 'Remaining payments without refinancing:',
+  refi_new_rate_label: 'New loan interest rate',
+  refi_new_months_label: 'New loan period',
+  refi_origination_fee_label: 'Origination fee',
+  refi_origination_fee_hint: '% of outstanding balance at refinancing date',
+  refi_flat_fee_label: 'Other one-time fees',
+  refi_balance_label: 'Balance to refinance',
+  refi_fees_label: 'Total one-time fees',
+  refi_phase1_int_label: 'Interest — old loan',
+  refi_phase2_int_label: 'Interest — new loan',
+  refi_net_saving: 'Net refinancing saving',
+  refi_net_cost: 'Net refinancing extra cost',
+  refi_break_even: 'Fees recovered by month:',
+  refi_separator: '↓ Refinancing',
+  refi_new_payment_label: 'New payment after refinancing',
 };
 
 export const LANGS: Record<Lang, Translations> = { pl, en };

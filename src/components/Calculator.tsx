@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
 import { useLang } from '../contexts/LangContext';
 import { calcStdPayment } from '../lib/mortgage';
-import type { CalcInputs, CalcState, Strategy } from '../hooks/useCalculator';
+import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 
 interface Props {
@@ -41,6 +41,29 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const interestRateRef = useRef<HTMLInputElement>(null);
   const loanMonthsRef = useRef<HTMLInputElement>(null);
   const prepayFeeRef = useRef<HTMLInputElement>(null);
+
+  const refiRateRef = useRef<HTMLInputElement>(null);
+  const refiMonthsRef = useRef<HTMLInputElement>(null);
+  const refiOriginationFeeRef = useRef<HTMLInputElement>(null);
+  const refiFlatRef = useRef<HTMLInputElement>(null);
+
+  // Sync refi inputs when inputs change externally
+  useEffect(() => {
+    if (refiRateRef.current && document.activeElement !== refiRateRef.current)
+      refiRateRef.current.value = String(inputs.refiRate);
+  }, [inputs.refiRate]);
+  useEffect(() => {
+    if (refiMonthsRef.current && document.activeElement !== refiMonthsRef.current)
+      refiMonthsRef.current.value = String(inputs.refiMonths);
+  }, [inputs.refiMonths]);
+  useEffect(() => {
+    if (refiOriginationFeeRef.current && document.activeElement !== refiOriginationFeeRef.current)
+      refiOriginationFeeRef.current.value = String(inputs.refiOriginationFee);
+  }, [inputs.refiOriginationFee]);
+  useEffect(() => {
+    if (refiFlatRef.current && document.activeElement !== refiFlatRef.current)
+      refiFlatRef.current.value = String(inputs.refiFlat);
+  }, [inputs.refiFlat]);
 
   // Track previous sliderMin so we can preserve the overpay amount when loan params change
   const prevSliderMinRef = useRef(sliderMin);
@@ -91,16 +114,19 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     if (!calcState || !chartRef.current) return;
     chart.current?.destroy();
 
-    const totalLen = calcState.baseMonths;
+    const totalLen = Math.max(calcState.baseMonths, calcState.rows.length);
     const withBals = Array<number>(totalLen).fill(0);
     calcState.rows.forEach((r, i) => { if (i < totalLen) withBals[i] = r.balanceAfter; });
+    const baseBals = totalLen > calcState.baseBalances.length
+      ? [...calcState.baseBalances, ...Array<number>(totalLen - calcState.baseBalances.length).fill(0)]
+      : calcState.baseBalances;
 
     chart.current = new Chart(chartRef.current, {
       type: 'line',
       data: {
         labels: Array.from({ length: totalLen }, (_, i) => i + 1),
         datasets: [
-          { label: t('chart_without'), data: calcState.baseBalances, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
+          { label: t('chart_without'), data: baseBals, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
           { label: t('chart_with'), data: withBals, borderColor: '#6ee7b7', backgroundColor: 'rgba(110,231,183,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
         ],
       },
@@ -240,6 +266,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 <option value="fixed_overpay">{t('strategy_fixed_overpay')}</option>
                 <option value="shorten_period">{t('strategy_shorten')}</option>
                 <option value="custom">{t('strategy_custom')}</option>
+                <option value="refinance">{t('strategy_refinance')}</option>
               </select>
             </div>
 
@@ -322,7 +349,89 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               </div>
             )}
 
-            {inputs.strategy !== 'custom' && (
+            {inputs.strategy === 'refinance' && (
+              <div>
+                <div className="slider-group">
+                  <div className="slider-header">
+                    <label>{t('refi_month_label')}</label>
+                    <span className="slider-val">{inputs.refiMonth}</span>
+                  </div>
+                  <input type="range" min={0} max={Math.min(120, inputs.loanMonths - 1)} step={1}
+                    value={inputs.refiMonth}
+                    onChange={(e) => setInputs({ refiMonth: +e.target.value })} />
+                  <div className="hint">{t('refi_remaining_hint')} <strong>{inputs.loanMonths - inputs.refiMonth}</strong> {t('form_months_unit')}</div>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('refi_new_rate_label')}</label>
+                  <div className="input-with-suffix">
+                    <input ref={refiRateRef} type="number" defaultValue={inputs.refiRate}
+                      min={0.01} max={25} step={0.01}
+                      onBlur={(e) => {
+                        const v = isFinite(+e.target.value) ? Math.max(0.01, Math.min(25, +e.target.value)) : inputs.refiRate;
+                        e.target.value = String(v);
+                        setInputs({ refiRate: v });
+                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    />
+                    <span className="input-suffix">%</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('refi_new_months_label')}</label>
+                  <div className="input-with-suffix">
+                    <input ref={refiMonthsRef} type="number" defaultValue={inputs.refiMonths}
+                      min={12} max={360} step={1}
+                      onBlur={(e) => {
+                        const v = isFinite(+e.target.value) ? Math.max(12, Math.min(360, Math.round(+e.target.value))) : inputs.refiMonths;
+                        e.target.value = String(v);
+                        setInputs({ refiMonths: v });
+                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    />
+                    <span className="input-suffix">{t('form_months_unit')}</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('refi_origination_fee_label')}</label>
+                  <div className="input-with-suffix">
+                    <input ref={refiOriginationFeeRef} type="number" defaultValue={inputs.refiOriginationFee}
+                      min={0} max={10} step={0.01}
+                      onBlur={(e) => {
+                        const v = isFinite(+e.target.value) ? Math.max(0, Math.min(10, +e.target.value)) : 0;
+                        e.target.value = String(v);
+                        setInputs({ refiOriginationFee: v });
+                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    />
+                    <span className="input-suffix">%</span>
+                  </div>
+                  <p className="hint">{t('refi_origination_fee_hint')}</p>
+                </div>
+
+                <div className="form-group">
+                  <label>{t('refi_flat_fee_label')}</label>
+                  <div className="input-with-suffix">
+                    <input ref={refiFlatRef} type="number" defaultValue={inputs.refiFlat}
+                      min={0} step={100}
+                      onBlur={(e) => {
+                        const v = Math.max(0, +e.target.value || 0);
+                        e.target.value = String(v);
+                        setInputs({ refiFlat: v });
+                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    />
+                    <span className="input-suffix">{t('currency')}</span>
+                  </div>
+                </div>
+
+                <div className="info-box" style={{ fontSize: '.85rem' }} dangerouslySetInnerHTML={{ __html: t('refi_hint') }} />
+              </div>
+            )}
+
+            {inputs.strategy !== 'custom' && inputs.strategy !== 'refinance' && (
               <div className="slider-group">
                 <div className="slider-header">
                   <label>{t('overpay_start_label')}</label>
@@ -411,6 +520,10 @@ function renderStats(
   t: (key: TranslationKey) => string,
   fmtC: (n: number) => string
 ): React.ReactElement | null {
+  if (cs.strategy === 'refinance' && cs.refiData) {
+    return renderRefiStats(cs, cs.refiData, t, fmtC);
+  }
+
   const withInterest = cs.rows.length ? cs.rows[cs.rows.length - 1]!.cumInterest : 0;
   const withMonths = cs.rows.length;
 
@@ -566,5 +679,114 @@ function renderInvestCard(
         {diff > 0 ? t('invest_verdict_invest') : t('invest_verdict_overpay')} <strong>{fmtC(Math.abs(diff))}</strong>
       </div>
     </div>
+  );
+}
+
+function renderRefiStats(
+  cs: CalcState,
+  rd: RefiData,
+  t: (key: TranslationKey) => string,
+  fmtC: (n: number) => string,
+): React.ReactElement {
+  const withInterest = rd.phase1Interest + rd.phase2Interest;
+  const totalFees = rd.originationFeeAmount + rd.flatFeeAmount;
+  const totalWithRefi = withInterest + totalFees;
+  const savedMoney = cs.baseInterest - totalWithRefi;
+  const withMonths = cs.rows.length;
+  const savedMonths = cs.baseMonths - withMonths;
+  const newPayment = calcStdPayment(rd.balance, rd.newRate / 100 / 12, rd.newMonths);
+
+  const pctOfBase = cs.baseInterest > 0 ? (totalWithRefi / cs.baseInterest * 100).toFixed(1) : '100';
+
+  let breakEvenMonth = -1;
+  if (totalFees > 0) {
+    let cumulSavings = 0;
+    for (let i = rd.month; i < cs.rows.length; i++) {
+      const basePrev = i > 0 ? (cs.baseCumInterestByMonth[i - 1] ?? 0) : 0;
+      const baseCurr = cs.baseCumInterestByMonth[i] ?? cs.baseInterest;
+      const baseMonthInt = baseCurr - basePrev;
+      cumulSavings += baseMonthInt - (cs.rows[i]?.interest ?? 0);
+      if (cumulSavings >= totalFees) { breakEvenMonth = i + 1; break; }
+    }
+  }
+
+  const savedYears = Math.floor(Math.abs(savedMonths) / 12);
+  const savedRem = Math.abs(savedMonths) % 12;
+  const timeStr = savedYears > 0
+    ? savedYears + ' ' + t('years') + (savedRem > 0 ? ' ' + savedRem + ' ' + t('months_short') : '')
+    : Math.abs(savedMonths) + ' ' + t('months_short');
+
+  return (
+    <>
+      <div className={savedMoney >= 0 ? 'result-card highlight-green' : 'result-card'}
+        style={savedMoney < 0 ? { borderColor: 'rgba(239,68,68,.3)', background: 'rgba(239,68,68,.05)' } : {}}>
+        <div className="result-big" style={{ color: savedMoney >= 0 ? 'var(--accent2)' : 'var(--danger)' }}>
+          {savedMoney >= 0 ? '' : '-'}{fmtC(Math.abs(savedMoney))}
+        </div>
+        <div className="result-label">{savedMoney >= 0 ? t('refi_net_saving') : t('refi_net_cost')}</div>
+      </div>
+
+      <div className="result-card highlight-blue">
+        <div className="result-grid">
+          <div className="result-item">
+            <div className="r-val" style={{ color: 'var(--accent3)' }}>{fmtC(rd.balance)}</div>
+            <div className="r-lbl">{t('refi_balance_label')}</div>
+          </div>
+          <div className="result-item">
+            <div className="r-val" style={{ color: totalFees > 0 ? 'var(--danger)' : 'var(--text2)' }}>{fmtC(totalFees)}</div>
+            <div className="r-lbl">{t('refi_fees_label')}</div>
+          </div>
+          <div className="result-item">
+            <div className="r-val">{fmtC(rd.phase1Interest)}</div>
+            <div className="r-lbl">{t('refi_phase1_int_label')}</div>
+          </div>
+          <div className="result-item">
+            <div className="r-val">{fmtC(rd.phase2Interest)}</div>
+            <div className="r-lbl">{t('refi_phase2_int_label')}</div>
+          </div>
+          <div className="result-item">
+            <div className="r-val" style={{ color: 'var(--accent)' }}>{fmtC(newPayment)}</div>
+            <div className="r-lbl">{t('refi_new_payment_label')}</div>
+          </div>
+          {savedMonths !== 0 && (
+            <div className="result-item">
+              <div className="r-val" style={{ color: savedMonths > 0 ? 'var(--accent2)' : 'var(--danger)' }}>
+                {savedMonths > 0 ? '-' : '+'}{timeStr}
+              </div>
+              <div className="r-lbl">{t('stats_faster')}</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="result-card">
+        <div style={{ fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--text3)', marginBottom: 14 }}>
+          {t('stats_comparison')}
+        </div>
+        <div className="comparison-bars">
+          <div className="bar-row">
+            <div className="bar-label"><span>{t('stats_without')}</span><span>{fmtC(cs.baseInterest)}</span></div>
+            <div className="bar-track"><div className="bar-fill" style={{ width: '100%', background: 'var(--danger)', opacity: 0.7 }} /></div>
+          </div>
+          <div className="bar-row">
+            <div className="bar-label"><span>{t('stats_with')}</span><span>{fmtC(totalWithRefi)}</span></div>
+            <div className="bar-track">
+              <div className="bar-fill" style={{
+                width: `${Math.min(100, +pctOfBase)}%`,
+                background: totalWithRefi <= cs.baseInterest ? 'var(--grad)' : 'var(--danger)',
+              }} />
+            </div>
+          </div>
+        </div>
+        {totalFees > 0 && (
+          <div className="info-box mt-16" style={{ fontSize: '.82rem' }}>
+            {breakEvenMonth > 0
+              ? <>{t('refi_break_even')} <strong style={{ color: 'var(--accent2)' }}>{breakEvenMonth}</strong></>
+              : <span style={{ color: 'var(--danger)' }}>{t('breakeven_never')}</span>
+            }
+          </div>
+        )}
+      </div>
+    </>
   );
 }

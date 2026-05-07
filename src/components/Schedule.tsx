@@ -1,4 +1,4 @@
-import { useRef, useEffect, memo, useState } from 'react';
+import { useRef, useEffect, memo, useState, Fragment } from 'react';
 import { motion } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
 import type { TranslationKey } from '../lib/i18n';
@@ -23,6 +23,7 @@ interface RowProps {
   rate: number;
   globalR: number;
   isCustom: boolean;
+  isRefi: boolean;
   rowEffect: 'shorten' | 'reduce';
   onOverpayChange: (idx: number, value: string) => void;
   onRateChange: (idx: number, value: string) => void;
@@ -32,7 +33,7 @@ interface RowProps {
 }
 
 const ScheduleRowItem = memo(function ScheduleRowItem({
-  idx, row, overpay, rate, globalR, isCustom, rowEffect,
+  idx, row, overpay, rate, globalR, isCustom, isRefi, rowEffect,
   onOverpayChange, onRateChange, onRowEffectChange, fmtC, t,
 }: RowProps) {
   const overpayRef = useRef<HTMLInputElement>(null);
@@ -58,9 +59,11 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           type="number"
           className={`rate-input${rateChanged ? ' rate-changed' : ''}`}
           defaultValue={(rate * 12 * 100).toFixed(2)}
-          min={0.1} max={25} step={0.1}
-          onBlur={(e) => onRateChange(idx, e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          min={0.01} max={25} step={0.01}
+          readOnly={isRefi}
+          style={isRefi ? { opacity: 0.5, cursor: 'default' } : undefined}
+          onBlur={isRefi ? undefined : (e) => onRateChange(idx, e.target.value)}
+          onKeyDown={isRefi ? undefined : (e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
         />
       </td>
       <td className="td-red">{fmtC(row.interest)}</td>
@@ -72,8 +75,10 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           className="overpay-input"
           defaultValue={String(Math.round(overpay))}
           min={0} step={1}
-          onBlur={(e) => onOverpayChange(idx, e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          readOnly={isRefi}
+          style={isRefi ? { opacity: 0.5, cursor: 'default' } : undefined}
+          onBlur={isRefi ? undefined : (e) => onOverpayChange(idx, e.target.value)}
+          onKeyDown={isRefi ? undefined : (e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
         />
         {isCustom && (
           <div style={{ display: 'flex', gap: 2, marginTop: 2 }}>
@@ -222,9 +227,13 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                 onClick={() => setYearlyView((v) => !v)}
               >{yearlyView ? t('sch_monthly_toggle') : t('sch_yearly_toggle')}</button>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn" onClick={onResetOverpays}>{t('toolbar_reset')}</button>
-              <button className="toolbar-btn" onClick={onClearOverpays}>{t('toolbar_clear')}</button>
-              <button className="toolbar-btn" onClick={onResetRates}>{t('toolbar_reset_rates')}</button>
+              {calcState.strategy !== 'refinance' && (
+                <>
+                  <button className="toolbar-btn" onClick={onResetOverpays}>{t('toolbar_reset')}</button>
+                  <button className="toolbar-btn" onClick={onClearOverpays}>{t('toolbar_clear')}</button>
+                  <button className="toolbar-btn" onClick={onResetRates}>{t('toolbar_reset_rates')}</button>
+                </>
+              )}
               <button className="toolbar-btn" onClick={() => exportCSV(calcState)}>{t('csv_export')}</button>
             </div>
           </div>
@@ -275,23 +284,51 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                   </tr>
                 </thead>
                 <tbody>
-                  {calcState.rows.map((row, i) => (
-                    <ScheduleRowItem
-                      key={row.num}
-                      idx={i}
-                      row={row}
-                      overpay={calcState.customOverpay[i] ?? 0}
-                      rate={calcState.customRates[i] ?? calcState.r}
-                      globalR={calcState.r}
-                      isCustom={calcState.strategy === 'custom'}
-                      rowEffect={calcState.customPerRowEffects[i] ?? calcState.customEffect}
-                      onOverpayChange={onOverpayChange}
-                      onRateChange={onRateChange}
-                      onRowEffectChange={onRowEffectChange}
-                      fmtC={fmtC}
-                      t={t}
-                    />
-                  ))}
+                  {calcState.rows.map((row, i) => {
+                    const isFirstRefiRow = !!row.isRefiRow && (i === 0 || !calcState.rows[i - 1]?.isRefiRow);
+                    const isRefi = calcState.strategy === 'refinance';
+                    const refiRowRate = row.isRefiRow
+                      ? (calcState.refiData?.newRate ?? 0) / 100 / 12
+                      : (calcState.customRates[i] ?? calcState.r);
+                    return (
+                      <Fragment key={row.num}>
+                        {isFirstRefiRow && (
+                          <tr>
+                            <td colSpan={9} style={{
+                              textAlign: 'center', fontSize: '.78rem', fontWeight: 700,
+                              color: 'var(--accent2)', background: 'rgba(110,231,183,.07)',
+                              padding: '6px 12px', letterSpacing: '.5px',
+                            }}>
+                              {t('refi_separator')}
+                              {calcState.refiData && (
+                                <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 8 }}>
+                                  {t('refi_balance_label')}: <strong style={{ color: 'var(--accent3)' }}>{fmtC(calcState.refiData.balance)}</strong>
+                                  {calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount > 0 && (
+                                    <> &nbsp;|&nbsp; {t('refi_fees_label')}: <strong style={{ color: 'var(--danger)' }}>{fmtC(calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount)}</strong></>
+                                  )}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                        <ScheduleRowItem
+                          idx={i}
+                          row={row}
+                          overpay={calcState.customOverpay[i] ?? 0}
+                          rate={refiRowRate}
+                          globalR={calcState.r}
+                          isCustom={calcState.strategy === 'custom'}
+                          isRefi={isRefi}
+                          rowEffect={calcState.customPerRowEffects[i] ?? calcState.customEffect}
+                          onOverpayChange={onOverpayChange}
+                          onRateChange={onRateChange}
+                          onRowEffectChange={onRowEffectChange}
+                          fmtC={fmtC}
+                          t={t}
+                        />
+                      </Fragment>
+                    );
+                  })}
                   {paidOffCount > 0 && (
                     <tr className="row-paid">
                       <td className="td-muted">{calcState.rows.length + 1}–{calcState.months}</td>

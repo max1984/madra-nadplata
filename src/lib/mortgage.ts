@@ -10,6 +10,7 @@ export interface ScheduleRow {
   balanceAfter: number;
   cumInterest: number;
   annualRate: number;
+  isRefiRow?: boolean;
 }
 
 export interface BaseScheduleResult {
@@ -120,6 +121,80 @@ export function balanceAt(
     balance = Math.max(0, balance - regularCap - overpay);
   }
   return balance;
+}
+
+export interface RefiResult {
+  rows: ScheduleRow[];
+  refiBalance: number;
+  originationFeeAmount: number;
+  flatFeeAmount: number;
+  phase1Interest: number;
+  phase2Interest: number;
+}
+
+export function buildRefinanceSchedule(
+  P: number,
+  originalRates: number[],
+  originalMonths: number,
+  globalR: number,
+  refiMonth: number,
+  newAnnualRate: number,
+  newMonths: number,
+  originationFeePct: number,
+  flatFee: number,
+): RefiResult {
+  let balance = P;
+  let cumInterest = 0;
+  const rows: ScheduleRow[] = [];
+
+  for (let i = 0; i < refiMonth && balance > 0.005; i++) {
+    const r = originalRates[i] ?? globalR;
+    const remaining = originalMonths - i;
+    const interest = balance * r;
+    const std = calcStdPayment(balance, r, remaining);
+    const regularCap = Math.max(0, Math.min(std - interest, balance));
+    const balanceBefore = balance;
+    balance = Math.max(0, balance - regularCap);
+    cumInterest += interest;
+    rows.push({
+      num: rows.length + 1, balanceBefore,
+      totalPayment: interest + regularCap,
+      capital: regularCap, regularCap, interest,
+      overpay: 0, fee: 0,
+      balanceAfter: balance, cumInterest,
+      annualRate: r * 12,
+    });
+  }
+
+  const refiBalance = balance;
+  const phase1Interest = cumInterest;
+  const originationFeeAmount = refiBalance * originationFeePct / 100;
+
+  const newR = newAnnualRate / 100 / 12;
+  balance = refiBalance;
+  let phase2Interest = 0;
+
+  for (let i = 0; i < newMonths && balance > 0.005; i++) {
+    const remaining = newMonths - i;
+    const interest = balance * newR;
+    const std = calcStdPayment(balance, newR, remaining);
+    const regularCap = Math.max(0, Math.min(std - interest, balance));
+    const balanceBefore = balance;
+    balance = Math.max(0, balance - regularCap);
+    phase2Interest += interest;
+    cumInterest += interest;
+    rows.push({
+      num: rows.length + 1, balanceBefore,
+      totalPayment: interest + regularCap,
+      capital: regularCap, regularCap, interest,
+      overpay: 0, fee: 0,
+      balanceAfter: balance, cumInterest,
+      annualRate: newAnnualRate / 100,
+      isRefiRow: true,
+    });
+  }
+
+  return { rows, refiBalance, originationFeeAmount, flatFeeAmount: flatFee, phase1Interest, phase2Interest };
 }
 
 export function naturalOverpaysFromBalance(
