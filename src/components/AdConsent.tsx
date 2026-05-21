@@ -3,8 +3,6 @@ import { useLang } from '../contexts/LangContext';
 
 const STORAGE_KEY = 'ad_consent_v1';
 
-type ConsentStatus = 'granted' | 'denied';
-
 function applyConsent(granted: boolean) {
   if (typeof window.gtag === 'function') {
     window.gtag('consent', 'update', {
@@ -17,7 +15,7 @@ function applyConsent(granted: boolean) {
 
 export default function AdConsent() {
   const { t } = useLang();
-  const [status, setStatus] = useState<ConsentStatus | null>(() => {
+  const [status, setStatus] = useState<'granted' | 'denied' | null>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored === 'granted' || stored === 'denied' ? stored : null;
   });
@@ -30,7 +28,7 @@ export default function AdConsent() {
   if (status !== null) return null;
 
   const decide = (granted: boolean) => {
-    const s: ConsentStatus = granted ? 'granted' : 'denied';
+    const s = granted ? 'granted' : 'denied';
     localStorage.setItem(STORAGE_KEY, s);
     applyConsent(granted);
     setStatus(s);

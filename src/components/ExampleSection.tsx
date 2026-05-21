@@ -51,10 +51,12 @@ export default function ExampleSection() {
       const si = y * 12;
       const ei = si + 12;
       yearLabels.push(`${t('chart_year')} ${y + 1}`);
-      yiBase.push(baseRows.slice(si, ei).reduce((acc, row) => acc + row.interest, 0));
-      ycBase.push(baseRows.slice(si, ei).reduce((acc, row) => acc + row.regularCap, 0));
-      yiWith.push(withRows.slice(si, Math.min(ei, withRows.length)).reduce((acc, row) => acc + row.interest, 0));
-      ycWith.push(withRows.slice(si, Math.min(ei, withRows.length)).reduce((acc, row) => acc + row.capital, 0));
+      let iBase = 0, cBase = 0, iWith = 0, cWith = 0;
+      for (let i = si; i < ei; i++) {
+        if (i < baseRows.length) { iBase += baseRows[i]!.interest; cBase += baseRows[i]!.regularCap; }
+        if (i < withRows.length) { iWith += withRows[i]!.interest; cWith += withRows[i]!.capital; }
+      }
+      yiBase.push(iBase); ycBase.push(cBase); yiWith.push(iWith); ycWith.push(cWith);
     }
 
     intChart.current = new Chart(intChartRef.current, {

@@ -7,11 +7,7 @@ import {
   balanceAt,
 } from './mortgage';
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
 const round2 = (n: number) => Math.round(n * 100) / 100;
-
-// ─── calcStdPayment ───────────────────────────────────────────────────────────
 
 describe('calcStdPayment', () => {
   it('returns P/n when rate is 0', () => {
@@ -39,8 +35,6 @@ describe('calcStdPayment', () => {
     expect(high).toBeGreaterThan(low);
   });
 });
-
-// ─── buildBaseSchedule ────────────────────────────────────────────────────────
 
 describe('buildBaseSchedule', () => {
   it('produces exactly `months` rows when loan goes full term', () => {
@@ -77,8 +71,6 @@ describe('buildBaseSchedule', () => {
     expect(high.totalInterest).toBeGreaterThan(low.totalInterest);
   });
 });
-
-// ─── buildSchedule ────────────────────────────────────────────────────────────
 
 describe('buildSchedule', () => {
   it('zero overpay: rows.length equals months (full term)', () => {
@@ -157,8 +149,6 @@ describe('buildSchedule', () => {
   });
 });
 
-// ─── balanceAt ────────────────────────────────────────────────────────────────
-
 describe('balanceAt', () => {
   it('with no overpay matches buildSchedule balanceAfter at same index', () => {
     const r = 0.065 / 12, P = 300000, n = 300;
@@ -177,8 +167,6 @@ describe('balanceAt', () => {
     expect(withOv).toBeLessThan(noOv);
   });
 });
-
-// ─── naturalOverpaysFromBalance ───────────────────────────────────────────────
 
 describe('naturalOverpaysFromBalance', () => {
   it('total monthly payment ≈ totalMonthly in each month', () => {
@@ -216,8 +204,6 @@ describe('naturalOverpaysFromBalance', () => {
     expect(overpays.length).toBe(n);
   });
 });
-
-// ─── slider minimum constraint (logic, not UI) ────────────────────────────────
 
 describe('slider minimum constraint', () => {
   it('totalMonthlySlider < stdPayment → overpay is 0 for all months', () => {

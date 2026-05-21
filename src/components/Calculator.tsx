@@ -6,6 +6,13 @@ import { calcStdPayment } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 
+function useSyncInput(ref: React.RefObject<HTMLInputElement | null>, value: number | string) {
+  useEffect(() => {
+    if (ref.current && document.activeElement !== ref.current)
+      ref.current.value = String(value);
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
 interface Props {
   inputs: CalcInputs;
   setInputs: (patch: Partial<CalcInputs>) => void;
@@ -30,13 +37,13 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   // Snap slider bounds to multiples of 100 so all positions are round numbers
   const sliderMin = Math.ceil((Math.ceil(stdPayment) + 1) / 100) * 100;
   const sliderMax = Math.floor(stdPayment * 2.5 / 100) * 100;
+  const isFixedTotal = inputs.strategy === 'fixed_total' || inputs.strategy === 'reduce_payment';
 
-  // Refs for the manual number inputs (uncontrolled, synced via useEffect)
   const totalMonthlyRef = useRef<HTMLInputElement>(null);
   const overpayAmountRef = useRef<HTMLInputElement>(null);
   const shortenAmountRef = useRef<HTMLInputElement>(null);
 
-  // Refs for the main form inputs (uncontrolled to avoid leading-zero / cursor issues)
+  // Uncontrolled inputs to avoid leading-zero / cursor issues
   const loanAmountRef = useRef<HTMLInputElement>(null);
   const interestRateRef = useRef<HTMLInputElement>(null);
   const loanMonthsRef = useRef<HTMLInputElement>(null);
@@ -53,63 +60,28 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     if (inputs.refiMonth > max) setInputs({ refiMonth: max });
   }, [inputs.loanMonths]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync refi inputs when inputs change externally
-  useEffect(() => {
-    if (refiRateRef.current && document.activeElement !== refiRateRef.current)
-      refiRateRef.current.value = String(inputs.refiRate);
-  }, [inputs.refiRate]);
-  useEffect(() => {
-    if (refiMonthsRef.current && document.activeElement !== refiMonthsRef.current)
-      refiMonthsRef.current.value = String(inputs.refiMonths);
-  }, [inputs.refiMonths]);
-  useEffect(() => {
-    if (refiOriginationFeeRef.current && document.activeElement !== refiOriginationFeeRef.current)
-      refiOriginationFeeRef.current.value = String(inputs.refiOriginationFee);
-  }, [inputs.refiOriginationFee]);
-  useEffect(() => {
-    if (refiFlatRef.current && document.activeElement !== refiFlatRef.current)
-      refiFlatRef.current.value = String(inputs.refiFlat);
-  }, [inputs.refiFlat]);
+  useSyncInput(refiRateRef, inputs.refiRate);
+  useSyncInput(refiMonthsRef, inputs.refiMonths);
+  useSyncInput(refiOriginationFeeRef, inputs.refiOriginationFee);
+  useSyncInput(refiFlatRef, inputs.refiFlat);
 
   // Track previous sliderMin so we can preserve the overpay amount when loan params change
   const prevSliderMinRef = useRef(sliderMin);
 
-  useEffect(() => {
-    if (totalMonthlyRef.current) totalMonthlyRef.current.value = String(inputs.totalMonthlySlider);
-  }, [inputs.totalMonthlySlider]);
-
-  useEffect(() => {
-    if (overpayAmountRef.current) overpayAmountRef.current.value = String(inputs.overpayAmountSlider);
-  }, [inputs.overpayAmountSlider]);
-
-  useEffect(() => {
-    if (shortenAmountRef.current) shortenAmountRef.current.value = String(inputs.shortenAmountSlider);
-  }, [inputs.shortenAmountSlider]);
-
-  // Sync form inputs when props change externally (e.g. URL params on load), but not while focused
-  useEffect(() => {
-    if (loanAmountRef.current && document.activeElement !== loanAmountRef.current)
-      loanAmountRef.current.value = String(inputs.loanAmount);
-  }, [inputs.loanAmount]);
-  useEffect(() => {
-    if (interestRateRef.current && document.activeElement !== interestRateRef.current)
-      interestRateRef.current.value = String(inputs.interestRate);
-  }, [inputs.interestRate]);
-  useEffect(() => {
-    if (loanMonthsRef.current && document.activeElement !== loanMonthsRef.current)
-      loanMonthsRef.current.value = String(inputs.loanMonths);
-  }, [inputs.loanMonths]);
-  useEffect(() => {
-    if (prepayFeeRef.current && document.activeElement !== prepayFeeRef.current)
-      prepayFeeRef.current.value = String(inputs.prepayFee);
-  }, [inputs.prepayFee]);
+  useSyncInput(totalMonthlyRef, inputs.totalMonthlySlider);
+  useSyncInput(overpayAmountRef, inputs.overpayAmountSlider);
+  useSyncInput(shortenAmountRef, inputs.shortenAmountSlider);
+  useSyncInput(loanAmountRef, inputs.loanAmount);
+  useSyncInput(interestRateRef, inputs.interestRate);
+  useSyncInput(loanMonthsRef, inputs.loanMonths);
+  useSyncInput(prepayFeeRef, inputs.prepayFee);
 
   // When stdPayment changes (loan amount / rate / months edited), preserve the overpay amount
   // rather than keeping the old total which no longer makes sense for the new loan.
   useEffect(() => {
     const prevMin = prevSliderMinRef.current;
     prevSliderMinRef.current = sliderMin;
-    if (!(inputs.strategy === 'reduce_payment' || inputs.strategy === 'fixed_total')) return;
+    if (!isFixedTotal) return;
     if (sliderMin === prevMin) return;
     const prevOverpay = Math.max(0, inputs.totalMonthlySlider - prevMin);
     const newTotal = Math.min(sliderMax, Math.max(sliderMin, sliderMin + prevOverpay));
@@ -276,7 +248,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               </select>
             </div>
 
-            {(inputs.strategy === 'reduce_payment' || inputs.strategy === 'fixed_total') && (
+            {isFixedTotal && (
               <div className="slider-group">
                 <div className="slider-header">
                   <label>{t('slider_total')}</label>
@@ -297,9 +269,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   value={Math.max(inputs.totalMonthlySlider, sliderMin)}
                   onChange={(e) => setInputs({ totalMonthlySlider: +e.target.value })} />
                 <div className="hint">{t('slider_std')} <strong>{fmtC(stdPayment, 2)}</strong></div>
-                {(inputs.strategy === 'fixed_total' || inputs.strategy === 'reduce_payment') && (
-                  <div className="info-box" style={{ fontSize: '.85rem', marginTop: 8 }}>{t('reduce_payment_hint')}</div>
-                )}
+                <div className="info-box" style={{ fontSize: '.85rem', marginTop: 8 }}>{t('reduce_payment_hint')}</div>
               </div>
             )}
 

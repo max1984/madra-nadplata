@@ -125,20 +125,54 @@ function buildYearlyRows(calcState: CalcState): YearRow[] {
     const slice = rows.slice(start, end);
     const isRefiStart = !refiStarted && slice.some(r => r.isRefiRow);
     if (isRefiStart) refiStarted = true;
+    let totalInterest = 0, totalRegularCap = 0, totalOverpay = 0, totalFee = 0, totalPayment = 0;
+    for (const r of slice) {
+      totalInterest += r.interest;
+      totalRegularCap += r.regularCap;
+      totalOverpay += r.overpay;
+      totalFee += r.fee;
+      totalPayment += r.totalPayment;
+    }
     years.push({
       year: y + 1,
       startPayment: start + 1,
       endPayment: end,
-      totalInterest: slice.reduce((s, r) => s + r.interest, 0),
-      totalRegularCap: slice.reduce((s, r) => s + r.regularCap, 0),
-      totalOverpay: slice.reduce((s, r) => s + r.overpay, 0),
-      totalFee: slice.reduce((s, r) => s + r.fee, 0),
-      totalPayment: slice.reduce((s, r) => s + r.totalPayment, 0),
+      totalInterest,
+      totalRegularCap,
+      totalOverpay,
+      totalFee,
+      totalPayment,
       endBalance: slice[slice.length - 1]!.balanceAfter,
       isRefiStart,
     });
   }
   return years;
+}
+
+function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
+  colSpan: number;
+  refiData: NonNullable<CalcState['refiData']>;
+  fmtC: (n: number) => string;
+  t: (key: TranslationKey) => string;
+}) {
+  const totalFees = refiData.originationFeeAmount + refiData.flatFeeAmount;
+  return (
+    <tr>
+      <td colSpan={colSpan} style={{
+        textAlign: 'center', fontSize: '.78rem', fontWeight: 700,
+        color: 'var(--accent2)', background: 'rgba(110,231,183,.07)',
+        padding: '6px 12px', letterSpacing: '.5px',
+      }}>
+        {t('refi_separator')}
+        <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 8 }}>
+          {t('refi_balance_label')}: <strong style={{ color: 'var(--accent3)' }}>{fmtC(refiData.balance)}</strong>
+          {totalFees > 0 && (
+            <> &nbsp;|&nbsp; {t('refi_fees_label')}: <strong style={{ color: 'var(--danger)' }}>{fmtC(totalFees)}</strong></>
+          )}
+        </span>
+      </td>
+    </tr>
+  );
 }
 
 function exportCSV(calcState: CalcState) {
@@ -261,21 +295,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                   {buildYearlyRows(calcState).map((yr) => (
                     <Fragment key={yr.year}>
                       {yr.isRefiStart && calcState.refiData && (
-                        <tr>
-                          <td colSpan={7} style={{
-                            textAlign: 'center', fontSize: '.78rem', fontWeight: 700,
-                            color: 'var(--accent2)', background: 'rgba(110,231,183,.07)',
-                            padding: '6px 12px', letterSpacing: '.5px',
-                          }}>
-                            {t('refi_separator')}
-                            <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 8 }}>
-                              {t('refi_balance_label')}: <strong style={{ color: 'var(--accent3)' }}>{fmtC(calcState.refiData.balance)}</strong>
-                              {calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount > 0 && (
-                                <> &nbsp;|&nbsp; {t('refi_fees_label')}: <strong style={{ color: 'var(--danger)' }}>{fmtC(calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount)}</strong></>
-                              )}
-                            </span>
-                          </td>
-                        </tr>
+                        <RefiSeparatorRow colSpan={7} refiData={calcState.refiData} fmtC={fmtC} t={t} />
                       )}
                       <tr>
                         <td className="td-muted">
@@ -316,24 +336,8 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                       : (calcState.customRates[i] ?? calcState.r);
                     return (
                       <Fragment key={row.num}>
-                        {isFirstRefiRow && (
-                          <tr>
-                            <td colSpan={9} style={{
-                              textAlign: 'center', fontSize: '.78rem', fontWeight: 700,
-                              color: 'var(--accent2)', background: 'rgba(110,231,183,.07)',
-                              padding: '6px 12px', letterSpacing: '.5px',
-                            }}>
-                              {t('refi_separator')}
-                              {calcState.refiData && (
-                                <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 8 }}>
-                                  {t('refi_balance_label')}: <strong style={{ color: 'var(--accent3)' }}>{fmtC(calcState.refiData.balance)}</strong>
-                                  {calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount > 0 && (
-                                    <> &nbsp;|&nbsp; {t('refi_fees_label')}: <strong style={{ color: 'var(--danger)' }}>{fmtC(calcState.refiData.originationFeeAmount + calcState.refiData.flatFeeAmount)}</strong></>
-                                  )}
-                                </span>
-                              )}
-                            </td>
-                          </tr>
+                        {isFirstRefiRow && calcState.refiData && (
+                          <RefiSeparatorRow colSpan={9} refiData={calcState.refiData} fmtC={fmtC} t={t} />
                         )}
                         <ScheduleRowItem
                           idx={i}

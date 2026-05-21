@@ -189,7 +189,7 @@ export function buildRefinanceSchedule(
       capital: regularCap, regularCap, interest,
       overpay: 0, fee: 0,
       balanceAfter: balance, cumInterest,
-      annualRate: newAnnualRate / 100,
+      annualRate: newR * 12,
       isRefiRow: true,
     });
   }

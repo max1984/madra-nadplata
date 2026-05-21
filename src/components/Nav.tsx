@@ -1,15 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
-import type { Lang } from '../lib/i18n';
-
 export default function Nav() {
   const { lang, setLang, t } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const handleLang = (l: Lang) => {
-    setLang(l);
-  };
 
   const links = (
     <>
@@ -24,11 +18,11 @@ export default function Nav() {
       <div className="lang-toggle">
         <button
           className={`lang-btn${lang === 'pl' ? ' active' : ''}`}
-          onClick={() => handleLang('pl')}
+          onClick={() => setLang('pl')}
         >PL</button>
         <button
           className={`lang-btn${lang === 'en' ? ' active' : ''}`}
-          onClick={() => handleLang('en')}
+          onClick={() => setLang('en')}
         >EN</button>
       </div>
     </>

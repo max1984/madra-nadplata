@@ -1,7 +1,6 @@
 import { LazyMotion, domAnimation } from 'framer-motion';
 import { lazy, Suspense } from 'react';
-import { LangProvider } from './contexts/LangContext';
-import { useLang } from './contexts/LangContext';
+import { LangProvider, useLang } from './contexts/LangContext';
 import { useCalculator } from './hooks/useCalculator';
 import Nav from './components/Nav';
 import Hero from './components/Hero';

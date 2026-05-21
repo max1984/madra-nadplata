@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useLang } from '../contexts/LangContext';
 
 function resetAdConsent() {
@@ -225,14 +225,11 @@ export default function PrivacyPolicy() {
   const { lang } = useLang();
   const [visible, setVisible] = useState(() => window.location.hash === '#privacy');
 
-  const onHashChange = useCallback(() => {
-    setVisible(window.location.hash === '#privacy');
-  }, []);
-
   useEffect(() => {
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, [onHashChange]);
+    const handler = () => setVisible(window.location.hash === '#privacy');
+    window.addEventListener('hashchange', handler);
+    return () => window.removeEventListener('hashchange', handler);
+  }, []);
 
   useEffect(() => {
     if (visible) {

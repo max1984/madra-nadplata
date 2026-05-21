@@ -152,7 +152,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
   const fee = feeRate / 100;
   const stdPayment = calcStdPayment(P, r, months);
   const customRates = Array<number>(months).fill(r);
-  const startMonth = inp.overpayStartMonth ?? 0;
+  const startMonth = inp.overpayStartMonth;
 
   let customOverpay: number[];
   let totalMonthly = 0;
@@ -177,8 +177,6 @@ function computeCalcState(inp: CalcInputs): CalcState {
     defaultOverpay = inp.shortenAmountSlider;
     customOverpay = Array<number>(months).fill(defaultOverpay);
     for (let i = 0; i < startMonth && i < months; i++) customOverpay[i] = 0;
-  } else if (strategy === 'refinance') {
-    customOverpay = Array<number>(months).fill(0);
   } else {
     customOverpay = Array<number>(months).fill(0);
   }
@@ -209,7 +207,6 @@ function computeCalcState(inp: CalcInputs): CalcState {
   } else {
     const fixedStd = strategy === 'shorten_period' ? stdPayment : null;
     rows = buildSchedule(P, customRates, months, fee, customOverpay, r, fixedStd);
-    refiData = undefined;
   }
 
   return {
