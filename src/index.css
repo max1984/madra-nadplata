@@ -109,6 +109,12 @@ nav::after {
 }
 .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
 
+/* MOBILE NAV RIGHT GROUP */
+.nav-mobile-right { display: none; align-items: center; gap: 8px; }
+@media(max-width:700px){
+  .nav-mobile-right { display: flex; }
+}
+
 /* HAMBURGER */
 .hamburger {
   display: none; flex-direction: column; justify-content: center; gap: 5px;
@@ -136,6 +142,7 @@ nav::after {
     gap: 14px; z-index: 99;
   }
   .nav-links.mobile-open .nav-sep { display: none; }
+  .nav-links.mobile-open .lang-toggle { display: none; }
   .nav-links.mobile-open a { font-size: 1.05rem; padding: 4px 0; }
 }
 
@@ -435,8 +442,15 @@ thead th {
   background: var(--bg2); padding: 12px 16px; text-align: left;
   font-size: .72rem; font-weight: 700; color: var(--text3);
   text-transform: uppercase; letter-spacing: .8px;
-  position: sticky; top: 0; z-index: 1; white-space: nowrap;
+  position: sticky; top: 0; z-index: 2; white-space: nowrap;
   border-bottom: 1px solid var(--border);
+}
+thead th:first-child {
+  position: sticky; top: 0; left: 0; z-index: 3;
+}
+tbody td:first-child {
+  position: sticky; left: 0; background: var(--bg); z-index: 1;
+  box-shadow: 2px 0 6px rgba(0,0,0,.25);
 }
 tbody tr { border-top: 1px solid rgba(255,255,255,.03); transition: background .15s; }
 tbody tr:hover { background: rgba(79,142,247,.04); }

@@ -32,13 +32,19 @@ export default function Nav() {
     <nav>
       <div className="nav-logo">💰 Mądra Nadpłata</div>
 
-      <button
-        className={`hamburger${menuOpen ? ' open' : ''}`}
-        onClick={() => setMenuOpen((v) => !v)}
-        aria-label="Menu"
-      >
-        <span /><span /><span />
-      </button>
+      <div className="nav-mobile-right">
+        <div className="lang-toggle">
+          <button className={`lang-btn${lang === 'pl' ? ' active' : ''}`} onClick={() => setLang('pl')}>PL</button>
+          <button className={`lang-btn${lang === 'en' ? ' active' : ''}`} onClick={() => setLang('en')}>EN</button>
+        </div>
+        <button
+          className={`hamburger${menuOpen ? ' open' : ''}`}
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Menu"
+        >
+          <span /><span /><span />
+        </button>
+      </div>
 
       <div className="nav-links">{links}</div>
 

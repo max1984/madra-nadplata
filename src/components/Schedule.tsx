@@ -40,11 +40,13 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
   const rateRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (overpayRef.current) overpayRef.current.value = String(Math.round(overpay));
+    if (overpayRef.current && document.activeElement !== overpayRef.current)
+      overpayRef.current.value = String(Math.round(overpay));
   }, [overpay]);
 
   useEffect(() => {
-    if (rateRef.current) rateRef.current.value = (rate * 12 * 100).toFixed(2);
+    if (rateRef.current && document.activeElement !== rateRef.current)
+      rateRef.current.value = (rate * 12 * 100).toFixed(2);
   }, [rate]);
 
   const rateChanged = Math.abs(rate - globalR) > 0.0000001;
@@ -61,6 +63,7 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           defaultValue={(rate * 12 * 100).toFixed(2)}
           min={0.01} max={25} step={0.01}
           readOnly={isRefi}
+          aria-readonly={isRefi}
           style={isRefi ? { opacity: 0.5, cursor: 'default' } : undefined}
           onBlur={isRefi ? undefined : (e) => onRateChange(idx, e.target.value)}
           onKeyDown={isRefi ? undefined : (e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
@@ -76,6 +79,7 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           defaultValue={String(Math.round(overpay))}
           min={0} step={1}
           readOnly={isRefi}
+          aria-readonly={isRefi}
           style={isRefi ? { opacity: 0.5, cursor: 'default' } : undefined}
           onBlur={isRefi ? undefined : (e) => onOverpayChange(idx, e.target.value)}
           onKeyDown={isRefi ? undefined : (e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
@@ -175,9 +179,13 @@ function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
   );
 }
 
-function exportCSV(calcState: CalcState) {
+function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string) {
   const sep = ';';
-  const headers = ['Rata #', 'Saldo przed', 'Oprocent. %', 'Odsetki', 'Kapital', 'Nadplata', 'Prowizja', 'Laczna rata', 'Saldo po'];
+  const headers = [
+    t('sch_col_num'), t('sch_col_bal_before'), t('sch_col_rate'),
+    t('sch_col_interest'), t('sch_col_capital'), t('sch_col_overpay'),
+    t('sch_col_fee'), t('sch_col_total'), t('sch_col_bal_after'),
+  ];
   const rows = calcState.rows.map((r) => [
     r.num,
     r.balanceBefore.toFixed(2),
@@ -245,6 +253,11 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
               {t('toolbar_total')} <strong style={{ color: 'var(--accent)' }}>{fmtC(totalOverpay)}</strong>
               &nbsp;|&nbsp;
               {t('toolbar_paid_at')} <strong style={{ color: 'var(--accent2)' }}>{calcState.rows.length}</strong> {t('toolbar_of')} {calcState.months}
+              {calcState.rows.length > 60 && (
+                <span style={{ fontSize: '.75rem', color: 'var(--text3)', marginLeft: 8 }}>
+                  ({calcState.rows.length} {t('stats_payments_label')})
+                </span>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               {calcState.strategy === 'custom' && (
@@ -266,14 +279,18 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                 onClick={() => setYearlyView((v) => !v)}
               >{yearlyView ? t('sch_monthly_toggle') : t('sch_yearly_toggle')}</button>
               <div className="toolbar-divider" />
-              {calcState.strategy !== 'refinance' && (
+              {calcState.strategy !== 'refinance' ? (
                 <>
                   <button className="toolbar-btn" onClick={onResetOverpays}>{t('toolbar_reset')}</button>
                   <button className="toolbar-btn" onClick={onClearOverpays}>{t('toolbar_clear')}</button>
                   <button className="toolbar-btn" onClick={onResetRates}>{t('toolbar_reset_rates')}</button>
                 </>
+              ) : (
+                <span style={{ fontSize: '.78rem', color: 'var(--text3)', fontStyle: 'italic' }}>
+                  {t('refi_no_overpay_note')}
+                </span>
               )}
-              <button className="toolbar-btn" onClick={() => exportCSV(calcState)}>{t('csv_export')}</button>
+              <button className="toolbar-btn" onClick={() => exportCSV(calcState, t)}>{t('csv_export')}</button>
             </div>
           </div>
 
@@ -357,7 +374,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                       </Fragment>
                     );
                   })}
-                  {paidOffCount > 0 && (
+                  {paidOffCount > 0 && calcState.strategy !== 'refinance' && (
                     <tr className="row-paid">
                       <td className="td-muted">{calcState.rows.length + 1}–{calcState.months}</td>
                       <td colSpan={8} style={{ textAlign: 'center', fontSize: '.8rem', fontStyle: 'italic', color: 'var(--text3)' }}>

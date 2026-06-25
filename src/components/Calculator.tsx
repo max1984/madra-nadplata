@@ -27,6 +27,15 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const chart = useRef<Chart | null>(null);
   const [copied, setCopied] = useState(false);
   const [investRate, setInvestRate] = useState(5);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const prevCalcState = useRef(calcState);
+
+  useEffect(() => {
+    if (!prevCalcState.current && calcState && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    prevCalcState.current = calcState;
+  }, [calcState]);
 
   const stdPayment = calcStdPayment(
     inputs.loanAmount,
@@ -37,6 +46,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   // Snap slider bounds to multiples of 100 so all positions are round numbers
   const sliderMin = Math.ceil((Math.ceil(stdPayment) + 1) / 100) * 100;
   const sliderMax = Math.floor(stdPayment * 2.5 / 100) * 100;
+  const overpayMax = Math.max(10000, Math.floor(stdPayment * 2 / 100) * 100);
   const isFixedTotal = inputs.strategy === 'fixed_total' || inputs.strategy === 'reduce_payment';
 
   const totalMonthlyRef = useRef<HTMLInputElement>(null);
@@ -124,6 +134,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
 
   const handleCopy = () => {
     navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = window.location.href;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -259,7 +280,8 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                     defaultValue={inputs.totalMonthlySlider}
                     min={1}
                     onBlur={(e) => {
-                      const v = Math.max(1, Math.min(sliderMax, Math.round(+e.target.value) || 1));
+                      const v = Math.max(sliderMin, Math.min(sliderMax, Math.round(+e.target.value) || sliderMin));
+                      e.target.value = String(v);
                       setInputs({ totalMonthlySlider: v });
                     }}
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
@@ -284,13 +306,14 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                     defaultValue={inputs.overpayAmountSlider}
                     min={0}
                     onBlur={(e) => {
-                      const v = Math.max(0, Math.min(10000, Math.round(+e.target.value) || 0));
+                      const v = Math.max(0, Math.min(overpayMax, Math.round(+e.target.value) || 0));
+                      e.target.value = String(v);
                       setInputs({ overpayAmountSlider: v });
                     }}
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   />
                 </div>
-                <input type="range" min={0} max={10000} step={100} value={inputs.overpayAmountSlider}
+                <input type="range" min={0} max={overpayMax} step={100} value={inputs.overpayAmountSlider}
                   onChange={(e) => setInputs({ overpayAmountSlider: +e.target.value })} />
               </div>
             )}
@@ -306,13 +329,14 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                     defaultValue={inputs.shortenAmountSlider}
                     min={0}
                     onBlur={(e) => {
-                      const v = Math.max(0, Math.min(10000, Math.round(+e.target.value) || 0));
+                      const v = Math.max(0, Math.min(overpayMax, Math.round(+e.target.value) || 0));
+                      e.target.value = String(v);
                       setInputs({ shortenAmountSlider: v });
                     }}
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   />
                 </div>
-                <input type="range" min={0} max={10000} step={100} value={inputs.shortenAmountSlider}
+                <input type="range" min={0} max={overpayMax} step={100} value={inputs.shortenAmountSlider}
                   onChange={(e) => setInputs({ shortenAmountSlider: +e.target.value })} />
                 <div className="info-box" style={{ fontSize: '.85rem', marginTop: 8 }} dangerouslySetInnerHTML={{ __html: t('shorten_hint') }} />
               </div>
@@ -404,6 +428,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 </div>
 
                 <div className="info-box" style={{ fontSize: '.85rem' }} dangerouslySetInnerHTML={{ __html: t('refi_hint') }} />
+                <div className="info-box" style={{ fontSize: '.82rem', marginTop: 8, borderColor: 'rgba(167,139,250,.25)', color: 'var(--accent3)' }}>
+                  {t('refi_no_overpay_note')}
+                </div>
               </div>
             )}
 
@@ -411,9 +438,11 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <div className="slider-group">
                 <div className="slider-header">
                   <label>{t('overpay_start_label')}</label>
-                  <span className="slider-val">{inputs.overpayStartMonth}</span>
+                  <span className="slider-val">
+                    {inputs.overpayStartMonth === 0 ? t('overpay_start_now') : inputs.overpayStartMonth}
+                  </span>
                 </div>
-                <input type="range" min={0} max={60} step={1}
+                <input type="range" min={0} max={Math.min(120, inputs.loanMonths - 1)} step={1}
                   value={inputs.overpayStartMonth}
                   onChange={(e) => setInputs({ overpayStartMonth: +e.target.value })} />
                 <div className="hint">{t('overpay_start_hint')}</div>
@@ -433,7 +462,8 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             >
               {t('calc_btn')}
             </motion.button>
-            <button type="button" className="copy-link-btn" onClick={handleCopy}>
+            <button type="button" className="copy-link-btn" onClick={handleCopy} disabled={!calcState}
+              style={!calcState ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
               {copied ? t('copy_link_copied') : t('copy_link')}
             </button>
             <div className="info-box" style={{ fontSize: '.82rem', marginTop: 12 }}>{t('overpay_day_tip')}</div>
@@ -441,6 +471,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
 
           {/* RESULTS */}
           <motion.div
+            ref={resultsRef}
             className="calc-results"
             initial={{ opacity: 0, x: 24 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -465,6 +496,11 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <>
                 {stats}
 
+                {calcState.strategy === 'refinance' && (
+                  <div className="result-card" style={{ fontSize: '.82rem', color: 'var(--text3)', fontStyle: 'italic' }}>
+                    {t('refi_no_invest_note')}
+                  </div>
+                )}
                 {calcState.strategy !== 'refinance' && <div className="result-card">
                   <div className="result-card-label">{t('invest_section_title')}</div>
                   <div className="slider-group" style={{ marginBottom: 12 }}>

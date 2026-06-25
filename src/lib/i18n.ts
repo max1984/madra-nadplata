@@ -70,7 +70,10 @@ export type TranslationKey =
   | 'refi_balance_label' | 'refi_fees_label'
   | 'refi_phase1_int_label' | 'refi_phase2_int_label'
   | 'refi_net_saving' | 'refi_net_cost'
-  | 'refi_break_even' | 'refi_separator' | 'refi_new_payment_label';
+  | 'refi_break_even' | 'refi_separator' | 'refi_new_payment_label'
+  | 'refi_no_overpay_note' | 'refi_no_invest_note'
+  | 'overpay_start_now'
+  | 'close';
 
 type Translations = Record<TranslationKey, string>;
 
@@ -101,7 +104,7 @@ const pl: Translations = {
   ex_label: 'Przykład z życia',
   ex_title_text: '300 000 zł kredytu – co zmienia stała nadpłata 500 zł miesięcznie?',
   ex_sub_text: 'Strategia: stała kwota do banku. Standardowa rata: {std}. Startowa nadpłata: 500 zł/mies.',
-  ex_without: 'Bez nadpłaty', ex_with_header: 'Stała kwota 7 000 zł / mies.',
+  ex_without: 'Bez nadpłaty', ex_with_header: 'Stała kwota {total} / mies.',
   impact_loan: 'Kwota kredytu', impact_period: 'Okres spłaty', impact_payment: 'Miesięczna rata',
   impact_monthly_total: 'Miesięczna wpłata', impact_interest_total: 'Łączne odsetki',
   impact_total: 'Łącznie do banku', impact_saved: 'Oszczędność',
@@ -177,6 +180,7 @@ const pl: Translations = {
   copy_link_copied: '✓ Skopiowano!',
   csv_export: 'Pobierz CSV',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
+  overpay_start_now: 'Od razu',
   overpay_start_hint: 'Miesiąc 0 = od razu. Przydatne, gdy nadpłatę planujesz za kilka miesięcy (np. po wykończeniu mieszkania).',
   row_effect_shorten: 'Skrócenie',
   row_effect_reduce: 'Zmniejszenie',
@@ -197,12 +201,12 @@ const pl: Translations = {
   custom_base_title: 'Koszty bazowe kredytu',
   custom_base_hint: 'Dodaj nadpłaty w harmonogramie poniżej – wyniki zaktualizują się automatycznie.',
   overpay_day_tip: '💡 Najlepszym dniem na nadpłatę jest dzień spłaty raty kapitałowo-odsetkowej – ze względu na różne podejścia banków do naliczania odsetek, wpłata w tym dniu jest zawsze bezpieczna.',
-  ad_consent_text: 'Ta strona wyświetla reklamy Google. Bez zgody mogą się pojawić reklamy niespersonalizowane. Dane nie są sprzedawane osobom trzecim.',
+  ad_consent_text: 'Ta strona wyświetla reklamy Google AdSense. Akceptując, zgadzasz się na personalizowanie reklam na podstawie Twoich zainteresowań. Odrzucając, zobaczysz reklamy niespersonalizowane. Dane nie są sprzedawane osobom trzecim.',
   ad_consent_accept: 'Akceptuj',
   ad_consent_decline: 'Odrzuć',
   ad_consent_policy: 'Polityka prywatności',
   strategy_refinance: 'Refinansowanie (nowy kredyt na inne warunki)',
-  refi_hint: 'Symuluje zamknięcie obecnego kredytu i zaciągnięcie nowego na wybranych warunkach. Prowizja i opłaty jednorazowe naliczane są od salda w momencie refinansowania.',
+  refi_hint: 'Symuluje zamknięcie obecnego kredytu i zaciągnięcie nowego na wybranych warunkach. Prowizja i opłaty jednorazowe naliczane są od salda w momencie refinansowania. Miesiąc 0 oznacza refinansowanie od razu – prowizja liczona od pełnej kwoty kredytu.',
   refi_month_label: 'Refinansuj po miesiącu',
   refi_remaining_hint: 'Pozostałe raty bez refinansowania:',
   refi_new_rate_label: 'Oprocentowanie nowego kredytu',
@@ -219,6 +223,9 @@ const pl: Translations = {
   refi_break_even: 'Opłaty zwracają się po miesiącu:',
   refi_separator: '↓ Refinansowanie',
   refi_new_payment_label: 'Nowa rata po refinansowaniu',
+  refi_no_overpay_note: 'W trybie refinansowania nadpłaty nie są uwzględniane. Aby modelować nadpłaty, użyj strategii bez refinansowania.',
+  refi_no_invest_note: 'Porównanie z inwestycją niedostępne w trybie refinansowania.',
+  close: 'Zamknij',
 };
 
 const en: Translations = {
@@ -248,7 +255,7 @@ const en: Translations = {
   ex_label: 'Real example',
   ex_title_text: '300,000 PLN mortgage – what does a fixed 500 PLN/month overpayment change?',
   ex_sub_text: 'Strategy: fixed total to bank. Standard payment: {std}. Starting overpayment: 500 PLN/mo.',
-  ex_without: 'Without overpayment', ex_with_header: 'Fixed total 7,000 PLN/month',
+  ex_without: 'Without overpayment', ex_with_header: 'Fixed total {total}/month',
   impact_loan: 'Loan amount', impact_period: 'Repayment period', impact_payment: 'Monthly payment',
   impact_monthly_total: 'Monthly total', impact_interest_total: 'Total interest',
   impact_total: 'Total to bank', impact_saved: 'Savings',
@@ -324,6 +331,7 @@ const en: Translations = {
   copy_link_copied: '✓ Copied!',
   csv_export: 'Download CSV',
   overpay_start_label: 'Start overpaying from month',
+  overpay_start_now: 'Now',
   overpay_start_hint: 'Month 0 = immediately. Useful if you plan to start overpaying after a few months.',
   row_effect_shorten: 'Shorten',
   row_effect_reduce: 'Reduce',
@@ -344,12 +352,12 @@ const en: Translations = {
   custom_base_title: 'Base loan costs',
   custom_base_hint: 'Add overpayments in the schedule below — results update automatically.',
   overpay_day_tip: '💡 The best day to make an overpayment is your installment due date — due to varying bank approaches to interest calculation, paying on the due date is always safe.',
-  ad_consent_text: 'This site displays Google ads. Without consent, non-personalized ads may appear. Your data is not sold to third parties.',
+  ad_consent_text: 'This site displays Google AdSense ads. By accepting, you consent to interest-based personalized advertising. By declining, you will see non-personalized ads only. Your data is not sold to third parties.',
   ad_consent_accept: 'Accept',
   ad_consent_decline: 'Decline',
   ad_consent_policy: 'Privacy Policy',
   strategy_refinance: 'Refinancing (new loan on different terms)',
-  refi_hint: 'Simulates closing the current loan and taking a new one on different terms. The origination fee and other one-time costs are applied to the outstanding balance at the time of refinancing.',
+  refi_hint: 'Simulates closing the current loan and taking a new one on different terms. The origination fee and other one-time costs are applied to the outstanding balance at the time of refinancing. Month 0 means refinancing immediately — fees are calculated on the full loan amount.',
   refi_month_label: 'Refinance after month',
   refi_remaining_hint: 'Remaining payments without refinancing:',
   refi_new_rate_label: 'New loan interest rate',
@@ -366,6 +374,9 @@ const en: Translations = {
   refi_break_even: 'Fees recovered by month:',
   refi_separator: '↓ Refinancing',
   refi_new_payment_label: 'New payment after refinancing',
+  refi_no_overpay_note: 'Overpayments are not supported in refinancing mode. To model overpayments, use a non-refinancing strategy.',
+  refi_no_invest_note: 'Investment comparison is not available in refinancing mode.',
+  close: 'Close',
 };
 
 export const LANGS: Record<Lang, Translations> = { pl, en };

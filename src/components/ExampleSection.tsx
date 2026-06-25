@@ -121,7 +121,7 @@ export default function ExampleSection() {
             <div className="impact-row"><span className="label">{t('impact_total')}</span><span className="value bad">{fmtC(baseInterest + P)}</span></div>
           </div>
           <div className="impact-card highlight">
-            <h3>{t('ex_with_header')}</h3>
+            <h3>{t('ex_with_header').replace('{total}', fmtC(totalMonthly))}</h3>
             <div className="impact-row"><span className="label">{t('impact_loan')}</span><span className="value">{fmtC(P)}</span></div>
             <div className="impact-row"><span className="label">{t('impact_period')}</span><span className="value good">{periodStr}</span></div>
             <div className="impact-row"><span className="label">{t('impact_monthly_total')}</span><span className="value">{fmtC(totalMonthly)}</span></div>

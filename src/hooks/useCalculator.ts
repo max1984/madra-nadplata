@@ -89,7 +89,7 @@ function parseUrlInputs(): Partial<CalcInputs> {
   const strat = sp.get('strategy');
   if (strat === 'reduce_payment') {
     patch.strategy = 'fixed_total'; // reduce_payment was removed; it was identical to fixed_total
-  } else if (strat && ['fixed_total', 'fixed_overpay', 'shorten_period', 'custom'].includes(strat)) {
+  } else if (strat && ['fixed_total', 'fixed_overpay', 'shorten_period', 'custom', 'refinance'].includes(strat)) {
     patch.strategy = strat as Strategy;
   }
   if (sp.has('total')) patch.totalMonthlySlider = +sp.get('total')!;
@@ -285,11 +285,11 @@ export function useCalculator() {
 
       let newOverpay = [...prev.customOverpay];
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
-        newOverpay = naturalOverpaysFromBalance(prev.P, 0, newRates, prev.months, prev.totalMonthly, prev.r);
+        newOverpay = naturalOverpaysFromBalance(prev.P, 0, newRates, prev.months, prev.totalMonthly, newRate);
       }
 
-      const base = buildBaseSchedule(prev.P, newRates, prev.months, prev.r);
-      const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev));
+      const base = buildBaseSchedule(prev.P, newRates, prev.months, newRate);
+      const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, newRate, resolveFixedStd(prev));
 
       return {
         ...prev,

@@ -222,7 +222,7 @@ function ContentEN() {
 }
 
 export default function PrivacyPolicy() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const [visible, setVisible] = useState(() => window.location.hash === '#privacy');
 
   useEffect(() => {
@@ -266,15 +266,19 @@ export default function PrivacyPolicy() {
         <button
           type="button"
           onClick={close}
-          aria-label="Zamknij"
+          aria-label={t('close')}
           style={{
-            position: 'absolute', top: 16, right: 16,
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--text3)', fontSize: '1.4rem', lineHeight: 1,
-            padding: 4,
+            position: 'absolute', top: 12, right: 12,
+            background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)',
+            borderRadius: 8, cursor: 'pointer',
+            color: 'var(--text2)', fontSize: '1rem', lineHeight: 1,
+            padding: '6px 10px', minWidth: 44, minHeight: 44,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 4,
           }}
         >
-          ×
+          <span aria-hidden="true">×</span>
+          <span style={{ fontSize: '.72rem', fontWeight: 600 }}>{t('close')}</span>
         </button>
         <div style={{
           fontSize: '.75rem', fontWeight: 700, textTransform: 'uppercase',
