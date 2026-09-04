@@ -6,11 +6,12 @@ import {
   buildRefinanceSchedule,
   naturalOverpaysFromBalance,
   balanceAt,
+  solveOverpayForTarget,
   type ScheduleRow,
 } from '../lib/mortgage';
 import type { TranslationKey } from '../lib/i18n';
 
-export type Strategy = 'reduce_payment' | 'fixed_total' | 'fixed_overpay' | 'shorten_period' | 'custom' | 'refinance';
+export type Strategy = 'reduce_payment' | 'fixed_total' | 'fixed_overpay' | 'shorten_period' | 'goal' | 'custom' | 'refinance';
 
 export interface CalcInputs {
   loanAmount: number;
@@ -21,6 +22,8 @@ export interface CalcInputs {
   totalMonthlySlider: number;
   overpayAmountSlider: number;
   shortenAmountSlider: number;
+  /** Cel spłaty: docelowa liczba rat (strategia 'goal'). */
+  goalMonths: number;
   overpayStartMonth: number;
   refiMonth: number;
   refiRate: number;
@@ -54,6 +57,9 @@ export interface CalcState {
   customPerRowEffects: ('shorten' | 'reduce')[];
   totalMonthly: number;
   defaultOverpay: number;
+  /** Nadpłata wyliczona przez solver dla strategii 'goal'. */
+  requiredOverpay?: number;
+  goalMonths?: number;
   baseInterest: number;
   baseMonths: number;
   baseBalances: number[];
@@ -71,6 +77,7 @@ const DEFAULT_INPUTS: CalcInputs = {
   totalMonthlySlider: 2300,
   overpayAmountSlider: 500,
   shortenAmountSlider: 500,
+  goalMonths: 180,
   overpayStartMonth: 0,
   refiMonth: 12,
   refiRate: 5,
@@ -89,12 +96,13 @@ function parseUrlInputs(): Partial<CalcInputs> {
   const strat = sp.get('strategy');
   if (strat === 'reduce_payment') {
     patch.strategy = 'fixed_total'; // reduce_payment was removed; it was identical to fixed_total
-  } else if (strat && ['fixed_total', 'fixed_overpay', 'shorten_period', 'custom', 'refinance'].includes(strat)) {
+  } else if (strat && ['fixed_total', 'fixed_overpay', 'shorten_period', 'goal', 'custom', 'refinance'].includes(strat)) {
     patch.strategy = strat as Strategy;
   }
   if (sp.has('total')) patch.totalMonthlySlider = +sp.get('total')!;
   if (sp.has('overpay')) patch.overpayAmountSlider = +sp.get('overpay')!;
   if (sp.has('shorten')) patch.shortenAmountSlider = +sp.get('shorten')!;
+  if (sp.has('goal')) patch.goalMonths = +sp.get('goal')!;
   if (sp.has('start')) patch.overpayStartMonth = +sp.get('start')!;
   if (sp.has('refiMonth')) patch.refiMonth = +sp.get('refiMonth')!;
   if (sp.has('refiRate')) patch.refiRate = +sp.get('refiRate')!;
@@ -114,6 +122,7 @@ function buildUrlParams(inp: CalcInputs): string {
   if (inp.strategy === 'fixed_total') sp.set('total', String(inp.totalMonthlySlider));
   if (inp.strategy === 'fixed_overpay') sp.set('overpay', String(inp.overpayAmountSlider));
   if (inp.strategy === 'shorten_period') sp.set('shorten', String(inp.shortenAmountSlider));
+  if (inp.strategy === 'goal') sp.set('goal', String(inp.goalMonths));
   if (inp.overpayStartMonth > 0) sp.set('start', String(inp.overpayStartMonth));
   if (inp.strategy === 'refinance') {
     sp.set('refiMonth', String(inp.refiMonth));
@@ -134,6 +143,11 @@ function validateInputs(inp: CalcInputs): TranslationKey | null {
   }
   if (!isFinite(inp.interestRate) || inp.interestRate < 0.01 || inp.interestRate > 25) {
     return 'error_rate';
+  }
+  if (inp.strategy === 'goal') {
+    if (!isFinite(inp.goalMonths) || inp.goalMonths < 1 || inp.goalMonths > inp.loanMonths) {
+      return 'error_goal_months';
+    }
   }
   if (inp.strategy === 'refinance') {
     if (!isFinite(inp.refiRate) || inp.refiRate < 0.01 || inp.refiRate > 25) {
@@ -157,6 +171,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
   let customOverpay: number[];
   let totalMonthly = 0;
   let defaultOverpay = 0;
+  let requiredOverpay: number | undefined;
 
   if (strategy === 'reduce_payment' || strategy === 'fixed_total') {
     totalMonthly = inp.totalMonthlySlider;
@@ -177,6 +192,10 @@ function computeCalcState(inp: CalcInputs): CalcState {
     defaultOverpay = inp.shortenAmountSlider;
     customOverpay = Array<number>(months).fill(defaultOverpay);
     for (let i = 0; i < startMonth && i < months; i++) customOverpay[i] = 0;
+  } else if (strategy === 'goal') {
+    requiredOverpay = solveOverpayForTarget(P, customRates, months, fee, r, inp.goalMonths, stdPayment);
+    defaultOverpay = requiredOverpay;
+    customOverpay = Array<number>(months).fill(requiredOverpay);
   } else {
     customOverpay = Array<number>(months).fill(0);
   }
@@ -205,7 +224,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
       newMonths: inp.refiMonths,
     };
   } else {
-    const fixedStd = strategy === 'shorten_period' ? stdPayment : null;
+    const fixedStd = strategy === 'shorten_period' || strategy === 'goal' ? stdPayment : null;
     rows = buildSchedule(P, customRates, months, fee, customOverpay, r, fixedStd);
   }
 
@@ -213,6 +232,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
     P, r, months, prepayFee: fee, stdPayment, origStdPayment: stdPayment,
     customOverpay, customRates, strategy, customEffect: 'shorten' as const,
     customPerRowEffects, totalMonthly, defaultOverpay,
+    requiredOverpay, goalMonths: strategy === 'goal' ? inp.goalMonths : undefined,
     baseInterest: base.totalInterest, baseMonths: base.count, baseBalances: base.balances,
     baseCumInterestByMonth: base.cumInterestByMonth,
     rows, refiData,
@@ -220,7 +240,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
 }
 
 function resolveFixedStd(prev: CalcState): number | null {
-  if (prev.strategy === 'shorten_period') return prev.origStdPayment;
+  if (prev.strategy === 'shorten_period' || prev.strategy === 'goal') return prev.origStdPayment;
   if (prev.strategy === 'custom' && prev.customEffect === 'shorten') return prev.origStdPayment;
   return null;
 }

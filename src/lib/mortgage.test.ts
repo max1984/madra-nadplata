@@ -5,6 +5,7 @@ import {
   buildBaseSchedule,
   naturalOverpaysFromBalance,
   balanceAt,
+  solveOverpayForTarget,
 } from './mortgage';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -228,5 +229,46 @@ describe('slider minimum constraint', () => {
     const std = calcStdPayment(P, r, n);
     const overpays = naturalOverpaysFromBalance(P, 0, Array(n).fill(r), n, std + 500, r);
     expect(overpays[0]).toBeGreaterThan(0);
+  });
+});
+
+describe('solveOverpayForTarget', () => {
+  const P = 300000, r = 0.06 / 12, n = 360;
+  const rates = Array<number>(n).fill(r);
+  const std = calcStdPayment(P, r, n);
+
+  it('returns 0 when the target is not shorter than the natural term', () => {
+    expect(solveOverpayForTarget(P, rates, n, 0, r, n, std)).toBe(0);
+    expect(solveOverpayForTarget(P, rates, n, 0, r, n + 60, std)).toBe(0);
+  });
+
+  it('found overpayment actually hits the target', () => {
+    for (const target of [300, 240, 180, 120, 60]) {
+      const overpay = solveOverpayForTarget(P, rates, n, 0, r, target, std);
+      const rows = buildSchedule(P, rates, n, 0, Array<number>(n).fill(overpay), r, std);
+      expect(rows.length).toBeLessThanOrEqual(target);
+    }
+  });
+
+  it('is minimal — one grosz less misses the target', () => {
+    const target = 180;
+    const overpay = solveOverpayForTarget(P, rates, n, 0, r, target, std);
+    const justUnder = buildSchedule(P, rates, n, 0, Array<number>(n).fill(overpay - 1), r, std);
+    expect(justUnder.length).toBeGreaterThan(target);
+  });
+
+  it('shorter target requires a bigger overpayment', () => {
+    const a = solveOverpayForTarget(P, rates, n, 0, r, 240, std);
+    const b = solveOverpayForTarget(P, rates, n, 0, r, 120, std);
+    expect(b).toBeGreaterThan(a);
+  });
+
+  it('a one-month target requires roughly the whole principal', () => {
+    const overpay = solveOverpayForTarget(P, rates, n, 0, r, 1, std);
+    expect(overpay).toBeGreaterThan(P * 0.99);
+  });
+
+  it('handles a target of 0 without looping forever', () => {
+    expect(solveOverpayForTarget(P, rates, n, 0, r, 0, std)).toBe(P);
   });
 });

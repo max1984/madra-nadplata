@@ -63,6 +63,9 @@ export type TranslationKey =
   | 'custom_base_title' | 'custom_base_hint'
   | 'overpay_day_tip'
   | 'ad_consent_text' | 'ad_consent_accept' | 'ad_consent_decline' | 'ad_consent_policy'
+  | 'strategy_goal' | 'goal_hint' | 'goal_years_label' | 'goal_target_label'
+  | 'goal_required_overpay' | 'goal_required_total' | 'goal_already_met'
+  | 'goal_unreachable' | 'error_goal_months'
   | 'strategy_refinance'
   | 'refi_hint' | 'refi_month_label' | 'refi_remaining_hint'
   | 'refi_new_rate_label' | 'refi_new_months_label'
@@ -205,6 +208,15 @@ const pl: Translations = {
   ad_consent_accept: 'Akceptuj',
   ad_consent_decline: 'Odrzuć',
   ad_consent_policy: 'Polityka prywatności',
+  strategy_goal: 'Cel spłaty (podaj termin – policzę nadpłatę)',
+  goal_hint: 'Odwrócone pytanie: zamiast zgadywać kwotę nadpłaty, podaj datę, do której chcesz mieć kredyt spłacony. Kalkulator wyliczy najmniejszą stałą nadpłatę, która pozwala zdążyć. Rata regularna zostaje bez zmian – nadpłata skraca okres.',
+  goal_years_label: 'Chcę spłacić kredyt w ciągu',
+  goal_target_label: 'Cel:',
+  goal_required_overpay: 'wymagana nadpłata / mies.',
+  goal_required_total: 'łącznie do banku / mies.',
+  goal_already_met: 'Ten cel osiągniesz bez nadpłacania – kredyt i tak kończy się wcześniej.',
+  goal_unreachable: 'Przy tak krótkim terminie nadpłata przekracza sensowne widełki. Wydłuż cel albo sprawdź saldo kredytu.',
+  error_goal_months: 'Cel spłaty musi mieścić się między 1 miesiącem a pozostałą liczbą rat.',
   strategy_refinance: 'Refinansowanie (nowy kredyt na inne warunki)',
   refi_hint: 'Symuluje zamknięcie obecnego kredytu i zaciągnięcie nowego na wybranych warunkach. Prowizja i opłaty jednorazowe naliczane są od salda w momencie refinansowania. Miesiąc 0 oznacza refinansowanie od razu – prowizja liczona od pełnej kwoty kredytu.',
   refi_month_label: 'Refinansuj po miesiącu',
@@ -356,6 +368,15 @@ const en: Translations = {
   ad_consent_accept: 'Accept',
   ad_consent_decline: 'Decline',
   ad_consent_policy: 'Privacy Policy',
+  strategy_goal: 'Payoff goal (set a date, get the overpayment)',
+  goal_hint: 'The reverse question: instead of guessing an overpayment, set the date you want to be debt-free. The calculator finds the smallest fixed monthly overpayment that gets you there. Your regular payment stays the same — the overpayment shortens the term.',
+  goal_years_label: 'I want the loan paid off within',
+  goal_target_label: 'Goal:',
+  goal_required_overpay: 'required overpayment / mo.',
+  goal_required_total: 'total to bank / mo.',
+  goal_already_met: 'You reach this goal without overpaying — the loan already ends sooner.',
+  goal_unreachable: 'For such a short deadline the required overpayment exceeds sensible limits. Extend the goal or check your balance.',
+  error_goal_months: 'The payoff goal must be between 1 month and the remaining number of payments.',
   strategy_refinance: 'Refinancing (new loan on different terms)',
   refi_hint: 'Simulates closing the current loan and taking a new one on different terms. The origination fee and other one-time costs are applied to the outstanding balance at the time of refinancing. Month 0 means refinancing immediately — fees are calculated on the full loan amount.',
   refi_month_label: 'Refinance after month',

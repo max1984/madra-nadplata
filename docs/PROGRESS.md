@@ -74,3 +74,44 @@ w `src/config/monetization.ts`.
 **Weryfikacja:** build + 25 testów przechodzi, zrzuty ekranu całej strony
 w rozdzielczości 1440 px sprawdzone wizualnie (hero, sekcje edukacyjne,
 wykresy, kalkulator z wynikami).
+
+---
+
+## FAZA 3 — Cel spłaty (nowa funkcja) ✅
+
+*4 września 2026*
+
+**Skąd pomysł**
+
+Przegląd konkurencji: Bankier.pl SMART, hipoteczny.pl, dobrykalkulator.pl,
+okioki.pl, bankoweabc.pl. Wszystkie robią dokładnie to samo — cztery pola,
+przełącznik „niższa rata / krótszy okres", jeden wynik. Żaden nie ma wykresu,
+edytowalnego harmonogramu ani eksportu, więc pod względem funkcji byliśmy
+już z przodu.
+
+Ale wszystkie, łącznie z naszym, odpowiadały tylko na pytanie
+„co mi da nadpłata X zł?". Prawdziwe pytanie kredytobiorcy brzmi odwrotnie:
+**„chcę mieć to spłacone przed emeryturą / przed studiami dziecka — ile muszę
+dopłacać?"**. Tego nie ma nikt w Polsce, a w narzędziach anglojęzycznych
+funkcja goal-seek jest uznawana za najbardziej użyteczny tryb kalkulatora.
+
+**Co zostało zrobione**
+
+- `solveOverpayForTarget()` w `src/lib/mortgage.ts` — bisekcja po kwocie
+  nadpłaty. Czas spłaty maleje monotonicznie wraz z nadpłatą, więc bisekcja
+  jest poprawna i zbiega w ~27 krokach do grosza. Zwraca **najmniejszą** kwotę,
+  która pozwala zdążyć, a nie pierwszą lepszą.
+- Nowa strategia `goal` w `useCalculator` — suwak celu w latach, wynik
+  propagowany do harmonogramu, wykresów i eksportu CSV jak każda inna strategia.
+- Karta wyniku pokazująca wymaganą nadpłatę, łączną kwotę do banku
+  i faktyczną liczbę rat.
+- Obsługa przypadku „cel osiągalny bez nadpłacania" — zamiast pustego wyniku
+  strona mówi wprost, że nic nie trzeba robić.
+- Współdzielenie przez URL: `?strategy=goal&goal=180`.
+- 6 nowych testów: trafianie w cel, minimalność wyniku, monotoniczność,
+  przypadki brzegowe (cel 1 miesiąc, cel 0, cel dłuższy niż kredyt).
+
+**Weryfikacja:** 31 testów przechodzi. Sprawdzone na żywo — kredyt 400 000 zł,
+6,5%, 300 rat, cel 15 lat → 784 zł/mies. nadpłaty, 3 484 zł łącznie do banku,
+183 052 zł zaoszczędzonych odsetek. Rata standardowa 2 701 zł zgadza się
+z wyliczeniem ręcznym.

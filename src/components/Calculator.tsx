@@ -50,6 +50,13 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const overpayMax = Math.max(10000, Math.floor(stdPayment * 2 / 100) * 100);
   const isFixedTotal = inputs.strategy === 'fixed_total' || inputs.strategy === 'reduce_payment';
 
+  const goalYears = Math.floor(inputs.goalMonths / 12);
+  const goalRemMonths = inputs.goalMonths % 12;
+  const goalLabel = [
+    goalYears > 0 ? `${goalYears} ${goalYears === 1 ? t('years1') : t('years')}` : '',
+    goalRemMonths > 0 ? `${goalRemMonths} ${t('months_short')}` : '',
+  ].filter(Boolean).join(' ');
+
   const totalMonthlyRef = useRef<HTMLInputElement>(null);
   const overpayAmountRef = useRef<HTMLInputElement>(null);
   const shortenAmountRef = useRef<HTMLInputElement>(null);
@@ -265,6 +272,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 <option value="fixed_total">{t('strategy_fixed_total')}</option>
                 <option value="fixed_overpay">{t('strategy_fixed_overpay')}</option>
                 <option value="shorten_period">{t('strategy_shorten')}</option>
+                <option value="goal">{t('strategy_goal')}</option>
                 <option value="custom">{t('strategy_custom')}</option>
                 <option value="refinance">{t('strategy_refinance')}</option>
               </select>
@@ -340,6 +348,20 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 <input type="range" min={0} max={overpayMax} step={100} value={inputs.shortenAmountSlider}
                   onChange={(e) => setInputs({ shortenAmountSlider: +e.target.value })} />
                 <div className="info-box" style={{ fontSize: '.85rem', marginTop: 8 }} dangerouslySetInnerHTML={{ __html: t('shorten_hint') }} />
+              </div>
+            )}
+
+            {inputs.strategy === 'goal' && (
+              <div className="slider-group">
+                <div className="slider-header">
+                  <label>{t('goal_years_label')}</label>
+                  <span className="slider-val">{goalLabel}</span>
+                </div>
+                <input type="range" min={12} max={inputs.loanMonths} step={12}
+                  value={Math.min(inputs.goalMonths, inputs.loanMonths)}
+                  onChange={(e) => setInputs({ goalMonths: +e.target.value })} />
+                <div className="hint">{t('slider_std')} <strong>{fmtC(stdPayment, 2)}</strong></div>
+                <div className="info-box" style={{ fontSize: '.85rem', marginTop: 8 }}>{t('goal_hint')}</div>
               </div>
             )}
 
@@ -435,7 +457,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               </div>
             )}
 
-            {inputs.strategy !== 'custom' && inputs.strategy !== 'refinance' && (
+            {inputs.strategy !== 'custom' && inputs.strategy !== 'refinance' && inputs.strategy !== 'goal' && (
               <div className="slider-group">
                 <div className="slider-header">
                   <label>{t('overpay_start_label')}</label>
@@ -540,6 +562,16 @@ function renderStats(
   const withInterest = cs.rows.length ? cs.rows[cs.rows.length - 1]!.cumInterest : 0;
   const withMonths = cs.rows.length;
 
+  if (cs.strategy === 'goal' && cs.requiredOverpay === 0) {
+    return (
+      <div className="result-card highlight-green">
+        <div className="result-big green">0 zł</div>
+        <div className="result-label">{t('goal_required_overpay')}</div>
+        <div className="info-box" style={{ fontSize: '.88rem', marginTop: 14 }}>{t('goal_already_met')}</div>
+      </div>
+    );
+  }
+
   const totalOverpay = cs.customOverpay.slice(0, withMonths).reduce((acc, v) => acc + v, 0);
   if (totalOverpay < 1) {
     if (cs.strategy !== 'custom') return null;
@@ -589,8 +621,26 @@ function renderStats(
     }
   }
 
+  const goalCard = cs.strategy === 'goal' && cs.requiredOverpay ? (
+    <div className="result-card highlight-blue">
+      <div className="result-big blue">{fmtC(cs.requiredOverpay)}</div>
+      <div className="result-label">{t('goal_required_overpay')}</div>
+      <div className="result-grid" style={{ marginTop: 18 }}>
+        <div className="result-item">
+          <div className="r-val">{fmtC(cs.origStdPayment + cs.requiredOverpay)}</div>
+          <div className="r-lbl">{t('goal_required_total')}</div>
+        </div>
+        <div className="result-item">
+          <div className="r-val" style={{ color: 'var(--accent2)' }}>{withMonths} {t('stats_payments_label')}</div>
+          <div className="r-lbl">{t('goal_target_label')} {cs.goalMonths} {t('months_short')}</div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
+      {goalCard}
       <div className="result-card highlight-green">
         <div className="result-big green">{fmtC(savedMoney)}</div>
         <div className="result-label">{t('stats_saved')}</div>

@@ -197,6 +197,48 @@ export function buildRefinanceSchedule(
   return { rows, refiBalance, originationFeeAmount, flatFeeAmount: flatFee, phase1Interest, phase2Interest };
 }
 
+/**
+ * Odwraca pytanie kalkulatora: zamiast „ile zaoszczędzę przy nadpłacie X",
+ * odpowiada na „ile muszę nadpłacać, żeby skończyć w N miesięcy".
+ *
+ * Szuka najmniejszej stałej nadpłaty miesięcznej, przy której kredyt zostaje
+ * spłacony najpóźniej w `targetMonths`. Rata regularna pozostaje na poziomie
+ * pierwotnym (wariant „skrócenie okresu") — to jedyny wariant, w którym cel
+ * czasowy ma sens, bo przy obniżaniu raty okres się nie zmienia.
+ *
+ * Zwraca `0`, gdy cel jest osiągalny bez nadpłacania (termin już go spełnia).
+ */
+export function solveOverpayForTarget(
+  P: number,
+  customRates: number[],
+  origMonths: number,
+  prepayFee: number,
+  globalR: number,
+  targetMonths: number,
+  fixedStdPayment: number,
+): number {
+  const payoffMonths = (overpay: number): number =>
+    buildSchedule(
+      P, customRates, origMonths, prepayFee,
+      Array<number>(origMonths).fill(overpay),
+      globalR, fixedStdPayment,
+    ).length;
+
+  if (targetMonths <= 0) return P;
+  if (payoffMonths(0) <= targetMonths) return 0;
+
+  // Czas spłaty maleje monotonicznie wraz z nadpłatą, więc wystarczy bisekcja.
+  // Górna granica: nadpłata równa całemu kapitałowi zamyka kredyt w 1. racie.
+  let lo = 0;
+  let hi = P;
+  for (let i = 0; i < 60 && hi - lo > 0.01; i++) {
+    const mid = (lo + hi) / 2;
+    if (payoffMonths(mid) <= targetMonths) hi = mid;
+    else lo = mid;
+  }
+  return Math.ceil(hi * 100) / 100;
+}
+
 export function naturalOverpaysFromBalance(
   startBalance: number,
   startIdx: number,
