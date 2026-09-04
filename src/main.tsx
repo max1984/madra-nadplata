@@ -9,6 +9,7 @@ import {
 } from 'chart.js';
 import './index.css';
 import App from './App.tsx';
+import { loadExternalScripts } from './lib/scripts';
 
 Chart.register(
   LineElement, BarElement, PointElement,
@@ -22,3 +23,5 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+loadExternalScripts();
