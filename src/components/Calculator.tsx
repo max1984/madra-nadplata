@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
+import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { calcStdPayment } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
@@ -114,17 +115,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
       data: {
         labels: Array.from({ length: totalLen }, (_, i) => i + 1),
         datasets: [
-          { label: t('chart_without'), data: baseBals, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
-          { label: t('chart_with'), data: withBals, borderColor: '#6ee7b7', backgroundColor: 'rgba(110,231,183,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
+          { label: t('chart_without'), data: baseBals, borderColor: CHART.base, backgroundColor: CHART.baseFill, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
+          { label: t('chart_with'), data: withBals, borderColor: CHART.over, backgroundColor: CHART.overFill, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
         ],
       },
       options: {
         responsive: true,
         interaction: { intersect: false, mode: 'index' },
-        plugins: { legend: { labels: { color: '#8892b0', font: { size: 11 } } } },
+        plugins: { legend: { labels: { color: CHART.legend, font: { size: 11 } } } },
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#4d5a7c', maxTicksLimit: 10 } },
-          y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#4d5a7c', callback: (v) => fmt(Number(v) / 1000) + 'k' } },
+          x: { grid: { color: CHART.grid }, ticks: { color: CHART.ticks, maxTicksLimit: 10 } },
+          y: { grid: { color: CHART.grid }, ticks: { color: CHART.ticks, callback: (v) => fmt(Number(v) / 1000) + 'k' } },
         },
       },
     });
@@ -428,7 +429,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 </div>
 
                 <div className="info-box" style={{ fontSize: '.85rem' }} dangerouslySetInnerHTML={{ __html: t('refi_hint') }} />
-                <div className="info-box" style={{ fontSize: '.82rem', marginTop: 8, borderColor: 'rgba(167,139,250,.25)', color: 'var(--accent3)' }}>
+                <div className="info-box" style={{ fontSize: '.82rem', marginTop: 8, borderColor: '#cbb6f5', background: 'var(--accent3-soft)', color: 'var(--accent3)' }}>
                   {t('refi_no_overpay_note')}
                 </div>
               </div>
@@ -731,7 +732,7 @@ function renderRefiStats(
   return (
     <>
       <div className={savedMoney >= 0 ? 'result-card highlight-green' : 'result-card'}
-        style={savedMoney < 0 ? { borderColor: 'rgba(239,68,68,.3)', background: 'rgba(239,68,68,.05)' } : {}}>
+        style={savedMoney < 0 ? { borderColor: '#fbcaca', background: 'var(--danger-soft)' } : {}}>
         <div className="result-big" style={{ color: savedMoney >= 0 ? 'var(--accent2)' : 'var(--danger)' }}>
           {savedMoney >= 0 ? '' : '-'}{fmtC(Math.abs(savedMoney))}
         </div>

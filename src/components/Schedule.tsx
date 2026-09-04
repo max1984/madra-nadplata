@@ -164,7 +164,7 @@ function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
     <tr>
       <td colSpan={colSpan} style={{
         textAlign: 'center', fontSize: '.78rem', fontWeight: 700,
-        color: 'var(--accent2)', background: 'rgba(110,231,183,.07)',
+        color: 'var(--accent2)', background: 'var(--accent2-soft)',
         padding: '6px 12px', letterSpacing: '.5px',
       }}>
         {t('refi_separator')}

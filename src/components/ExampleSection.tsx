@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
+import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { EX, EXAMPLE_DATA } from '../lib/example';
 
@@ -29,17 +30,17 @@ export default function ExampleSection() {
       data: {
         labels,
         datasets: [
-          { label: t('chart_without'), data: baseBalances, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.07)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
-          { label: t('chart_with'), data: withBals, borderColor: '#6ee7b7', backgroundColor: 'rgba(110,231,183,.07)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
+          { label: t('chart_without'), data: baseBalances, borderColor: CHART.base, backgroundColor: CHART.baseFill, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
+          { label: t('chart_with'), data: withBals, borderColor: CHART.over, backgroundColor: CHART.overFill, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
         ],
       },
       options: {
         responsive: true,
         interaction: { intersect: false, mode: 'index' },
-        plugins: { legend: { labels: { color: '#8892b0', font: { size: 11 } } } },
+        plugins: { legend: { labels: { color: CHART.legend, font: { size: 11 } } } },
         scales: {
-          x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#4d5a7c', maxTicksLimit: 8, callback: (_, i) => i % 24 === 0 ? `${t('chart_year')} ${Math.floor(i / 12) + 1}` : '' } },
-          y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#4d5a7c', callback: (v) => fmt(Number(v) / 1000) + 'k' } },
+          x: { grid: { color: CHART.grid }, ticks: { color: CHART.ticks, maxTicksLimit: 8, callback: (_, i) => i % 24 === 0 ? `${t('chart_year')} ${Math.floor(i / 12) + 1}` : '' } },
+          y: { grid: { color: CHART.grid }, ticks: { color: CHART.ticks, callback: (v) => fmt(Number(v) / 1000) + 'k' } },
         },
       },
     });
@@ -64,18 +65,18 @@ export default function ExampleSection() {
       data: {
         labels: yearLabels,
         datasets: [
-          { label: t('chart_interest_without'), data: yiBase, backgroundColor: 'rgba(239,68,68,.6)', stack: 'base' },
-          { label: t('chart_capital_without'), data: ycBase, backgroundColor: 'rgba(100,116,139,.3)', stack: 'base' },
-          { label: t('chart_interest_with'), data: yiWith, backgroundColor: 'rgba(79,142,247,.7)', stack: 'over' },
-          { label: t('chart_capital_with'), data: ycWith, backgroundColor: 'rgba(110,231,183,.4)', stack: 'over' },
+          { label: t('chart_interest_without'), data: yiBase, backgroundColor: CHART.baseBar, stack: 'base' },
+          { label: t('chart_capital_without'), data: ycBase, backgroundColor: CHART.capitalBase, stack: 'base' },
+          { label: t('chart_interest_with'), data: yiWith, backgroundColor: CHART.capitalOver, stack: 'over' },
+          { label: t('chart_capital_with'), data: ycWith, backgroundColor: CHART.overBar, stack: 'over' },
         ],
       },
       options: {
         responsive: true,
-        plugins: { legend: { labels: { color: '#8892b0', font: { size: 10 }, boxWidth: 12 } } },
+        plugins: { legend: { labels: { color: CHART.legend, font: { size: 10 }, boxWidth: 12 } } },
         scales: {
-          x: { stacked: true, grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#4d5a7c', maxRotation: 45, font: { size: 10 } } },
-          y: { stacked: true, grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#4d5a7c', callback: (v) => fmt(Number(v) / 1000) + 'k' } },
+          x: { stacked: true, grid: { color: CHART.grid }, ticks: { color: CHART.ticks, maxRotation: 45, font: { size: 10 } } },
+          y: { stacked: true, grid: { color: CHART.grid }, ticks: { color: CHART.ticks, callback: (v) => fmt(Number(v) / 1000) + 'k' } },
         },
       },
     });

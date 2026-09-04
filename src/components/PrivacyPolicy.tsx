@@ -252,7 +252,7 @@ export default function PrivacyPolicy() {
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 10000,
-        background: 'rgba(5, 8, 22, 0.85)', backdropFilter: 'blur(6px)',
+        background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
         padding: '24px 16px', overflowY: 'auto',
       }}
@@ -269,7 +269,7 @@ export default function PrivacyPolicy() {
           aria-label={t('close')}
           style={{
             position: 'absolute', top: 12, right: 12,
-            background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)',
+            background: 'var(--bg2)', border: '1px solid var(--border)',
             borderRadius: 8, cursor: 'pointer',
             color: 'var(--text2)', fontSize: '1rem', lineHeight: 1,
             padding: '6px 10px', minWidth: 44, minHeight: 44,
@@ -286,7 +286,7 @@ export default function PrivacyPolicy() {
         }}>
           {lang === 'pl' ? 'Polityka prywatności' : 'Privacy Policy'}
         </div>
-        <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text1)', margin: '0 0 24px' }}>
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 24px' }}>
           {lang === 'pl' ? 'Jak używamy danych i reklam' : 'How we use data and ads'}
         </h1>
         {lang === 'pl' ? <ContentPL /> : <ContentEN />}

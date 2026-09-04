@@ -53,7 +53,7 @@ export default function Hero() {
             <motion.div
               key={i}
               className="hero-stat"
-              whileHover={{ y: -4, borderColor: 'rgba(79,142,247,0.3)' }}
+              whileHover={{ y: -4, borderColor: '#bfd0ee' }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
               <div className="val">{s.val}</div>

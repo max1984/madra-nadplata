@@ -42,7 +42,7 @@ export default function HowItWorks() {
               key={n}
               className="step"
               variants={cardVariant}
-              whileHover={{ y: -8, borderColor: 'rgba(79,142,247,0.3)' }}
+              whileHover={{ y: -8, borderColor: '#bfd0ee' }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
             >
               <div className="step-num">{n}</div>
