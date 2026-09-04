@@ -159,3 +159,62 @@ ręcznym przeliczeniem). Konfiguracja przywrócona do pustej.
 
 ⏸ **Czeka na Ciebie:** linki z sieci afiliacyjnej → `PARTNER_OFFERS`
 oraz ID jednostek reklamowych → `ADSENSE_SLOTS`.
+
+---
+
+## FAZA 5 — Podstrony SEO ✅
+
+*4 września 2026*
+
+**Problem**
+
+Strona miała jeden adres URL walczący o jedną frazę, na której konkurencja
+(Bankier, rankomat) ma domeny o autorytecie nie do dogonienia. Jeden URL to
+sufit ruchu, a bez ruchu wszystkie poprzednie fazy są warte zero.
+
+**Co zostało zrobione**
+
+- `scripts/build-seo.mjs` — generator statycznych podstron, uruchamiany
+  automatycznie po `vite build`. 18 podstron + `sitemap.xml`.
+- `scripts/seo-content.mjs` — treść oddzielona od logiki generowania.
+- Blok linków w stopce aplikacji — bez odnośnika ze strony głównej sam sitemap
+  rzadko wystarcza, żeby Google uznał podstronę za wartą zaindeksowania.
+- `public/sitemap.xml` usunięty; sitemap jest teraz generowany, więc nie może
+  się zdezaktualizować.
+
+**Dwie rodziny podstron**
+
+*13 stron kwotowych* (`/kalkulator-nadplaty-300000-zl/`) — dla każdej kwoty
+tabela skutków nadpłaty 200–2000 zł i druga tabela pokazująca wpływ
+oprocentowania. Każda liczba jest wyliczana w czasie budowania przez
+`src/lib/mortgage.ts`, ten sam kod, który liczy w kalkulatorze. Nic nie jest
+wpisane ręcznie, więc treść i narzędzie nie mogą się rozjechać.
+
+*5 stron poradnikowych* — treść pisana ręcznie, każda odpowiada na jedno
+konkretne pytanie z wyszukiwarki: opłacalność nadpłaty, skrócenie okresu kontra
+niższa rata, moment rozpoczęcia, nadpłata kontra inwestowanie, prowizja
+za wcześniejszą spłatę.
+
+**Decyzja: statyczny HTML zamiast tras w SPA**
+
+Strona stoi na GitHub Pages, gdzie nie ma serwera renderującego Reacta.
+Googlebot wykonuje JavaScript, ale z opóźnieniem i bez gwarancji. Dla stron,
+których jedynym zadaniem jest zostać znalezionym, czysty HTML z inline CSS jest
+lepszym narzędziem — ładuje się natychmiast i indeksuje bezwarunkowo.
+Generator bundluje `mortgage.ts` esbuildem, więc nie ma zduplikowanej
+matematyki finansowej w drugim języku.
+
+**Decyzja: brak stron „nadpłata w mBanku / PKO BP"**
+
+Frazy z nazwami banków mają duży wolumen i były pierwszym pomysłem — ale
+rzetelna strona o nadpłacie w konkretnym banku wymaga zweryfikowanych danych
+o prowizjach i procedurach tego banku. Bez nich powstałoby 12 niemal
+identycznych stron podmieniających tylko nazwę, czyli podręcznikowy przykład
+doorway pages, za które Google karze — a w kategorii finansowej podanie
+niesprawdzonej informacji o opłatach to problem poważniejszy niż SEO.
+Do zrobienia, gdy będą źródła.
+
+**Weryfikacja:** wygenerowane strony sprawdzone w przeglądarce. Kredyt
+300 000 zł / 6,5% / 25 lat → rata 2 026 zł, odsetki 307 686 zł, nadpłata
+500 zł oszczędza 125 588 zł i skraca kredyt o 9 lat 1 mies. Zgadza się
+z kalkulatorem i z przeliczeniem ręcznym.
