@@ -630,6 +630,55 @@ footer a:hover { color: var(--accent); }
   border-radius: 10px; font-size: .85rem;
 }
 
+/* SLOT REKLAMOWY */
+.ad-slot {
+  margin: 28px auto; max-width: 1200px;
+  text-align: center; min-height: 100px;
+}
+.ad-slot-label {
+  font-size: .62rem; font-weight: 600; letter-spacing: 1.4px;
+  text-transform: uppercase; color: #94a3b8; margin-bottom: 6px;
+}
+
+/* OFERTY PARTNERSKIE */
+.partner-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius); padding: 24px 26px;
+  box-shadow: var(--shadow-sm);
+}
+.partner-label {
+  display: inline-block;
+  font-size: .62rem; font-weight: 700; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--warn);
+  background: var(--warn-soft); border: 1px solid #fcd9a0;
+  border-radius: 999px; padding: 3px 10px; margin-bottom: 12px;
+}
+.partner-title {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1.02rem; font-weight: 700; line-height: 1.35;
+  margin-bottom: 8px;
+}
+.partner-body { font-size: .88rem; color: var(--text2); margin-bottom: 16px; }
+.partner-offers { display: flex; flex-direction: column; gap: 10px; }
+.partner-offer {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 16px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--bg2);
+  text-decoration: none; transition: border-color .15s, background .15s, transform .15s;
+}
+.partner-offer:hover {
+  border-color: var(--accent); background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.partner-offer-name { font-size: .92rem; font-weight: 700; color: var(--text); }
+.partner-offer-pitch { font-size: .82rem; color: var(--text2); }
+.partner-disclosure {
+  font-size: .72rem; color: var(--text3); line-height: 1.5;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+}
+
 /* UTILS */
 .container { max-width: 1200px; margin: 0 auto; }
 .flex-gap { display: flex; gap: 16px; flex-wrap: wrap; }

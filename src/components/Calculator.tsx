@@ -6,6 +6,7 @@ import { useLang } from '../contexts/LangContext';
 import { calcStdPayment } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
+import PartnerOffers from './PartnerOffers';
 
 function useSyncInput(ref: React.RefObject<HTMLInputElement | null>, value: number | string) {
   useEffect(() => {
@@ -518,6 +519,8 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             ) : (
               <>
                 {stats}
+
+                <PartnerOffers calcState={calcState} />
 
                 {calcState.strategy === 'refinance' && (
                   <div className="result-card" style={{ fontSize: '.82rem', color: 'var(--text3)', fontStyle: 'italic' }}>

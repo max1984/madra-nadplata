@@ -7,6 +7,7 @@ import Hero from './components/Hero';
 import AdConsent from './components/AdConsent';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import ErrorBoundary from './components/ErrorBoundary';
+import AdSlot from './components/AdSlot';
 
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const ExampleSection = lazy(() => import('./components/ExampleSection'));
@@ -34,6 +35,8 @@ function AppInner() {
         <ExampleSection />
         <FAQ />
 
+        <AdSlot slot="inArticle" />
+
         <div className="tools-divider">
           <div className="tools-divider-line" />
           <div className="tools-divider-content">
@@ -50,6 +53,8 @@ function AppInner() {
           onCalculate={calculate}
           calcError={calcError}
         />
+        <AdSlot slot="afterResults" />
+
         <Schedule
           calcState={calcState}
           onOverpayChange={onOverpayChange}

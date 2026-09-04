@@ -63,6 +63,7 @@ export type TranslationKey =
   | 'custom_base_title' | 'custom_base_hint'
   | 'overpay_day_tip'
   | 'ad_consent_text' | 'ad_consent_accept' | 'ad_consent_decline' | 'ad_consent_policy'
+  | 'ad_label' | 'partner_label' | 'partner_title' | 'partner_body' | 'partner_disclosure'
   | 'strategy_goal' | 'goal_hint' | 'goal_years_label' | 'goal_target_label'
   | 'goal_required_overpay' | 'goal_required_total' | 'goal_already_met'
   | 'goal_unreachable' | 'error_goal_months'
@@ -205,6 +206,11 @@ const pl: Translations = {
   custom_base_hint: 'Dodaj nadpłaty w harmonogramie poniżej – wyniki zaktualizują się automatycznie.',
   overpay_day_tip: '💡 Najlepszym dniem na nadpłatę jest dzień spłaty raty kapitałowo-odsetkowej – ze względu na różne podejścia banków do naliczania odsetek, wpłata w tym dniu jest zawsze bezpieczna.',
   ad_consent_text: 'Ta strona wyświetla reklamy Google AdSense. Akceptując, zgadzasz się na personalizowanie reklam na podstawie Twoich zainteresowań. Odrzucając, zobaczysz reklamy niespersonalizowane. Dane nie są sprzedawane osobom trzecim.',
+  ad_label: 'Reklama',
+  partner_label: 'Oferta partnerska',
+  partner_title: 'Niższe oprocentowanie działa jak nadpłata – tylko bez wpłacania ani złotówki',
+  partner_body: 'Przy Twoim saldzie i okresie spłaty oprocentowanie niższe o 1 punkt procentowy oznacza {amount} mniej odsetek. Jeśli od zaciągnięcia kredytu minęło trochę czasu, warto sprawdzić, czy inny bank nie da Ci dziś lepszych warunków.',
+  partner_disclosure: 'To linki partnerskie – jeśli skorzystasz z oferty, strona może dostać prowizję. Nie zmienia to wyników kalkulatora ani warunków, które dostaniesz od banku.',
   ad_consent_accept: 'Akceptuj',
   ad_consent_decline: 'Odrzuć',
   ad_consent_policy: 'Polityka prywatności',
@@ -365,6 +371,11 @@ const en: Translations = {
   custom_base_hint: 'Add overpayments in the schedule below — results update automatically.',
   overpay_day_tip: '💡 The best day to make an overpayment is your installment due date — due to varying bank approaches to interest calculation, paying on the due date is always safe.',
   ad_consent_text: 'This site displays Google AdSense ads. By accepting, you consent to interest-based personalized advertising. By declining, you will see non-personalized ads only. Your data is not sold to third parties.',
+  ad_label: 'Advertisement',
+  partner_label: 'Partner offer',
+  partner_title: 'A lower rate works like an overpayment — without paying a single extra unit',
+  partner_body: 'At your balance and remaining term, a rate lower by 1 percentage point means {amount} less interest. If some time has passed since you took the loan, it is worth checking whether another bank would offer you better terms today.',
+  partner_disclosure: 'These are affiliate links — if you use an offer, this site may receive a commission. It does not change the calculator results or the terms the bank gives you.',
   ad_consent_accept: 'Accept',
   ad_consent_decline: 'Decline',
   ad_consent_policy: 'Privacy Policy',

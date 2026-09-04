@@ -115,3 +115,47 @@ funkcja goal-seek jest uznawana za najbardziej użyteczny tryb kalkulatora.
 6,5%, 300 rat, cel 15 lat → 784 zł/mies. nadpłaty, 3 484 zł łącznie do banku,
 183 052 zł zaoszczędzonych odsetek. Rata standardowa 2 701 zł zgadza się
 z wyliczeniem ręcznym.
+
+---
+
+## FAZA 4 — Podpięcie monetyzacji ✅
+
+*4 września 2026*
+
+**Co zostało zrobione**
+
+- `src/components/AdSlot.tsx` — jednostka reklamowa czytająca konfigurację.
+  Bez skonfigurowanego slotu nie renderuje niczego: żadnej pustej ramki,
+  żadnego przeskoku layoutu.
+- `src/components/PartnerOffers.tsx` — kontekstowy moduł ofert pod wynikami.
+- Dwa miejsca reklamowe: pod wynikami kalkulatora i między sekcjami
+  edukacyjnymi. **Świadomie nie ma reklamy nad kalkulatorem** — użytkownik,
+  który nie doszedł do wyniku, nie kliknie też w ofertę partnera,
+  a oferta jest warta wielokrotnie więcej niż odsłona reklamy.
+
+**Jak działa moduł partnerski**
+
+Nie jest to zwykły baner. Liczy na danych konkretnego użytkownika, ile odsetek
+zniknęłoby przy oprocentowaniu niższym o 1 punkt procentowy, i pokazuje tę kwotę
+w treści. Przy kredycie 400 000 zł na 7,2% i 300 ratach to 75 608 zł — liczba,
+która sama się broni, bez obiecywania czegokolwiek w imieniu banku.
+
+Warunki wyświetlenia (wszystkie muszą być spełnione):
+
+1. Użytkownik kliknął „Oblicz" — moduł nie istnieje na pustej stronie.
+2. Pozostało co najmniej 60 rat — przy krótszym okresie refinansowanie
+   zwykle nie zwraca kosztów.
+3. Obniżka oprocentowania faktycznie dawałaby oszczędność.
+4. W konfiguracji są jakiekolwiek oferty.
+
+Oznaczenie: badge „Oferta partnerska", osobna adnotacja o prowizji pod linkami,
+`rel="sponsored nofollow"` na każdym odnośniku. To nie jest nadgorliwość —
+Google traktuje strony finansowe jako YMYL i karze za ukryte reklamy,
+a AdSense potrafi za to zablokować konto.
+
+**Weryfikacja:** przetestowane z tymczasowymi ofertami testowymi — moduł
+renderuje się poprawnie i podaje prawidłową kwotę (75 608 zł potwierdzone
+ręcznym przeliczeniem). Konfiguracja przywrócona do pustej.
+
+⏸ **Czeka na Ciebie:** linki z sieci afiliacyjnej → `PARTNER_OFFERS`
+oraz ID jednostek reklamowych → `ADSENSE_SLOTS`.
