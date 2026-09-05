@@ -25,11 +25,11 @@ export default function Footer() {
   return (
     <footer>
       {lang === 'pl' && (
-        <nav className="footer-links" aria-label="Poradniki">
+        <div className="footer-links" role="navigation" aria-label="Poradniki">
           {SEO_LINKS.map((l) => (
             <a key={l.href} href={l.href}>{l.label}</a>
           ))}
-        </nav>
+        </div>
       )}
 
       <div className="footer-logo">💰 Mądra Nadpłata</div>

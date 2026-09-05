@@ -10,7 +10,7 @@
  * Dopóki jest tu atrapa, skrypt AdSense w ogóle się nie ładuje — nie ma sensu
  * ciągnąć 200 kB JavaScriptu, który i tak nic nie wyświetli.
  */
-export const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX';
+export const ADSENSE_CLIENT = 'ca-pub-6577606072180185';
 
 /** ID jednostek reklamowych z panelu AdSense (Reklamy → Według jednostek). */
 export const ADSENSE_SLOTS = {

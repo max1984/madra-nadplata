@@ -268,3 +268,34 @@ publisher ID AdSense, konto Search Console, rejestracja w sieci afiliacyjnej.
 Do tego czasu strona działa dokładnie jak wcześniej, tylko szybciej, jaśniej,
 z jedną unikalną funkcją więcej i z osiemnastoma dodatkowymi drzwiami wejścia
 z wyszukiwarki.
+
+---
+
+## Podpięcie prawdziwego AdSense ✅
+
+*5 września 2026*
+
+Właściciel przekazał publisher ID (`pub-6577606072180185`). Podmienione
+w dwóch miejscach:
+
+- `src/config/monetization.ts` → `ADSENSE_CLIENT = 'ca-pub-6577606072180185'`.
+  Od tego momentu `adsEnabled()` zwraca `true`: skrypt `adsbygoogle.js`
+  ładuje się naprawdę (Auto Ads zacznie działać na całej stronie, gdy Google
+  zakończy weryfikację witryny), a baner zgody na reklamy zaczyna się pokazywać
+  pierwszym odwiedzającym.
+- `public/ads.txt` → prawdziwy `pub-6577606072180185` zamiast atrapy.
+  Bez zgodnego `ads.txt` część popytu programatycznego i tak by odpadła,
+  nawet przy poprawnym ID w skrypcie.
+
+Dwa ręcznie umieszczone sloty (`afterResults`, `inArticle` w
+`ADSENSE_SLOTS`) zostają puste, dopóki nie założysz w panelu AdSense
+konkretnych jednostek reklamowych — do tego czasu monetyzuje samo Auto Ads.
+
+**Naprawiony przy okazji bug zgłoszony przez właściciela:** linki poradnikowe
+w stopce (dodane w Fazie 5) były owinięte w tag `<nav>`. Globalny CSS ma
+regułę po samej nazwie znacznika — `nav { position: fixed; top: 0; z-index: 100; }`
+— napisaną z myślą o głównej nawigacji, ale łapiącą **każdy** element `<nav>`
+na stronie. Efekt: linki w stopce renderowały się przyklejone do góry ekranu,
+na wierzchu treści hero. Zmienione na `<div role="navigation">` — ten sam
+sygnał dla czytników ekranu, bez kolizji ze stylem tagu. Zweryfikowane
+zrzutem ekranu: góra strony czysta, linki z powrotem w stopce.
