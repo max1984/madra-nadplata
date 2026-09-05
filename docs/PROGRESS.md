@@ -218,3 +218,53 @@ Do zrobienia, gdy będą źródła.
 300 000 zł / 6,5% / 25 lat → rata 2 026 zł, odsetki 307 686 zł, nadpłata
 500 zł oszczędza 125 588 zł i skraca kredyt o 9 lat 1 mies. Zgadza się
 z kalkulatorem i z przeliczeniem ręcznym.
+
+**Potwierdzenie na produkcji** (5 września 2026, po automatycznym deployu):
+strona główna, wszystkie 18 podstron i `sitemap.xml` (19 adresów) odpowiadają
+`200 OK` pod `nadplata.org`. Pipeline `push → build → GitHub Pages` zadziałał
+bez żadnej ręcznej interwencji.
+
+---
+
+## FAZA 6 — Automatyzacja ✅
+
+*5 września 2026*
+
+**Cel:** domknąć obietnicę „zero pracy właściciela" — deploy już działał
+automatycznie od pierwszego commita w tej sesji (GitHub Actions → Pages przy
+każdym pushu na `main`), tej fazie zostały więc dwie rzeczy, których wcześniej
+brakowało: pilnowanie, czy strona żyje, i pilnowanie aktualności zależności.
+
+**Co zostało zrobione**
+
+- `.github/workflows/monitor.yml` — cotygodniowa kontrola (poniedziałek,
+  06:17 UTC): strona główna odpowiada, `sitemap.xml` ma odpowiednią liczbę
+  wpisów, dwie reprezentatywne podstrony SEO odpowiadają, `robots.txt`
+  wskazuje na sitemap. Bez żadnych sekretów — GitHub domyślnie wysyła e-mail
+  do właściciela repozytorium, gdy zaplanowany workflow kończy się
+  niepowodzeniem, więc to jedyny potrzebny „alarm".
+- `.github/dependabot.yml` — cotygodniowe PR-y z aktualizacjami npm
+  (pogrupowane patch/minor, limit 5 naraz) i akcji GitHuba. Merge nadal
+  wymaga Twojego kliknięcia — to jedyne miejsce, gdzie automatyzacja świadomie
+  zatrzymuje się przed Tobą, bo aktualizacje major mogą wymagać przeglądu.
+
+**Co już działało wcześniej i nie wymagało zmian**
+
+- Deploy: `git push` na `main` → `npm run build` (teraz obejmuje też generator
+  SEO z fazy 5) → GitHub Pages. Zero kroków ręcznych.
+- Sitemap: generowany przy każdym buildzie z `lastmod` ustawionym na datę
+  builda — nie może się zdezaktualizować.
+
+**Weryfikacja:** logika sprawdzeń z `monitor.yml` odtworzona ręcznie przeciwko
+`nadplata.org` — wszystkie cztery kroki przechodzą.
+
+---
+
+## Podsumowanie: gdzie jesteśmy
+
+Wszystkie sześć faz z `PLAN-ZYSKU.md` wdrożone i działające na produkcji.
+Pozostałe kroki należą wyłącznie do właściciela (sekcja 3 planu):
+publisher ID AdSense, konto Search Console, rejestracja w sieci afiliacyjnej.
+Do tego czasu strona działa dokładnie jak wcześniej, tylko szybciej, jaśniej,
+z jedną unikalną funkcją więcej i z osiemnastoma dodatkowymi drzwiami wejścia
+z wyszukiwarki.
