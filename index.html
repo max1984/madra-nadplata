@@ -147,8 +147,11 @@
         wait_for_update: 2000
       });
     </script>
-    <!-- AdSense i analityka ładowane warunkowo z src/lib/scripts.ts
-         (konfiguracja: src/config/monetization.ts) -->
+    <!-- AdSense wymaga tego tagu statycznie w <head> do weryfikacji witryny.
+         ID musi być zgodne z ADSENSE_CLIENT w src/config/monetization.ts.
+         Analityka nadal ładowana warunkowo z src/lib/scripts.ts. -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6577606072180185"
+     crossorigin="anonymous"></script>
   </head>
   <body>
     <div id="root"></div>

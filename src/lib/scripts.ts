@@ -1,4 +1,4 @@
-import { ADSENSE_CLIENT, CF_ANALYTICS_TOKEN, adsEnabled, analyticsEnabled } from '../config/monetization';
+import { CF_ANALYTICS_TOKEN, analyticsEnabled } from '../config/monetization';
 
 function appendScript(attrs: Record<string, string>) {
   const s = document.createElement('script');
@@ -10,16 +10,11 @@ function appendScript(attrs: Record<string, string>) {
  * Ładuje skrypty zewnętrzne dopiero po pierwszym renderze i tylko te, które są
  * faktycznie skonfigurowane. Dzięki temu przy pustej konfiguracji strona nie
  * ciągnie ani bajta obcego kodu — LCP zostaje nietknięte.
+ * Skrypt AdSense jest osobno wklejony statycznie w index.html <head>, bo
+ * AdSense wymaga go tam do weryfikacji witryny.
  */
 export function loadExternalScripts() {
   const run = () => {
-    if (adsEnabled()) {
-      appendScript({
-        async: '',
-        src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`,
-        crossorigin: 'anonymous',
-      });
-    }
     if (analyticsEnabled()) {
       appendScript({
         defer: '',
