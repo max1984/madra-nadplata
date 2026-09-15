@@ -41,4 +41,21 @@ describe('validateInputs', () => {
     expect(validateInputs({ ...DEFAULT_INPUTS, prepayFee: 0 })).toBeNull();
     expect(validateInputs({ ...DEFAULT_INPUTS, prepayFee: 5 })).toBeNull();
   });
+
+  const validRefi = { ...DEFAULT_INPUTS, strategy: 'refinance' as const };
+
+  it('accepts refinance inputs within the UI bounds', () => {
+    expect(validateInputs(validRefi)).toBeNull();
+  });
+
+  it('rejects a refinancing month outside the loan term', () => {
+    expect(validateInputs({ ...validRefi, refiMonth: -1 })).toBe('error_refi_month');
+    expect(validateInputs({ ...validRefi, refiMonth: validRefi.loanMonths })).toBe('error_refi_month');
+  });
+
+  it('rejects an out-of-range origination fee or a negative flat fee — same class of bug as ?fee on prepayFee', () => {
+    expect(validateInputs({ ...validRefi, refiOriginationFee: 50 })).toBe('error_refi_fee');
+    expect(validateInputs({ ...validRefi, refiOriginationFee: -1 })).toBe('error_refi_fee');
+    expect(validateInputs({ ...validRefi, refiFlat: -100 })).toBe('error_refi_fee');
+  });
 });
