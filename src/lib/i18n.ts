@@ -49,7 +49,7 @@ export type TranslationKey =
   | 'chart_interest_with' | 'chart_capital_with'
   | 'chart_year' | 'currency' | 'years' | 'years1' | 'months_short'
   | 'hero_note'
-  | 'error_loan_amount' | 'error_months' | 'error_rate'
+  | 'error_loan_amount' | 'error_months' | 'error_rate' | 'error_prepay_fee'
   | 'error_refi_rate' | 'error_refi_months'
   | 'copy_link' | 'copy_link_copied'
   | 'csv_export'
@@ -178,6 +178,7 @@ const pl: Translations = {
   error_loan_amount: 'Kwota kredytu musi wynosić od 1 000 do 10 000 000 zł.',
   error_months: 'Liczba rat musi wynosić od 12 do 360.',
   error_rate: 'Oprocentowanie musi wynosić od 0,01% do 25%.',
+  error_prepay_fee: 'Prowizja za nadpłatę musi wynosić od 0% do 5%.',
   error_refi_rate: 'Oprocentowanie nowego kredytu musi wynosić od 0,01% do 25%.',
   error_refi_months: 'Okres nowego kredytu musi wynosić od 12 do 360 miesięcy.',
   copy_link: 'Kopiuj link',
@@ -343,6 +344,7 @@ const en: Translations = {
   error_loan_amount: 'Loan amount must be between 1,000 and 10,000,000.',
   error_months: 'Months must be between 12 and 360.',
   error_rate: 'Interest rate must be between 0.01% and 25%.',
+  error_prepay_fee: 'The prepayment fee must be between 0% and 5%.',
   error_refi_rate: 'New loan interest rate must be between 0.01% and 25%.',
   error_refi_months: 'New loan period must be between 12 and 360 months.',
   copy_link: 'Copy link',

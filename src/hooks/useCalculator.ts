@@ -68,7 +68,7 @@ export interface CalcState {
   refiData?: RefiData;
 }
 
-const DEFAULT_INPUTS: CalcInputs = {
+export const DEFAULT_INPUTS: CalcInputs = {
   loanAmount: 300000,
   interestRate: 6,
   loanMonths: 360,
@@ -150,7 +150,7 @@ function buildUrlParams(inp: CalcInputs): string {
   return sp.toString();
 }
 
-function validateInputs(inp: CalcInputs): TranslationKey | null {
+export function validateInputs(inp: CalcInputs): TranslationKey | null {
   if (!isFinite(inp.loanAmount) || inp.loanAmount < 1000 || inp.loanAmount > 10_000_000) {
     return 'error_loan_amount';
   }
@@ -159,6 +159,9 @@ function validateInputs(inp: CalcInputs): TranslationKey | null {
   }
   if (!isFinite(inp.interestRate) || inp.interestRate < 0.01 || inp.interestRate > 25) {
     return 'error_rate';
+  }
+  if (!isFinite(inp.prepayFee) || inp.prepayFee < 0 || inp.prepayFee > 5) {
+    return 'error_prepay_fee';
   }
   if (inp.strategy === 'goal') {
     if (!isFinite(inp.goalMonths) || inp.goalMonths < 1 || inp.goalMonths > inp.loanMonths) {

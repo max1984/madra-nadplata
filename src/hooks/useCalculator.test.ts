@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrlInputs } from './useCalculator';
+import { parseUrlInputs, validateInputs, DEFAULT_INPUTS } from './useCalculator';
 
 describe('parseUrlInputs', () => {
   it('parses valid numeric params', () => {
@@ -27,5 +27,18 @@ describe('parseUrlInputs', () => {
 
   it('returns an empty patch for an empty query string', () => {
     expect(parseUrlInputs('')).toEqual({});
+  });
+});
+
+describe('validateInputs', () => {
+  it('accepts the default inputs', () => {
+    expect(validateInputs(DEFAULT_INPUTS)).toBeNull();
+  });
+
+  it('rejects an out-of-range prepayment fee — a shared link could set ?fee=999 unchecked', () => {
+    expect(validateInputs({ ...DEFAULT_INPUTS, prepayFee: 999 })).toBe('error_prepay_fee');
+    expect(validateInputs({ ...DEFAULT_INPUTS, prepayFee: -1 })).toBe('error_prepay_fee');
+    expect(validateInputs({ ...DEFAULT_INPUTS, prepayFee: 0 })).toBeNull();
+    expect(validateInputs({ ...DEFAULT_INPUTS, prepayFee: 5 })).toBeNull();
   });
 });
