@@ -7,7 +7,13 @@ export function fmt(n: number, dec = 0, lang: Lang = 'pl'): string {
   );
 }
 
+/**
+ * Wszystkie kwoty w kalkulatorze to złotówki niezależnie od języka interfejsu
+ * — to kalkulator polskich kredytów hipotecznych dla anglojęzycznych
+ * użytkowników, nie przelicznik walut. Wersja "en" pokazywała "$", co
+ * sugerowało dolary i myliło co do realnej wartości kredytu.
+ */
 export function fmtC(n: number, lang: Lang = 'pl', dec = 0): string {
-  if (lang === 'en') return '$\u00a0' + fmt(n, dec, lang);
-  return fmt(n, dec, lang) + '\u00a0zł';
+  const suffix = lang === 'en' ? 'PLN' : 'zł';
+  return fmt(n, dec, lang) + ' ' + suffix;
 }

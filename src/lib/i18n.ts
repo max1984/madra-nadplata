@@ -338,7 +338,7 @@ const en: Translations = {
   chart_without: 'Without overpayment', chart_with: 'With overpayment',
   chart_interest_without: 'Interest (no overpayment)', chart_capital_without: 'Principal (no overpayment)',
   chart_interest_with: 'Interest (with overpayment)', chart_capital_with: 'Principal (with overpayment)',
-  chart_year: 'Year', currency: '$', years: 'years', years1: 'year', months_short: 'mo.',
+  chart_year: 'Year', currency: 'PLN', years: 'years', years1: 'year', months_short: 'mo.',
   hero_note: '* example: {amount} PLN, {years} years, {rate}%, fixed total {total} PLN/mo.',
   error_loan_amount: 'Loan amount must be between 1,000 and 10,000,000.',
   error_months: 'Months must be between 12 and 360.',
