@@ -86,29 +86,45 @@ const DEFAULT_INPUTS: CalcInputs = {
   refiFlat: 0,
 };
 
-function parseUrlInputs(): Partial<CalcInputs> {
-  const sp = new URLSearchParams(window.location.search);
+/**
+ * Parsuje liczbowe parametry URL, pomijając te, które nie są skończonymi
+ * liczbami (np. ?amount=abc albo ?rate=Infinity) — inaczej trafiały jako NaN
+ * wprost do stanu formularza i pola wejściowe wyglądały na puste/zepsute
+ * dla każdego, kto dostał uszkodzony link do udostępnionego wyliczenia.
+ */
+function parseNum(sp: URLSearchParams, key: string): number | undefined {
+  if (!sp.has(key)) return undefined;
+  const n = Number(sp.get(key));
+  return Number.isFinite(n) ? n : undefined;
+}
+
+export function parseUrlInputs(search: string = window.location.search): Partial<CalcInputs> {
+  const sp = new URLSearchParams(search);
   const patch: Partial<CalcInputs> = {};
-  if (sp.has('amount')) patch.loanAmount = +sp.get('amount')!;
-  if (sp.has('rate')) patch.interestRate = +sp.get('rate')!;
-  if (sp.has('months')) patch.loanMonths = +sp.get('months')!;
-  if (sp.has('fee')) patch.prepayFee = +sp.get('fee')!;
+  const set = <K extends keyof CalcInputs>(key: K, value: CalcInputs[K] | undefined) => {
+    if (value !== undefined) patch[key] = value;
+  };
+
+  set('loanAmount', parseNum(sp, 'amount'));
+  set('interestRate', parseNum(sp, 'rate'));
+  set('loanMonths', parseNum(sp, 'months'));
+  set('prepayFee', parseNum(sp, 'fee'));
   const strat = sp.get('strategy');
   if (strat === 'reduce_payment') {
     patch.strategy = 'fixed_total'; // reduce_payment was removed; it was identical to fixed_total
   } else if (strat && ['fixed_total', 'fixed_overpay', 'shorten_period', 'goal', 'custom', 'refinance'].includes(strat)) {
     patch.strategy = strat as Strategy;
   }
-  if (sp.has('total')) patch.totalMonthlySlider = +sp.get('total')!;
-  if (sp.has('overpay')) patch.overpayAmountSlider = +sp.get('overpay')!;
-  if (sp.has('shorten')) patch.shortenAmountSlider = +sp.get('shorten')!;
-  if (sp.has('goal')) patch.goalMonths = +sp.get('goal')!;
-  if (sp.has('start')) patch.overpayStartMonth = +sp.get('start')!;
-  if (sp.has('refiMonth')) patch.refiMonth = +sp.get('refiMonth')!;
-  if (sp.has('refiRate')) patch.refiRate = +sp.get('refiRate')!;
-  if (sp.has('refiMonths')) patch.refiMonths = +sp.get('refiMonths')!;
-  if (sp.has('refiOFee')) patch.refiOriginationFee = +sp.get('refiOFee')!;
-  if (sp.has('refiFlat')) patch.refiFlat = +sp.get('refiFlat')!;
+  set('totalMonthlySlider', parseNum(sp, 'total'));
+  set('overpayAmountSlider', parseNum(sp, 'overpay'));
+  set('shortenAmountSlider', parseNum(sp, 'shorten'));
+  set('goalMonths', parseNum(sp, 'goal'));
+  set('overpayStartMonth', parseNum(sp, 'start'));
+  set('refiMonth', parseNum(sp, 'refiMonth'));
+  set('refiRate', parseNum(sp, 'refiRate'));
+  set('refiMonths', parseNum(sp, 'refiMonths'));
+  set('refiOriginationFee', parseNum(sp, 'refiOFee'));
+  set('refiFlat', parseNum(sp, 'refiFlat'));
   return patch;
 }
 
