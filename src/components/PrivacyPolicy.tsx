@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../contexts/LangContext';
+import { safeRemoveItem } from '../lib/safeStorage';
 
 function resetAdConsent() {
-  localStorage.removeItem('ad_consent_v1');
+  safeRemoveItem('ad_consent_v1');
   window.location.hash = '';
   window.location.reload();
 }

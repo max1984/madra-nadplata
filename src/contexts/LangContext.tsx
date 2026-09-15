@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import type { Lang } from '../lib/i18n';
 import { t as translate, type TranslationKey } from '../lib/i18n';
 import { fmt as formatNum, fmtC as formatCurrency } from '../lib/format';
+import { safeGetItem, safeSetItem } from '../lib/safeStorage';
 
 interface LangContextValue {
   lang: Lang;
@@ -15,12 +16,12 @@ const LangContext = createContext<LangContextValue | null>(null);
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
-    const stored = localStorage.getItem('lang');
+    const stored = safeGetItem('lang');
     return (stored === 'en' || stored === 'pl') ? stored : 'pl';
   });
 
   const setLang = (l: Lang) => {
-    localStorage.setItem('lang', l);
+    safeSetItem('lang', l);
     setLangState(l);
   };
 

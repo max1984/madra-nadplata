@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLang } from '../contexts/LangContext';
 import { adsEnabled } from '../config/monetization';
+import { safeGetItem, safeSetItem } from '../lib/safeStorage';
 
 const STORAGE_KEY = 'ad_consent_v1';
 
@@ -17,7 +18,7 @@ function applyConsent(granted: boolean) {
 export default function AdConsent() {
   const { t } = useLang();
   const [status, setStatus] = useState<'granted' | 'denied' | null>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = safeGetItem(STORAGE_KEY);
     return stored === 'granted' || stored === 'denied' ? stored : null;
   });
 
@@ -32,7 +33,7 @@ export default function AdConsent() {
 
   const decide = (granted: boolean) => {
     const s = granted ? 'granted' : 'denied';
-    localStorage.setItem(STORAGE_KEY, s);
+    safeSetItem(STORAGE_KEY, s);
     applyConsent(granted);
     setStatus(s);
   };
