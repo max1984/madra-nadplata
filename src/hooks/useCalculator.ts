@@ -373,9 +373,13 @@ export function useCalculator() {
     });
   }, []);
 
+  // Refinansowanie liczy harmonogram przez buildRefinanceSchedule, nie buildSchedule
+  // — reset tutaj podmieniłby go na zwykłą amortyzację, ignorując refiMonth/refiRate.
+  // UI chowa te przyciski dla strategii 'refinance' (patrz Schedule.tsx), ale strażnik
+  // zostaje na wypadek, gdyby to się kiedyś zmieniło (tak jak już mają onOverpayChange/onRateChange).
   const resetOverpays = useCallback(() => {
     setCalcState((prev) => {
-      if (!prev) return prev;
+      if (!prev || prev.strategy === 'refinance') return prev;
       let newOverpay: number[];
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
         newOverpay = naturalOverpaysWithStart(prev.P, prev.customRates, prev.months, prev.totalMonthly, prev.r, prev.overpayStartMonth);
@@ -391,7 +395,7 @@ export function useCalculator() {
 
   const clearOverpays = useCallback(() => {
     setCalcState((prev) => {
-      if (!prev) return prev;
+      if (!prev || prev.strategy === 'refinance') return prev;
       const newOverpay = Array<number>(prev.months).fill(0);
       const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
       return { ...prev, customOverpay: newOverpay, rows };
@@ -421,7 +425,7 @@ export function useCalculator() {
 
   const resetRates = useCallback(() => {
     setCalcState((prev) => {
-      if (!prev) return prev;
+      if (!prev || prev.strategy === 'refinance') return prev;
       const newRates = Array<number>(prev.months).fill(prev.r);
       let newOverpay = [...prev.customOverpay];
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
