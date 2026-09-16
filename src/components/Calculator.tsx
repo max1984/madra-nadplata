@@ -193,9 +193,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <div className="form-group">
-              <label>{t('form_loan_amount')}</label>
+              <label htmlFor="loan-amount">{t('form_loan_amount')}</label>
               <div className="input-with-suffix">
                 <input
+                  id="loan-amount"
                   ref={loanAmountRef}
                   type="number" defaultValue={inputs.loanAmount} min={1000} max={10000000} step={1000}
                   onBlur={(e) => {
@@ -211,9 +212,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             </div>
 
             <div className="form-group">
-              <label>{t('form_interest')}</label>
+              <label htmlFor="interest-rate">{t('form_interest')}</label>
               <div className="input-with-suffix">
                 <input
+                  id="interest-rate"
                   ref={interestRateRef}
                   type="number" defaultValue={inputs.interestRate} min={0.01} max={25} step={0.01}
                   onBlur={(e) => {
@@ -229,9 +231,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             </div>
 
             <div className="form-group">
-              <label>{t('form_months')}</label>
+              <label htmlFor="loan-months">{t('form_months')}</label>
               <div className="input-with-suffix">
                 <input
+                  id="loan-months"
                   ref={loanMonthsRef}
                   type="number" defaultValue={inputs.loanMonths} min={12} max={360} step={1}
                   onBlur={(e) => {
@@ -247,9 +250,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             </div>
 
             <div className="form-group">
-              <label>{t('form_fee')}</label>
+              <label htmlFor="prepay-fee">{t('form_fee')}</label>
               <div className="input-with-suffix">
                 <input
+                  id="prepay-fee"
                   ref={prepayFeeRef}
                   type="number" defaultValue={inputs.prepayFee} min={0} max={5} step={0.1}
                   onBlur={(e) => {
@@ -268,8 +272,8 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <div className="form-divider" />
 
             <div className="form-group">
-              <label>{t('form_strategy')}</label>
-              <select value={inputs.strategy === 'reduce_payment' ? 'fixed_total' : inputs.strategy} onChange={(e) => setInputs({ strategy: e.target.value as Strategy })}>
+              <label htmlFor="strategy-select">{t('form_strategy')}</label>
+              <select id="strategy-select" value={inputs.strategy === 'reduce_payment' ? 'fixed_total' : inputs.strategy} onChange={(e) => setInputs({ strategy: e.target.value as Strategy })}>
                 <option value="fixed_total">{t('strategy_fixed_total')}</option>
                 <option value="fixed_overpay">{t('strategy_fixed_overpay')}</option>
                 <option value="shorten_period">{t('strategy_shorten')}</option>
@@ -282,8 +286,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             {isFixedTotal && (
               <div className="slider-group">
                 <div className="slider-header">
-                  <label>{t('slider_total')}</label>
+                  <label htmlFor="total-monthly">{t('slider_total')}</label>
                   <input
+                    id="total-monthly"
                     ref={totalMonthlyRef}
                     type="number"
                     className="slider-val-input"
@@ -298,6 +303,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   />
                 </div>
                 <input type="range" min={sliderMin} max={sliderMax} step={100}
+                  aria-label={t('slider_total')}
                   value={Math.max(inputs.totalMonthlySlider, sliderMin)}
                   onChange={(e) => setInputs({ totalMonthlySlider: +e.target.value })} />
                 <div className="hint">{t('slider_std')} <strong>{fmtC(stdPayment, 2)}</strong></div>
@@ -308,8 +314,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             {inputs.strategy === 'fixed_overpay' && (
               <div className="slider-group">
                 <div className="slider-header">
-                  <label>{t('slider_overpay')}</label>
+                  <label htmlFor="overpay-amount">{t('slider_overpay')}</label>
                   <input
+                    id="overpay-amount"
                     ref={overpayAmountRef}
                     type="number"
                     className="slider-val-input"
@@ -324,6 +331,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   />
                 </div>
                 <input type="range" min={0} max={overpayMax} step={100} value={inputs.overpayAmountSlider}
+                  aria-label={t('slider_overpay')}
                   onChange={(e) => setInputs({ overpayAmountSlider: +e.target.value })} />
               </div>
             )}
@@ -331,8 +339,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             {inputs.strategy === 'shorten_period' && (
               <div className="slider-group">
                 <div className="slider-header">
-                  <label>{t('slider_overpay')}</label>
+                  <label htmlFor="shorten-amount">{t('slider_overpay')}</label>
                   <input
+                    id="shorten-amount"
                     ref={shortenAmountRef}
                     type="number"
                     className="slider-val-input"
@@ -347,6 +356,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   />
                 </div>
                 <input type="range" min={0} max={overpayMax} step={100} value={inputs.shortenAmountSlider}
+                  aria-label={t('slider_overpay')}
                   onChange={(e) => setInputs({ shortenAmountSlider: +e.target.value })} />
                 <div className="info-box" style={{ fontSize: '.85rem', marginTop: 8 }} dangerouslySetInnerHTML={{ __html: t('shorten_hint') }} />
               </div>
@@ -355,10 +365,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             {inputs.strategy === 'goal' && (
               <div className="slider-group">
                 <div className="slider-header">
-                  <label>{t('goal_years_label')}</label>
+                  <label htmlFor="goal-months">{t('goal_years_label')}</label>
                   <span className="slider-val">{goalLabel}</span>
                 </div>
-                <input type="range" min={12} max={inputs.loanMonths} step={12}
+                <input id="goal-months" type="range" min={12} max={inputs.loanMonths} step={12}
                   value={Math.min(inputs.goalMonths, inputs.loanMonths)}
                   onChange={(e) => setInputs({ goalMonths: +e.target.value })} />
                 <div className="hint">{t('slider_std')} <strong>{fmtC(stdPayment, 2)}</strong></div>
@@ -377,19 +387,19 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               <div>
                 <div className="slider-group">
                   <div className="slider-header">
-                    <label>{t('refi_month_label')}</label>
+                    <label htmlFor="refi-month">{t('refi_month_label')}</label>
                     <span className="slider-val">{inputs.refiMonth}</span>
                   </div>
-                  <input type="range" min={0} max={Math.min(120, inputs.loanMonths - 1)} step={1}
+                  <input id="refi-month" type="range" min={0} max={Math.min(120, inputs.loanMonths - 1)} step={1}
                     value={inputs.refiMonth}
                     onChange={(e) => setInputs({ refiMonth: +e.target.value })} />
                   <div className="hint">{t('refi_remaining_hint')} <strong>{inputs.loanMonths - inputs.refiMonth}</strong> {t('form_months_unit')}</div>
                 </div>
 
                 <div className="form-group">
-                  <label>{t('refi_new_rate_label')}</label>
+                  <label htmlFor="refi-rate">{t('refi_new_rate_label')}</label>
                   <div className="input-with-suffix">
-                    <input ref={refiRateRef} type="number" defaultValue={inputs.refiRate}
+                    <input id="refi-rate" ref={refiRateRef} type="number" defaultValue={inputs.refiRate}
                       min={0.01} max={25} step={0.01}
                       onBlur={(e) => {
                         const v = isFinite(+e.target.value) ? Math.max(0.01, Math.min(25, +e.target.value)) : inputs.refiRate;
@@ -403,9 +413,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 </div>
 
                 <div className="form-group">
-                  <label>{t('refi_new_months_label')}</label>
+                  <label htmlFor="refi-months">{t('refi_new_months_label')}</label>
                   <div className="input-with-suffix">
-                    <input ref={refiMonthsRef} type="number" defaultValue={inputs.refiMonths}
+                    <input id="refi-months" ref={refiMonthsRef} type="number" defaultValue={inputs.refiMonths}
                       min={12} max={360} step={1}
                       onBlur={(e) => {
                         const v = isFinite(+e.target.value) ? Math.max(12, Math.min(360, Math.round(+e.target.value))) : inputs.refiMonths;
@@ -419,9 +429,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 </div>
 
                 <div className="form-group">
-                  <label>{t('refi_origination_fee_label')}</label>
+                  <label htmlFor="refi-origination-fee">{t('refi_origination_fee_label')}</label>
                   <div className="input-with-suffix">
-                    <input ref={refiOriginationFeeRef} type="number" defaultValue={inputs.refiOriginationFee}
+                    <input id="refi-origination-fee" ref={refiOriginationFeeRef} type="number" defaultValue={inputs.refiOriginationFee}
                       min={0} max={10} step={0.01}
                       onBlur={(e) => {
                         const v = isFinite(+e.target.value) ? Math.max(0, Math.min(10, +e.target.value)) : 0;
@@ -436,9 +446,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 </div>
 
                 <div className="form-group">
-                  <label>{t('refi_flat_fee_label')}</label>
+                  <label htmlFor="refi-flat-fee">{t('refi_flat_fee_label')}</label>
                   <div className="input-with-suffix">
-                    <input ref={refiFlatRef} type="number" defaultValue={inputs.refiFlat}
+                    <input id="refi-flat-fee" ref={refiFlatRef} type="number" defaultValue={inputs.refiFlat}
                       min={0} max={10000000} step={100}
                       onBlur={(e) => {
                         const v = Math.max(0, Math.min(10000000, +e.target.value || 0));
@@ -461,12 +471,12 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             {inputs.strategy !== 'custom' && inputs.strategy !== 'refinance' && inputs.strategy !== 'goal' && (
               <div className="slider-group">
                 <div className="slider-header">
-                  <label>{t('overpay_start_label')}</label>
+                  <label htmlFor="overpay-start">{t('overpay_start_label')}</label>
                   <span className="slider-val">
                     {inputs.overpayStartMonth === 0 ? t('overpay_start_now') : inputs.overpayStartMonth}
                   </span>
                 </div>
-                <input type="range" min={0} max={Math.min(120, inputs.loanMonths - 1)} step={1}
+                <input id="overpay-start" type="range" min={0} max={Math.min(120, inputs.loanMonths - 1)} step={1}
                   value={inputs.overpayStartMonth}
                   onChange={(e) => setInputs({ overpayStartMonth: +e.target.value })} />
                 <div className="hint">{t('overpay_start_hint')}</div>
@@ -531,10 +541,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   <div className="result-card-label">{t('invest_section_title')}</div>
                   <div className="slider-group" style={{ marginBottom: 12 }}>
                     <div className="slider-header">
-                      <label style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--text2)' }}>{t('invest_rate_label')}</label>
+                      <label htmlFor="invest-rate" style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--text2)' }}>{t('invest_rate_label')}</label>
                       <span className="slider-val">{investRate}%</span>
                     </div>
-                    <input type="range" min={0} max={15} step={0.5}
+                    <input id="invest-rate" type="range" min={0} max={15} step={0.5}
                       value={investRate}
                       onChange={(e) => setInvestRate(+e.target.value)} />
                   </div>
