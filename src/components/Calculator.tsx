@@ -111,9 +111,13 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     setInputs({ totalMonthlySlider: newTotal });
   }, [sliderMin]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Aktualizujemy istniejący wykres zamiast go niszczyć i tworzyć od nowa —
+  // każda edycja raty/nadpłaty w harmonogramie (Schedule.tsx) tworzy nowy
+  // obiekt calcState, więc przy destroy+create na każdej zmianie canvas co
+  // klawisz mrugał i tracił animację przejścia. Chart.js update() płynnie
+  // interpoluje między starymi a nowymi punktami.
   useEffect(() => {
     if (!calcState || !chartRef.current) return;
-    chart.current?.destroy();
 
     const totalLen = Math.max(calcState.baseMonths, calcState.rows.length);
     const withBals = Array<number>(totalLen).fill(0);
@@ -121,11 +125,23 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     const baseBals = totalLen > calcState.baseBalances.length
       ? [...calcState.baseBalances, ...Array<number>(totalLen - calcState.baseBalances.length).fill(0)]
       : calcState.baseBalances;
+    const labels = Array.from({ length: totalLen }, (_, i) => i + 1);
+
+    if (chart.current) {
+      const [withoutDs, withDs] = chart.current.data.datasets;
+      chart.current.data.labels = labels;
+      withoutDs!.data = baseBals;
+      withoutDs!.label = t('chart_without');
+      withDs!.data = withBals;
+      withDs!.label = t('chart_with');
+      chart.current.update();
+      return;
+    }
 
     chart.current = new Chart(chartRef.current, {
       type: 'line',
       data: {
-        labels: Array.from({ length: totalLen }, (_, i) => i + 1),
+        labels,
         datasets: [
           { label: t('chart_without'), data: baseBals, borderColor: CHART.base, backgroundColor: CHART.baseFill, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
           { label: t('chart_with'), data: withBals, borderColor: CHART.over, backgroundColor: CHART.overFill, borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
@@ -141,9 +157,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
         },
       },
     });
-
-    return () => { chart.current?.destroy(); };
   }, [calcState, t, fmt]);
+
+  // Destroy tylko przy odmontowaniu komponentu — nie przy każdej zmianie calcState.
+  useEffect(() => () => { chart.current?.destroy(); chart.current = null; }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(window.location.href).then(() => {
