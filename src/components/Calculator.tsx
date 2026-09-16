@@ -553,6 +553,13 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   );
 }
 
+/**
+ * Powyżej tej wielokrotności zwykłej raty wynik strategii "cel spłaty" jest
+ * matematycznie poprawny, ale nierealny do wdrożenia w domowym budżecie —
+ * wtedy pokazujemy ostrzeżenie zamiast udawać, że to zwykła rekomendacja.
+ */
+const GOAL_UNREASONABLE_MULTIPLE = 5;
+
 function renderStats(
   cs: CalcState,
   t: (key: TranslationKey) => string,
@@ -638,6 +645,9 @@ function renderStats(
           <div className="r-lbl">{t('goal_target_label')} {cs.goalMonths} {t('months_short')}</div>
         </div>
       </div>
+      {cs.requiredOverpay > cs.origStdPayment * GOAL_UNREASONABLE_MULTIPLE && (
+        <div className="info-box" style={{ fontSize: '.85rem', marginTop: 14 }}>{t('goal_unreachable')}</div>
+      )}
     </div>
   ) : null;
 
