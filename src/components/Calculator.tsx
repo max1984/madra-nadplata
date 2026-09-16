@@ -516,6 +516,25 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.6, delay: 0.15 }}
           >
+            {isFinite(stdPayment) && stdPayment > 0 && (
+              <div className="result-card" style={{ marginBottom: 20 }}>
+                <div className="result-card-label">{t('rate_shock_title')}</div>
+                <p className="hint" style={{ marginBottom: 12 }}>{t('rate_shock_hint')}</p>
+                <div className="result-grid">
+                  {[1, 2, 3].map((delta) => {
+                    const shockStd = calcStdPayment(inputs.loanAmount, (inputs.interestRate + delta) / 100 / 12, inputs.loanMonths);
+                    const diff = shockStd - stdPayment;
+                    return (
+                      <div className="result-item" key={delta}>
+                        <div className="r-val" style={{ color: 'var(--danger)' }}>{fmtC(shockStd, 0)}</div>
+                        <div className="r-lbl">+{delta} p.p. ({diff >= 0 ? '+' : ''}{fmtC(diff, 0)} {t('rate_shock_more')})</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {!calcState ? (
               <div className="result-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 200 }}>
                 <div className="result-label" style={{ marginBottom: 12, fontSize: '.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--text3)' }}>
