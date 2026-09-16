@@ -45,9 +45,13 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     inputs.loanMonths
   );
 
-  // Snap slider bounds to multiples of 100 so all positions are round numbers
+  // Snap slider bounds to multiples of 100 so all positions are round numbers.
+  // Dla bardzo małych kredytów (np. 1000 zł na 360 rat) stdPayment jest tak
+  // niski, że sliderMax (2.5x raty) wychodzi poniżej sliderMin (rata+100) —
+  // odwrócony zakres psuje <input type="range">. Math.max wymusza sensowny
+  // rozstęp niezależnie od tego, jak mały jest kredyt.
   const sliderMin = Math.ceil((Math.ceil(stdPayment) + 1) / 100) * 100;
-  const sliderMax = Math.floor(stdPayment * 2.5 / 100) * 100;
+  const sliderMax = Math.max(sliderMin + 100, Math.floor(stdPayment * 2.5 / 100) * 100);
   const overpayMax = Math.max(10000, Math.floor(stdPayment * 2 / 100) * 100);
   const isFixedTotal = inputs.strategy === 'fixed_total' || inputs.strategy === 'reduce_payment';
 
