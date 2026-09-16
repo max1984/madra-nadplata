@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, naturalOverpaysWithStart, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
@@ -123,5 +123,22 @@ describe('naturalOverpaysWithStart', () => {
     const fromZero = naturalOverpaysWithStart(P, rates, months, 2300, r, 0);
     expect(delayed[0]).toBe(0);
     expect(fromZero[0]).toBeGreaterThan(0);
+  });
+});
+
+describe('resolveFixedStd', () => {
+  it('fixes the payment at the original standard rate for shorten_period and goal — that is the whole point of those strategies', () => {
+    expect(resolveFixedStd(makeCustomCalcState({ strategy: 'shorten_period', origStdPayment: 1798.65 }))).toBe(1798.65);
+    expect(resolveFixedStd(makeCustomCalcState({ strategy: 'goal', origStdPayment: 1798.65 }))).toBe(1798.65);
+  });
+
+  it('fixes the payment for custom strategy only when the global effect is "shorten"', () => {
+    expect(resolveFixedStd(makeCustomCalcState({ strategy: 'custom', customEffect: 'shorten', origStdPayment: 1798.65 }))).toBe(1798.65);
+    expect(resolveFixedStd(makeCustomCalcState({ strategy: 'custom', customEffect: 'reduce' }))).toBeNull();
+  });
+
+  it('lets the payment float (null) for the natural-payment strategies', () => {
+    expect(resolveFixedStd(makeCustomCalcState({ strategy: 'fixed_total' }))).toBeNull();
+    expect(resolveFixedStd(makeCustomCalcState({ strategy: 'fixed_overpay' }))).toBeNull();
   });
 });

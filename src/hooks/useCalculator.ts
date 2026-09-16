@@ -277,7 +277,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
   };
 }
 
-function resolveFixedStd(prev: CalcState): number | null {
+export function resolveFixedStd(prev: CalcState): number | null {
   if (prev.strategy === 'shorten_period' || prev.strategy === 'goal') return prev.origStdPayment;
   if (prev.strategy === 'custom' && prev.customEffect === 'shorten') return prev.origStdPayment;
   return null;
