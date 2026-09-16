@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, naturalOverpaysWithStart, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
   const months = 3;
@@ -10,6 +11,7 @@ function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
     customRates: Array<number>(months).fill(0.005),
     strategy: 'custom', customEffect: 'reduce',
     customPerRowEffects: Array<'shorten' | 'reduce'>(months).fill('reduce'),
+    overpayStartMonth: 0,
     totalMonthly: 0, defaultOverpay: 0,
     baseInterest: 0, baseMonths: months, baseBalances: [], baseCumInterestByMonth: [],
     rows: [],
@@ -97,5 +99,29 @@ describe('resolvePerRowFixed', () => {
     const perRow = resolvePerRowFixed(mixed);
     expect(perRow).not.toBeUndefined();
     expect(perRow![0]).not.toBe(perRow![1]);
+  });
+});
+
+describe('naturalOverpaysWithStart', () => {
+  const P = 300000, months = 360, r = 0.06 / 12;
+  const rates = Array<number>(months).fill(r);
+
+  it('is all zeros before the configured start month', () => {
+    const overpay = naturalOverpaysWithStart(P, rates, months, 2300, r, 24);
+    expect(overpay.slice(0, 24).every((v) => v === 0)).toBe(true);
+    expect(overpay[24]).toBeGreaterThan(0);
+  });
+
+  it('matches plain naturalOverpaysFromBalance when startMonth is 0', () => {
+    const withStart = naturalOverpaysWithStart(P, rates, months, 2300, r, 0);
+    const plain = naturalOverpaysFromBalance(P, 0, rates, months, 2300, r);
+    expect(withStart).toEqual(plain);
+  });
+
+  it('regression: onRateChange/resetOverpays/resetRates must pass overpayStartMonth from CalcState, not hardcode 0 — otherwise a configured delayed start silently resets to "overpay from month 1"', () => {
+    const delayed = naturalOverpaysWithStart(P, rates, months, 2300, r, 24);
+    const fromZero = naturalOverpaysWithStart(P, rates, months, 2300, r, 0);
+    expect(delayed[0]).toBe(0);
+    expect(fromZero[0]).toBeGreaterThan(0);
   });
 });

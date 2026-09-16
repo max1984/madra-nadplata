@@ -55,6 +55,7 @@ export interface CalcState {
   strategy: Strategy;
   customEffect: 'shorten' | 'reduce';
   customPerRowEffects: ('shorten' | 'reduce')[];
+  overpayStartMonth: number;
   totalMonthly: number;
   defaultOverpay: number;
   /** Nadpłata wyliczona przez solver dla strategii 'goal'. */
@@ -188,6 +189,22 @@ export function validateInputs(inp: CalcInputs): TranslationKey | null {
   return null;
 }
 
+/**
+ * Nadpłaty "naturalne" (dopłać do stałej raty) z opóźnionym startem —
+ * przed miesiącem startMonth same zera, dopiero od niego rozkład liczony
+ * od salda w tym momencie. Wydzielone, żeby onRateChange/resetOverpays nie
+ * musiały (i nie zapominały) powtarzać tej samej logiki co computeCalcState.
+ */
+export function naturalOverpaysWithStart(
+  P: number, customRates: number[], months: number, totalMonthly: number, r: number, startMonth: number
+): number[] {
+  if (startMonth <= 0) return naturalOverpaysFromBalance(P, 0, customRates, months, totalMonthly, r);
+  const noOv = Array<number>(months).fill(0);
+  const balAtStart = balanceAt(P, customRates, months, noOv, startMonth - 1, r);
+  const postOvs = naturalOverpaysFromBalance(balAtStart, startMonth, customRates, months, totalMonthly, r);
+  return [...Array<number>(startMonth).fill(0), ...postOvs];
+}
+
 function computeCalcState(inp: CalcInputs): CalcState {
   const { loanAmount: P, interestRate, loanMonths: months, prepayFee: feeRate, strategy } = inp;
   const r = interestRate / 100 / 12;
@@ -204,14 +221,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
   if (strategy === 'reduce_payment' || strategy === 'fixed_total') {
     totalMonthly = inp.totalMonthlySlider;
     defaultOverpay = totalMonthly;
-    if (startMonth > 0) {
-      const noOv = Array<number>(months).fill(0);
-      const balAtStart = balanceAt(P, customRates, months, noOv, startMonth - 1, r);
-      const postOvs = naturalOverpaysFromBalance(balAtStart, startMonth, customRates, months, totalMonthly, r);
-      customOverpay = [...Array<number>(startMonth).fill(0), ...postOvs];
-    } else {
-      customOverpay = naturalOverpaysFromBalance(P, 0, customRates, months, totalMonthly, r);
-    }
+    customOverpay = naturalOverpaysWithStart(P, customRates, months, totalMonthly, r, startMonth);
   } else if (strategy === 'fixed_overpay') {
     defaultOverpay = inp.overpayAmountSlider;
     customOverpay = Array<number>(months).fill(defaultOverpay);
@@ -259,7 +269,7 @@ function computeCalcState(inp: CalcInputs): CalcState {
   return {
     P, r, months, prepayFee: fee, stdPayment, origStdPayment: stdPayment,
     customOverpay, customRates, strategy, customEffect: 'shorten' as const,
-    customPerRowEffects, totalMonthly, defaultOverpay,
+    customPerRowEffects, totalMonthly, defaultOverpay, overpayStartMonth: startMonth,
     requiredOverpay, goalMonths: strategy === 'goal' ? inp.goalMonths : undefined,
     baseInterest: base.totalInterest, baseMonths: base.count, baseBalances: base.balances,
     baseCumInterestByMonth: base.cumInterestByMonth,
@@ -345,7 +355,7 @@ export function useCalculator() {
 
       let newOverpay = [...prev.customOverpay];
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
-        newOverpay = naturalOverpaysFromBalance(prev.P, 0, newRates, prev.months, prev.totalMonthly, newRate);
+        newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, newRate, prev.overpayStartMonth);
       }
 
       const base = buildBaseSchedule(prev.P, newRates, prev.months, newRate);
@@ -368,7 +378,7 @@ export function useCalculator() {
       if (!prev) return prev;
       let newOverpay: number[];
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
-        newOverpay = naturalOverpaysFromBalance(prev.P, 0, prev.customRates, prev.months, prev.totalMonthly, prev.r);
+        newOverpay = naturalOverpaysWithStart(prev.P, prev.customRates, prev.months, prev.totalMonthly, prev.r, prev.overpayStartMonth);
       } else if (prev.strategy === 'custom') {
         newOverpay = Array<number>(prev.months).fill(0);
       } else {
@@ -415,7 +425,7 @@ export function useCalculator() {
       const newRates = Array<number>(prev.months).fill(prev.r);
       let newOverpay = [...prev.customOverpay];
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
-        newOverpay = naturalOverpaysFromBalance(prev.P, 0, newRates, prev.months, prev.totalMonthly, prev.r);
+        newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, prev.r, prev.overpayStartMonth);
       }
       const base = buildBaseSchedule(prev.P, newRates, prev.months, prev.r);
       const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
