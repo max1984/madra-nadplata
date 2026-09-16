@@ -299,3 +299,64 @@ na stronie. Efekt: linki w stopce renderowały się przyklejone do góry ekranu,
 na wierzchu treści hero. Zmienione na `<div role="navigation">` — ten sam
 sygnał dla czytników ekranu, bez kolizji ze stylem tagu. Zweryfikowane
 zrzutem ekranu: góra strony czysta, linki z powrotem w stopce.
+
+---
+
+## Sesja ciągłego ulepszania (autonomiczna pętla) ✅
+
+*16 września 2026*
+
+Właściciel poprosił o uruchomienie samo-tempującej pętli: znajdź jedną
+konkretną poprawkę, wdróż, przetestuj, zacommituj i wypchnij, powtarzaj.
+Poniżej skrót — pełne uzasadnienia w komunikatach commitów.
+
+**Realne błędy w logice kalkulatora (zweryfikowane w przeglądarce/testami):**
+
+- Modal polityki prywatności w ogóle się nie zamykał — `close()` czyścił
+  hash przez `history.pushState`, które nie odpala `hashchange`, więc stan
+  `visible` nigdy nie wracał na `false`. Przycisk „Zamknij”, klik w tło
+  i Escape wyglądały na działające, ale nic nie robiły.
+- Trzy warianty tego samego błędu: konfiguracja użytkownika cicho gubiona
+  przy przeliczaniu harmonogramu, bo funkcja przeliczająca nie znała
+  parametru, który computeCalcState znał od początku — `customPerRowEffects`
+  (edycja/reset po ustawieniu różnych efektów per wiersz w strategii
+  „własna”), `overpayStartMonth` (edycja oprocentowania/reset przy
+  opóźnionym starcie nadpłaty) i ten sam przypadek osobno w `resetOverpays`
+  dla `fixed_overpay`/`shorten_period`. Za każdym razem naprawa: wydzielona,
+  wspólna, przetestowana funkcja użyta identycznie we wszystkich miejscach
+  zamiast rozjeżdżających się kopii.
+- Suwak stałej raty miał odwrócony zakres (`min > max`) dla bardzo małych
+  kredytów — niezdefiniowane zachowanie w przeglądarkach.
+- Uszkodzony link do udostępnionego wyliczenia (np. `?amount=abc`) wstawiał
+  `NaN` wprost do formularza.
+- Angielska wersja UI pokazywała `$` przy kwotach, które zawsze są w PLN.
+- Eksport CSV harmonogramu łamał się w Excelu na Windows (kropka zamiast
+  przecinka jako separator dziesiętny, brak BOM psuł polskie znaki).
+- Brakująca walidacja prowizji za nadpłatę i pól refinansowania — link
+  z absurdalną wartością (np. `?fee=999`) przechodził bez błędu.
+
+**Nowe funkcje — dokończenie listy z FAZY 3 planu (priorytet 1→3→2→4):**
+
+- **Raport do druku / PDF** — arkusz `@media print` chowający marketing,
+  przycisk „Drukuj / Zapisz PDF” obok eksportu CSV.
+- **Test odporności na wzrost oprocentowania** (+1/+2/+3 p.p.) — widoczny
+  od razu, jeszcze przed kliknięciem „Oblicz”.
+- **Wakacje kredytowe** — izolowana symulacja „co jeśli zawiesisz N rat”
+  (kapitalizacja odsetek, jawnie opisany model), żeby nie ryzykować integracji
+  z całym silnikiem harmonogramu.
+
+**Dostępność:** żadne z 15+ pól formularza kalkulatora nie miało powiązania
+`<label>`↔`<input>` (`htmlFor`/`id`) — naprawione. Do tego: `aria-label`
+per wiersz w tabeli harmonogramu, `role="dialog"`/focus trap w modalu
+polityki prywatności, `prefers-reduced-motion` dla animacji framer-motion
+(CSS-owa reguła obejmowała tylko natywne animacje), kontrast tekstu
+w stopce, `color-scheme: light` (natywny UI przeglądarki ignorował jasny
+motyw w trybie ciemnym systemu), zamykanie menu mobilnego klikiem na
+zewnątrz/Escape.
+
+**SEO i inne:** 8 z 18 wygenerowanych podstron SEO nie miało żadnego linku
+ze stopki (dokładnie problem, przed którym ostrzega komentarz w tym samym
+pliku) — naprawione. Dodano `og:image`/manifest PWA/ikony (z edytowalnymi
+źródłami SVG w `design/`). Pipeline deployu nie uruchamiał `npm test` przed
+buildem — teraz czerwone testy blokują deploy tak samo jak błąd kompilacji.
+Zestaw testów urósł z 36 do 73.
