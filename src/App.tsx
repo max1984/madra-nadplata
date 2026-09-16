@@ -1,4 +1,4 @@
-import { LazyMotion, domAnimation } from 'framer-motion';
+import { LazyMotion, domAnimation, MotionConfig } from 'framer-motion';
 import { lazy, Suspense } from 'react';
 import { LangProvider, useLang } from './contexts/LangContext';
 import { useCalculator } from './hooks/useCalculator';
@@ -74,11 +74,17 @@ function AppInner() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <LazyMotion features={domAnimation} strict>
-        <LangProvider>
-          <AppInner />
-        </LangProvider>
-      </LazyMotion>
+      {/* reducedMotion="user" — respektuje prefers-reduced-motion z systemu.
+          CSS w index.css tłumi tylko natywne animation/transition; sprężyny
+          i przesunięcia sterowane przez framer-motion (whileHover, fadeUp,
+          AnimatePresence...) nie są CSS-em i bez tego ignorowały tę preferencję. */}
+      <MotionConfig reducedMotion="user">
+        <LazyMotion features={domAnimation} strict>
+          <LangProvider>
+            <AppInner />
+          </LangProvider>
+        </LazyMotion>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }
