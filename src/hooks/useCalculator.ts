@@ -205,6 +205,18 @@ export function naturalOverpaysWithStart(
   return [...Array<number>(startMonth).fill(0), ...postOvs];
 }
 
+/**
+ * Stała kwota nadpłaty (fixed_overpay/shorten_period), z zerami przed
+ * opóźnionym startem — wydzielone z tego samego powodu co naturalOverpaysWithStart:
+ * resetOverpays miał osobną kopię tej logiki BEZ zerowania prefiksu, więc reset
+ * cicho kasował skonfigurowane opóźnienie startu dla tych dwóch strategii.
+ */
+export function flatOverpayWithStart(months: number, amount: number, startMonth: number): number[] {
+  const arr = Array<number>(months).fill(amount);
+  for (let i = 0; i < startMonth && i < months; i++) arr[i] = 0;
+  return arr;
+}
+
 function computeCalcState(inp: CalcInputs): CalcState {
   const { loanAmount: P, interestRate, loanMonths: months, prepayFee: feeRate, strategy } = inp;
   const r = interestRate / 100 / 12;
@@ -224,12 +236,10 @@ function computeCalcState(inp: CalcInputs): CalcState {
     customOverpay = naturalOverpaysWithStart(P, customRates, months, totalMonthly, r, startMonth);
   } else if (strategy === 'fixed_overpay') {
     defaultOverpay = inp.overpayAmountSlider;
-    customOverpay = Array<number>(months).fill(defaultOverpay);
-    for (let i = 0; i < startMonth && i < months; i++) customOverpay[i] = 0;
+    customOverpay = flatOverpayWithStart(months, defaultOverpay, startMonth);
   } else if (strategy === 'shorten_period') {
     defaultOverpay = inp.shortenAmountSlider;
-    customOverpay = Array<number>(months).fill(defaultOverpay);
-    for (let i = 0; i < startMonth && i < months; i++) customOverpay[i] = 0;
+    customOverpay = flatOverpayWithStart(months, defaultOverpay, startMonth);
   } else if (strategy === 'goal') {
     requiredOverpay = solveOverpayForTarget(P, customRates, months, fee, r, inp.goalMonths, stdPayment);
     defaultOverpay = requiredOverpay;
@@ -385,7 +395,10 @@ export function useCalculator() {
         newOverpay = naturalOverpaysWithStart(prev.P, prev.customRates, prev.months, prev.totalMonthly, prev.r, prev.overpayStartMonth);
       } else if (prev.strategy === 'custom') {
         newOverpay = Array<number>(prev.months).fill(0);
+      } else if (prev.strategy === 'fixed_overpay' || prev.strategy === 'shorten_period') {
+        newOverpay = flatOverpayWithStart(prev.months, prev.defaultOverpay, prev.overpayStartMonth);
       } else {
+        // 'goal' — nadpłata dotyczy całego okresu, bez pojęcia opóźnionego startu.
         newOverpay = Array<number>(prev.months).fill(prev.defaultOverpay);
       }
       const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));

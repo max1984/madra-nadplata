@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
@@ -140,5 +140,19 @@ describe('resolveFixedStd', () => {
   it('lets the payment float (null) for the natural-payment strategies', () => {
     expect(resolveFixedStd(makeCustomCalcState({ strategy: 'fixed_total' }))).toBeNull();
     expect(resolveFixedStd(makeCustomCalcState({ strategy: 'fixed_overpay' }))).toBeNull();
+  });
+});
+
+describe('flatOverpayWithStart', () => {
+  it('fills every month with the flat amount when there is no delayed start', () => {
+    expect(flatOverpayWithStart(4, 500, 0)).toEqual([500, 500, 500, 500]);
+  });
+
+  it('zeroes the months before the configured start — this exact case was missing from resetOverpays for fixed_overpay/shorten_period', () => {
+    expect(flatOverpayWithStart(6, 500, 3)).toEqual([0, 0, 0, 500, 500, 500]);
+  });
+
+  it('is a no-op zeroing when startMonth reaches or exceeds the schedule length', () => {
+    expect(flatOverpayWithStart(4, 500, 10)).toEqual([0, 0, 0, 0]);
   });
 });
