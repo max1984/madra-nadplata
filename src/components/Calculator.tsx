@@ -542,7 +542,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 </div>}
 
                 <div className="calc-chart-box">
-                  <canvas ref={chartRef} />
+                  <canvas ref={chartRef} role="img" aria-label={t('chart_balance')} />
                 </div>
               </>
             )}

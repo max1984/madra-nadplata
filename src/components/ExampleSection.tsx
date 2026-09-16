@@ -140,11 +140,11 @@ export default function ExampleSection() {
         >
           <div className="chart-box">
             <h4>{t('chart_balance')}</h4>
-            <canvas ref={balChartRef} />
+            <canvas ref={balChartRef} role="img" aria-label={t('chart_balance')} />
           </div>
           <div className="chart-box">
             <h4>{t('chart_breakdown')}</h4>
-            <canvas ref={intChartRef} />
+            <canvas ref={intChartRef} role="img" aria-label={t('chart_breakdown')} />
           </div>
         </motion.div>
       </div>
