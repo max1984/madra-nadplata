@@ -179,6 +179,15 @@ function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
   );
 }
 
+/**
+ * ";" jako separator kolumn jest tu celowy — to jedyny sposób, żeby Excel
+ * z polskimi ustawieniami regionalnymi (przecinek jako separator dziesiętny)
+ * poprawnie rozbił plik na kolumny. Ale skoro Excel oczekuje przecinka jako
+ * separatora dziesiętnego, liczby też muszą go używać — inaczej Excel wczyta
+ * "1234.56" jako tekst, nie liczbę, i suma/sortowanie w arkuszu nie zadziała.
+ */
+export const csvDec = (n: number) => n.toFixed(2).replace('.', ',');
+
 function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string) {
   const sep = ';';
   const headers = [
@@ -188,16 +197,18 @@ function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string) {
   ];
   const rows = calcState.rows.map((r) => [
     r.num,
-    r.balanceBefore.toFixed(2),
-    (r.annualRate * 100).toFixed(2),
-    r.interest.toFixed(2),
-    r.regularCap.toFixed(2),
-    r.overpay.toFixed(2),
-    r.fee.toFixed(2),
-    r.totalPayment.toFixed(2),
-    r.balanceAfter.toFixed(2),
+    csvDec(r.balanceBefore),
+    csvDec(r.annualRate * 100),
+    csvDec(r.interest),
+    csvDec(r.regularCap),
+    csvDec(r.overpay),
+    csvDec(r.fee),
+    csvDec(r.totalPayment),
+    csvDec(r.balanceAfter),
   ].join(sep));
-  const csv = [headers.join(sep), ...rows].join('\n');
+  // BOM na początku — bez niego Excel na Windows potrafi wczytać UTF-8 jako
+  // ANSI i połamać polskie znaki (ą, ł, ż...) w nagłówkach kolumn.
+  const csv = '﻿' + [headers.join(sep), ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
