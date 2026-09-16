@@ -3,6 +3,7 @@ import {
   calcStdPayment,
   buildSchedule,
   buildBaseSchedule,
+  buildRefinanceSchedule,
   naturalOverpaysFromBalance,
   balanceAt,
   solveOverpayForTarget,
@@ -270,5 +271,60 @@ describe('solveOverpayForTarget', () => {
 
   it('handles a target of 0 without looping forever', () => {
     expect(solveOverpayForTarget(P, rates, n, 0, r, 0, std)).toBe(P);
+  });
+});
+
+describe('buildRefinanceSchedule', () => {
+  const P = 300000, months = 360;
+  const oldR = 0.06 / 12;
+  const oldRates = Array<number>(months).fill(oldR);
+
+  it('refinancing at month 0 keeps the balance at the original principal', () => {
+    const result = buildRefinanceSchedule(P, oldRates, months, oldR, 0, 5, 300, 2, 0);
+    expect(result.refiBalance).toBe(P);
+    expect(result.phase1Interest).toBe(0);
+    expect(result.originationFeeAmount).toBeCloseTo(P * 0.02, 2);
+  });
+
+  it('computes the origination fee off the balance at the refi month, not the original principal', () => {
+    const refiMonth = 60;
+    const result = buildRefinanceSchedule(P, oldRates, months, oldR, refiMonth, 5, 300, 2, 0);
+    const expectedBalance = balanceAt(P, oldRates, months, Array<number>(months).fill(0), refiMonth - 1, oldR);
+    expect(result.refiBalance).toBeCloseTo(expectedBalance, 1);
+    expect(result.originationFeeAmount).toBeCloseTo(result.refiBalance * 0.02, 2);
+    expect(result.originationFeeAmount).not.toBeCloseTo(P * 0.02, 2);
+  });
+
+  it('passes the flat fee straight through unchanged', () => {
+    const result = buildRefinanceSchedule(P, oldRates, months, oldR, 24, 5, 300, 0, 1500);
+    expect(result.flatFeeAmount).toBe(1500);
+  });
+
+  it('produces phase1 + phase2 rows with a continuous, non-increasing balance', () => {
+    const refiMonth = 36;
+    const result = buildRefinanceSchedule(P, oldRates, months, oldR, refiMonth, 5, 300, 2, 0);
+
+    expect(result.rows.length).toBe(refiMonth + 300);
+    result.rows.slice(0, refiMonth).forEach((row) => expect(row.isRefiRow).toBeUndefined());
+    result.rows.slice(refiMonth).forEach((row) => expect(row.isRefiRow).toBe(true));
+
+    expect(result.rows[refiMonth - 1].balanceAfter).toBeCloseTo(result.refiBalance, 1);
+    expect(result.rows[refiMonth].balanceBefore).toBeCloseTo(result.refiBalance, 1);
+
+    for (let i = 1; i < result.rows.length; i++) {
+      expect(result.rows[i].balanceAfter).toBeLessThanOrEqual(result.rows[i - 1].balanceAfter + 0.01);
+    }
+  });
+
+  it('accumulates cumInterest continuously across the refinance boundary', () => {
+    const result = buildRefinanceSchedule(P, oldRates, months, oldR, 36, 5, 300, 0, 0);
+    const lastRow = result.rows[result.rows.length - 1];
+    expect(lastRow.cumInterest).toBeCloseTo(result.phase1Interest + result.phase2Interest, 1);
+  });
+
+  it('a lower new rate pays off the refinanced balance within the new term', () => {
+    const result = buildRefinanceSchedule(P, oldRates, months, oldR, 60, 4, 300, 0, 0);
+    const lastRow = result.rows[result.rows.length - 1];
+    expect(lastRow.balanceAfter).toBeCloseTo(0, 1);
   });
 });
