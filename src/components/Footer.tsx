@@ -12,11 +12,19 @@ const SEO_LINKS = [
   { href: '/kiedy-zaczac-nadplacac-kredyt/', label: 'Kiedy zacząć nadpłacać?' },
   { href: '/nadplata-kredytu-czy-inwestowanie/', label: 'Nadpłata czy inwestowanie?' },
   { href: '/prowizja-za-wczesniejsza-splate-kredytu/', label: 'Prowizja za wcześniejszą spłatę' },
+  { href: '/kalkulator-nadplaty-100000-zl/', label: 'Nadpłata 100 000 zł' },
+  { href: '/kalkulator-nadplaty-150000-zl/', label: 'Nadpłata 150 000 zł' },
   { href: '/kalkulator-nadplaty-200000-zl/', label: 'Nadpłata 200 000 zł' },
+  { href: '/kalkulator-nadplaty-250000-zl/', label: 'Nadpłata 250 000 zł' },
   { href: '/kalkulator-nadplaty-300000-zl/', label: 'Nadpłata 300 000 zł' },
+  { href: '/kalkulator-nadplaty-350000-zl/', label: 'Nadpłata 350 000 zł' },
   { href: '/kalkulator-nadplaty-400000-zl/', label: 'Nadpłata 400 000 zł' },
+  { href: '/kalkulator-nadplaty-450000-zl/', label: 'Nadpłata 450 000 zł' },
   { href: '/kalkulator-nadplaty-500000-zl/', label: 'Nadpłata 500 000 zł' },
+  { href: '/kalkulator-nadplaty-600000-zl/', label: 'Nadpłata 600 000 zł' },
   { href: '/kalkulator-nadplaty-700000-zl/', label: 'Nadpłata 700 000 zł' },
+  { href: '/kalkulator-nadplaty-800000-zl/', label: 'Nadpłata 800 000 zł' },
+  { href: '/kalkulator-nadplaty-1000000-zl/', label: 'Nadpłata 1 000 000 zł' },
 ];
 
 export default function Footer() {
