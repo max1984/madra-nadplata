@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLang } from '../contexts/LangContext';
 import { safeRemoveItem } from '../lib/safeStorage';
 
@@ -225,6 +225,8 @@ function ContentEN() {
 export default function PrivacyPolicy() {
   const { lang, t } = useLang();
   const [visible, setVisible] = useState(() => window.location.hash === '#privacy');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handler = () => setVisible(window.location.hash === '#privacy');
@@ -235,14 +237,46 @@ export default function PrivacyPolicy() {
   useEffect(() => {
     if (visible) {
       document.body.style.overflow = 'hidden';
+      // Zapamiętaj, co miało focus przed otwarciem (żeby oddać je po zamknięciu)
+      // i przenieś focus do okna — inaczej modal jest niewidoczny dla klawiatury/czytnika ekranu.
+      previouslyFocused.current = document.activeElement as HTMLElement;
+      dialogRef.current?.focus();
     } else {
       document.body.style.overflow = '';
+      previouslyFocused.current?.focus();
     }
     return () => { document.body.style.overflow = ''; };
   }, [visible]);
 
+  /**
+   * history.pushState() (używane przez close()) nie odpala zdarzenia
+   * hashchange — bez tego setVisible(false) modal wizualnie nie znikał po
+   * kliknięciu "Zamknij"/tła/Escape, mimo że URL się czyścił.
+   */
+  const closeModal = () => {
+    close();
+    setVisible(false);
+  };
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { closeModal(); return; }
+      // Prosty focus trap: Tab nie może uciec do treści pod przyciemnionym tłem.
+      if (e.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     if (visible) window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [visible]);
@@ -257,16 +291,22 @@ export default function PrivacyPolicy() {
         display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
         padding: '24px 16px', overflowY: 'auto',
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) close(); }}
+      onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
     >
-      <div style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: 16, maxWidth: 720, width: '100%',
-        padding: '32px 36px', position: 'relative',
-      }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="privacy-title"
+        tabIndex={-1}
+        style={{
+          background: 'var(--card)', border: '1px solid var(--border)',
+          borderRadius: 16, maxWidth: 720, width: '100%',
+          padding: '32px 36px', position: 'relative',
+        }}>
         <button
           type="button"
-          onClick={close}
+          onClick={closeModal}
           aria-label={t('close')}
           style={{
             position: 'absolute', top: 12, right: 12,
@@ -287,7 +327,7 @@ export default function PrivacyPolicy() {
         }}>
           {lang === 'pl' ? 'Polityka prywatności' : 'Privacy Policy'}
         </div>
-        <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 24px' }}>
+        <h1 id="privacy-title" style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 24px' }}>
           {lang === 'pl' ? 'Jak używamy danych i reklam' : 'How we use data and ads'}
         </h1>
         {lang === 'pl' ? <ContentPL /> : <ContentEN />}
