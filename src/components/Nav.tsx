@@ -1,9 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
 export default function Nav() {
   const { lang, setLang, t } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Rozwinięte menu mobilne zamyka się też kliknięciem poza nim i Escape —
+  // inaczej jedyny sposób zamknięcia to ponowne dotknięcie hamburgera.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
 
   const links = (
     <>
@@ -31,7 +50,7 @@ export default function Nav() {
   );
 
   return (
-    <nav>
+    <nav ref={navRef}>
       <div className="nav-logo">💰 Mądra Nadpłata</div>
 
       <div className="nav-mobile-right">
