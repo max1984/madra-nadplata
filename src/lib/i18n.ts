@@ -52,7 +52,7 @@ export type TranslationKey =
   | 'error_loan_amount' | 'error_months' | 'error_rate' | 'error_prepay_fee'
   | 'error_refi_rate' | 'error_refi_months' | 'error_refi_month' | 'error_refi_fee'
   | 'copy_link' | 'copy_link_copied'
-  | 'csv_export'
+  | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
   | 'invest_section_title' | 'invest_rate_label' | 'invest_gain_label' | 'invest_saved_label'
@@ -186,6 +186,7 @@ const pl: Translations = {
   copy_link: 'Kopiuj link',
   copy_link_copied: '✓ Skopiowano!',
   csv_export: 'Pobierz CSV',
+  sch_print: 'Drukuj / Zapisz PDF',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
   overpay_start_now: 'Od razu',
   overpay_start_hint: 'Miesiąc 0 = od razu. Przydatne, gdy nadpłatę planujesz za kilka miesięcy (np. po wykończeniu mieszkania).',
@@ -354,6 +355,7 @@ const en: Translations = {
   copy_link: 'Copy link',
   copy_link_copied: '✓ Copied!',
   csv_export: 'Download CSV',
+  sch_print: 'Print / Save PDF',
   overpay_start_label: 'Start overpaying from month',
   overpay_start_now: 'Now',
   overpay_start_hint: 'Month 0 = immediately. Useful if you plan to start overpaying after a few months.',

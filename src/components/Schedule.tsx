@@ -304,6 +304,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                 </span>
               )}
               <button className="toolbar-btn" onClick={() => exportCSV(calcState, t)}>{t('csv_export')}</button>
+              <button className="toolbar-btn" onClick={() => window.print()}>{t('sch_print')}</button>
             </div>
           </div>
 
