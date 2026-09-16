@@ -55,10 +55,14 @@ export default function Footer() {
           {t('footer_donate')}
         </a>
       </div>
+      {/* var(--text3) na białym tle ma kontrast ~4.76:1 — tuż nad progiem WCAG
+          AA (4.5:1). Dodatkowa opacity, którą tu wcześniej było, zbijała
+          efektywny kontrast dużo poniżej progu, robiąc mail/politykę prywatności
+          nieczytelnymi dla osób słabowidzących — nie dodawać jej z powrotem. */}
       <div style={{ marginTop: 12 }}>
         <a
           href="mailto:bartlomiej.derda@gmail.com"
-          style={{ color: 'var(--text3)', fontSize: '0.8rem', textDecoration: 'none', opacity: 0.7 }}
+          style={{ color: 'var(--text3)', fontSize: '0.8rem', textDecoration: 'none' }}
         >
           bartlomiej.derda@gmail.com
         </a>
@@ -66,12 +70,12 @@ export default function Footer() {
       <div style={{ marginTop: 12 }}>
         <a
           href="#privacy"
-          style={{ color: 'var(--text3)', fontSize: '0.75rem', textDecoration: 'none', opacity: 0.6 }}
+          style={{ color: 'var(--text3)', fontSize: '0.75rem', textDecoration: 'none' }}
         >
           Polityka prywatności / Privacy Policy
         </a>
       </div>
-      <div style={{ marginTop: 8, fontSize: '0.7rem', color: 'var(--text3)', opacity: 0.4 }}>
+      <div style={{ marginTop: 8, fontSize: '0.7rem', color: 'var(--text3)' }}>
         v{__APP_VERSION__}
       </div>
     </footer>
