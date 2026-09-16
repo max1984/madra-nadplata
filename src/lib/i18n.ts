@@ -68,6 +68,7 @@ export type TranslationKey =
   | 'goal_required_overpay' | 'goal_required_total' | 'goal_already_met'
   | 'goal_unreachable' | 'error_goal_months'
   | 'rate_shock_title' | 'rate_shock_hint' | 'rate_shock_more'
+  | 'holiday_title' | 'holiday_hint' | 'holiday_scenario'
   | 'strategy_refinance'
   | 'refi_hint' | 'refi_month_label' | 'refi_remaining_hint'
   | 'refi_new_rate_label' | 'refi_new_months_label'
@@ -230,6 +231,9 @@ const pl: Translations = {
   rate_shock_title: 'Test odporności na wzrost oprocentowania',
   rate_shock_hint: 'Jak zmieniłaby się Twoja rata, gdyby oprocentowanie wzrosło?',
   rate_shock_more: 'więcej miesięcznie',
+  holiday_title: 'Wakacje kredytowe',
+  holiday_hint: 'Co się zmieni, jeśli zawiesisz spłatę na kilka miesięcy? Zakładamy, że w tym czasie nic nie płacisz, a odsetki dopisują się do salda — szczegóły zależą od Twojego banku.',
+  holiday_scenario: '{n} mies. wakacji → odsetki rosną o {amount}',
   error_goal_months: 'Cel spłaty musi mieścić się między 1 miesiącem a pozostałą liczbą rat.',
   strategy_refinance: 'Refinansowanie (nowy kredyt na inne warunki)',
   refi_hint: 'Symuluje zamknięcie obecnego kredytu i zaciągnięcie nowego na wybranych warunkach. Prowizja i opłaty jednorazowe naliczane są od salda w momencie refinansowania. Miesiąc 0 oznacza refinansowanie od razu – prowizja liczona od pełnej kwoty kredytu.',
@@ -402,6 +406,9 @@ const en: Translations = {
   rate_shock_title: 'Interest rate stress test',
   rate_shock_hint: 'How would your payment change if the interest rate went up?',
   rate_shock_more: 'more per month',
+  holiday_title: 'Payment holiday',
+  holiday_hint: 'What changes if you pause repayment for a few months? We assume you pay nothing during that time and interest is added to the balance — details depend on your bank.',
+  holiday_scenario: '{n}-month holiday → interest grows by {amount}',
   error_goal_months: 'The payoff goal must be between 1 month and the remaining number of payments.',
   strategy_refinance: 'Refinancing (new loan on different terms)',
   refi_hint: 'Simulates closing the current loan and taking a new one on different terms. The origination fee and other one-time costs are applied to the outstanding balance at the time of refinancing. Month 0 means refinancing immediately — fees are calculated on the full loan amount.',

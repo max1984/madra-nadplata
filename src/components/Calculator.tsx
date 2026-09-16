@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
-import { calcStdPayment } from '../lib/mortgage';
+import { calcStdPayment, simulatePaymentHoliday } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
@@ -528,6 +528,27 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                       <div className="result-item" key={delta}>
                         <div className="r-val" style={{ color: 'var(--danger)' }}>{fmtC(shockStd, 0)}</div>
                         <div className="r-lbl">+{delta} p.p. ({diff >= 0 ? '+' : ''}{fmtC(diff, 0)} {t('rate_shock_more')})</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {isFinite(stdPayment) && stdPayment > 0 && (
+              <div className="result-card" style={{ marginBottom: 20 }}>
+                <div className="result-card-label">{t('holiday_title')}</div>
+                <p className="hint" style={{ marginBottom: 12 }}>{t('holiday_hint')}</p>
+                <div className="result-grid">
+                  {[3, 6].map((holidayMonths) => {
+                    const result = simulatePaymentHoliday(inputs.loanAmount, inputs.interestRate / 100 / 12, inputs.loanMonths, holidayMonths);
+                    const text = t('holiday_scenario')
+                      .replace('{n}', String(holidayMonths))
+                      .replace('{amount}', fmtC(result.extraInterest, 0));
+                    return (
+                      <div className="result-item" key={holidayMonths}>
+                        <div className="r-val" style={{ color: 'var(--danger)' }}>+{result.extraMonths} {t('form_months_unit')}</div>
+                        <div className="r-lbl">{text}</div>
                       </div>
                     );
                   })}

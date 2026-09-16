@@ -265,3 +265,41 @@ export function naturalOverpaysFromBalance(
   while (result.length < needed) result.push(0);
   return result;
 }
+
+export interface PaymentHolidayResult {
+  /** Saldo po skapitalizowaniu odsetek z pominiętych rat. */
+  balanceAfterHoliday: number;
+  /** O ile miesięcy wydłuża się spłata przy powrocie do tej samej raty co przed wakacjami. */
+  extraMonths: number;
+  /** O ile wzrastają łączne odsetki w całym okresie kredytu względem braku wakacji. */
+  extraInterest: number;
+}
+
+/**
+ * Symuluje "wakacje kredytowe": przez `holidayMonths` rat nic się nie płaci,
+ * a odsetki dopisują się do salda (kapitalizują) zamiast być spłacane na
+ * bieżąco. Po wakacjach spłata wraca do dokładnie tej samej raty co wcześniej
+ * — stąd wydłużenie okresu zamiast wzrostu raty. To uproszczony, jawnie
+ * opisany model; dokładne zasady zależą od banku/programu.
+ */
+export function simulatePaymentHoliday(
+  P: number, globalR: number, months: number, holidayMonths: number
+): PaymentHolidayResult {
+  const stdPayment = calcStdPayment(P, globalR, months);
+  const baseline = buildBaseSchedule(P, Array<number>(months).fill(globalR), months, globalR);
+
+  const balanceAfterHoliday = P * Math.pow(1 + globalR, holidayMonths);
+  const bufferMonths = months + holidayMonths + 240; // spory zapas, żeby spłata na pewno domknęła się do zera
+  const payoff = buildSchedule(
+    balanceAfterHoliday, Array<number>(bufferMonths).fill(globalR), bufferMonths, 0,
+    Array<number>(bufferMonths).fill(0), globalR, stdPayment,
+  );
+  const payoffInterest = payoff.length ? payoff[payoff.length - 1]!.cumInterest : 0;
+  const totalInterestWithHoliday = (balanceAfterHoliday - P) + payoffInterest;
+
+  return {
+    balanceAfterHoliday,
+    extraMonths: (holidayMonths + payoff.length) - months,
+    extraInterest: totalInterestWithHoliday - baseline.totalInterest,
+  };
+}

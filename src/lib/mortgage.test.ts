@@ -7,6 +7,7 @@ import {
   naturalOverpaysFromBalance,
   balanceAt,
   solveOverpayForTarget,
+  simulatePaymentHoliday,
 } from './mortgage';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -326,5 +327,35 @@ describe('buildRefinanceSchedule', () => {
     const result = buildRefinanceSchedule(P, oldRates, months, oldR, 60, 4, 300, 0, 0);
     const lastRow = result.rows[result.rows.length - 1];
     expect(lastRow.balanceAfter).toBeCloseTo(0, 1);
+  });
+});
+
+describe('simulatePaymentHoliday', () => {
+  const P = 300000, months = 360, r = 0.06 / 12;
+
+  it('capitalizes interest during the holiday — balance grows, it does not stay flat', () => {
+    const result = simulatePaymentHoliday(P, r, months, 6);
+    expect(result.balanceAfterHoliday).toBeGreaterThan(P);
+    expect(result.balanceAfterHoliday).toBeCloseTo(P * Math.pow(1 + r, 6), 6);
+  });
+
+  it('extends the term instead of raising the payment, and adds real interest cost', () => {
+    const result = simulatePaymentHoliday(P, r, months, 6);
+    expect(result.extraMonths).toBeGreaterThan(0);
+    expect(result.extraInterest).toBeGreaterThan(0);
+  });
+
+  it('a longer holiday costs more than a shorter one', () => {
+    const short = simulatePaymentHoliday(P, r, months, 3);
+    const long = simulatePaymentHoliday(P, r, months, 6);
+    expect(long.extraMonths).toBeGreaterThan(short.extraMonths);
+    expect(long.extraInterest).toBeGreaterThan(short.extraInterest);
+  });
+
+  it('with 0 holiday months, nothing changes', () => {
+    const result = simulatePaymentHoliday(P, r, months, 0);
+    expect(result.balanceAfterHoliday).toBeCloseTo(P, 6);
+    expect(result.extraMonths).toBe(0);
+    expect(result.extraInterest).toBeCloseTo(0, 2);
   });
 });
