@@ -273,6 +273,18 @@ function resolveFixedStd(prev: CalcState): number | null {
   return null;
 }
 
+/**
+ * W strategii 'custom' każdy wiersz może mieć własny efekt (skróć/obniż),
+ * niezależnie od resolveFixedStd, który zna tylko jeden globalny customEffect.
+ * Bez tego edycja nadpłaty/oprocentowania albo reset zerowały ustawione
+ * wcześniej efekty per wiersz — przycisk przy wierszu dalej pokazywał wybrany
+ * efekt, ale przeliczony harmonogram cicho wracał do jednego globalnego.
+ */
+export function resolvePerRowFixed(prev: CalcState): (number | null)[] | undefined {
+  if (prev.strategy !== 'custom') return undefined;
+  return prev.customPerRowEffects.map((e) => (e === 'shorten' ? prev.origStdPayment : null));
+}
+
 export function useCalculator() {
   const [inputs, setInputsState] = useState<CalcInputs>(() => ({
     ...DEFAULT_INPUTS,
@@ -319,7 +331,7 @@ export function useCalculator() {
         }
       }
 
-      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev));
+      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
       return { ...prev, customOverpay: newOverpay, rows };
     });
   }, []);
@@ -337,7 +349,7 @@ export function useCalculator() {
       }
 
       const base = buildBaseSchedule(prev.P, newRates, prev.months, newRate);
-      const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, newRate, resolveFixedStd(prev));
+      const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, newRate, resolveFixedStd(prev), resolvePerRowFixed(prev));
 
       return {
         ...prev,
@@ -362,7 +374,7 @@ export function useCalculator() {
       } else {
         newOverpay = Array<number>(prev.months).fill(prev.defaultOverpay);
       }
-      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev));
+      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
       return { ...prev, customOverpay: newOverpay, rows };
     });
   }, []);
@@ -371,7 +383,7 @@ export function useCalculator() {
     setCalcState((prev) => {
       if (!prev) return prev;
       const newOverpay = Array<number>(prev.months).fill(0);
-      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev));
+      const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
       return { ...prev, customOverpay: newOverpay, rows };
     });
   }, []);
@@ -406,7 +418,7 @@ export function useCalculator() {
         newOverpay = naturalOverpaysFromBalance(prev.P, 0, newRates, prev.months, prev.totalMonthly, prev.r);
       }
       const base = buildBaseSchedule(prev.P, newRates, prev.months, prev.r);
-      const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev));
+      const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
       return {
         ...prev,
         customRates: newRates,

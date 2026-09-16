@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrlInputs, validateInputs, DEFAULT_INPUTS } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+
+function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
+  const months = 3;
+  return {
+    P: 100000, r: 0.005, months, prepayFee: 0,
+    stdPayment: 1798.65, origStdPayment: 1798.65,
+    customOverpay: Array<number>(months).fill(0),
+    customRates: Array<number>(months).fill(0.005),
+    strategy: 'custom', customEffect: 'reduce',
+    customPerRowEffects: Array<'shorten' | 'reduce'>(months).fill('reduce'),
+    totalMonthly: 0, defaultOverpay: 0,
+    baseInterest: 0, baseMonths: months, baseBalances: [], baseCumInterestByMonth: [],
+    rows: [],
+    ...overrides,
+  };
+}
 
 describe('parseUrlInputs', () => {
   it('parses valid numeric params', () => {
@@ -57,5 +73,29 @@ describe('validateInputs', () => {
     expect(validateInputs({ ...validRefi, refiOriginationFee: 50 })).toBe('error_refi_fee');
     expect(validateInputs({ ...validRefi, refiOriginationFee: -1 })).toBe('error_refi_fee');
     expect(validateInputs({ ...validRefi, refiFlat: -100 })).toBe('error_refi_fee');
+  });
+});
+
+describe('resolvePerRowFixed', () => {
+  it('is undefined for non-custom strategies — buildSchedule then uses the scalar fixedStdPayment', () => {
+    expect(resolvePerRowFixed(makeCustomCalcState({ strategy: 'fixed_total' }))).toBeUndefined();
+  });
+
+  it('builds one fixed-payment slot per row, matching that row\'s own effect', () => {
+    const state = makeCustomCalcState({
+      customPerRowEffects: ['shorten', 'reduce', 'shorten'],
+      origStdPayment: 1798.65,
+    });
+    expect(resolvePerRowFixed(state)).toEqual([1798.65, null, 1798.65]);
+  });
+
+  it('regression: onOverpayChange/resetRates/etc. must pass this so a mixed per-row setup survives other edits', () => {
+    // onCustomEffectChange/onRowEffectChange already built this array correctly;
+    // the bug was the other five buildSchedule call sites silently dropping it
+    // and falling back to the single global customEffect for every row.
+    const mixed = makeCustomCalcState({ customPerRowEffects: ['shorten', 'reduce'], customEffect: 'reduce' });
+    const perRow = resolvePerRowFixed(mixed);
+    expect(perRow).not.toBeUndefined();
+    expect(perRow![0]).not.toBe(perRow![1]);
   });
 });
