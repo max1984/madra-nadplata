@@ -62,6 +62,7 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           className={`rate-input${rateChanged ? ' rate-changed' : ''}`}
           defaultValue={(rate * 12 * 100).toFixed(2)}
           min={0.01} max={25} step={0.01}
+          aria-label={`${t('sch_col_rate')} — ${t('sch_col_num')} ${row.num}`}
           readOnly={isRefi}
           aria-readonly={isRefi}
           style={isRefi ? { opacity: 0.5, cursor: 'default' } : undefined}
@@ -78,6 +79,7 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
           className="overpay-input"
           defaultValue={String(Math.round(overpay))}
           min={0} step={1}
+          aria-label={`${t('sch_col_overpay')} — ${t('sch_col_num')} ${row.num}`}
           readOnly={isRefi}
           aria-readonly={isRefi}
           style={isRefi ? { opacity: 0.5, cursor: 'default' } : undefined}
@@ -310,13 +312,13 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
               <table>
                 <thead>
                   <tr>
-                    <th>{t('sch_col_year')}</th>
-                    <th>{t('sch_col_interest')}</th>
-                    <th>{t('sch_col_capital')}</th>
-                    <th>{t('sch_col_overpay')}</th>
-                    <th>{t('sch_col_fee')}</th>
-                    <th>{t('sch_col_total')}</th>
-                    <th>{t('sch_col_bal_after')}</th>
+                    <th scope="col">{t('sch_col_year')}</th>
+                    <th scope="col">{t('sch_col_interest')}</th>
+                    <th scope="col">{t('sch_col_capital')}</th>
+                    <th scope="col">{t('sch_col_overpay')}</th>
+                    <th scope="col">{t('sch_col_fee')}</th>
+                    <th scope="col">{t('sch_col_total')}</th>
+                    <th scope="col">{t('sch_col_bal_after')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -344,15 +346,15 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
               <table>
                 <thead>
                   <tr>
-                    <th>{t('sch_col_num')}</th>
-                    <th>{t('sch_col_bal_before')}</th>
-                    <th>{t('sch_col_rate')}</th>
-                    <th>{t('sch_col_interest')}</th>
-                    <th>{t('sch_col_capital')}</th>
-                    <th>{t('sch_col_overpay')}</th>
-                    <th>{t('sch_col_fee')}</th>
-                    <th>{t('sch_col_total')}</th>
-                    <th>{t('sch_col_bal_after')}</th>
+                    <th scope="col">{t('sch_col_num')}</th>
+                    <th scope="col">{t('sch_col_bal_before')}</th>
+                    <th scope="col">{t('sch_col_rate')}</th>
+                    <th scope="col">{t('sch_col_interest')}</th>
+                    <th scope="col">{t('sch_col_capital')}</th>
+                    <th scope="col">{t('sch_col_overpay')}</th>
+                    <th scope="col">{t('sch_col_fee')}</th>
+                    <th scope="col">{t('sch_col_total')}</th>
+                    <th scope="col">{t('sch_col_bal_after')}</th>
                   </tr>
                 </thead>
                 <tbody>
