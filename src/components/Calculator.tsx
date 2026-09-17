@@ -505,7 +505,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             )}
 
             {calcError && (
-              <div className="calc-error">{t(calcError)}</div>
+              <div className="calc-error" role="alert">{t(calcError)}</div>
             )}
 
             <motion.button
