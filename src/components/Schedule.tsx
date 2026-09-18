@@ -1,7 +1,7 @@
 import { useRef, useEffect, memo, useState, Fragment } from 'react';
 import { motion } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
-import type { TranslationKey } from '../lib/i18n';
+import type { Lang, TranslationKey } from '../lib/i18n';
 import type { ScheduleRow } from '../lib/mortgage';
 import type { CalcState } from '../hooks/useCalculator';
 
@@ -182,16 +182,19 @@ function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
 }
 
 /**
- * ";" jako separator kolumn jest tu celowy — to jedyny sposób, żeby Excel
- * z polskimi ustawieniami regionalnymi (przecinek jako separator dziesiętny)
- * poprawnie rozbił plik na kolumny. Ale skoro Excel oczekuje przecinka jako
- * separatora dziesiętnego, liczby też muszą go używać — inaczej Excel wczyta
- * "1234.56" jako tekst, nie liczbę, i suma/sortowanie w arkuszu nie zadziała.
+ * ";" jako separator kolumn + przecinek dziesiętny to jedyny sposób, żeby
+ * Excel z polskimi ustawieniami regionalnymi poprawnie rozbił plik na kolumny
+ * i rozpoznał liczby (inaczej "1234.56" wczytuje się jako tekst). Wersja
+ * angielska interfejsu ma jednak angielskich odbiorców z odwrotną konwencją
+ * regionalną (przecinek jako separator kolumn/tysięcy, kropka dziesiętna) —
+ * eksport z polskimi nagłówkami, ale w formacie EN, mieszałby dwie konwencje
+ * naraz i psuł się dokładnie tak samo jak przy polskich ustawieniach na odwrót.
  */
-export const csvDec = (n: number) => n.toFixed(2).replace('.', ',');
+export const csvDec = (n: number, lang: Lang = 'pl') =>
+  lang === 'en' ? n.toFixed(2) : n.toFixed(2).replace('.', ',');
 
-function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string) {
-  const sep = ';';
+function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lang: Lang) {
+  const sep = lang === 'en' ? ',' : ';';
   const headers = [
     t('sch_col_num'), t('sch_col_bal_before'), t('sch_col_rate'),
     t('sch_col_interest'), t('sch_col_capital'), t('sch_col_overpay'),
@@ -199,14 +202,14 @@ function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string) {
   ];
   const rows = calcState.rows.map((r) => [
     r.num,
-    csvDec(r.balanceBefore),
-    csvDec(r.annualRate * 100),
-    csvDec(r.interest),
-    csvDec(r.regularCap),
-    csvDec(r.overpay),
-    csvDec(r.fee),
-    csvDec(r.totalPayment),
-    csvDec(r.balanceAfter),
+    csvDec(r.balanceBefore, lang),
+    csvDec(r.annualRate * 100, lang),
+    csvDec(r.interest, lang),
+    csvDec(r.regularCap, lang),
+    csvDec(r.overpay, lang),
+    csvDec(r.fee, lang),
+    csvDec(r.totalPayment, lang),
+    csvDec(r.balanceAfter, lang),
   ].join(sep));
   // BOM na początku — bez niego Excel na Windows potrafi wczytać UTF-8 jako
   // ANSI i połamać polskie znaki (ą, ł, ż...) w nagłówkach kolumn.
@@ -221,7 +224,7 @@ function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string) {
 }
 
 export default function Schedule({ calcState, onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange, onResetOverpays, onClearOverpays, onResetRates }: Props) {
-  const { t, fmtC } = useLang();
+  const { t, fmtC, lang } = useLang();
   const [yearlyView, setYearlyView] = useState(false);
 
   if (!calcState) {
@@ -303,7 +306,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                   {t('refi_no_overpay_note')}
                 </span>
               )}
-              <button className="toolbar-btn" onClick={() => exportCSV(calcState, t)}>{t('csv_export')}</button>
+              <button className="toolbar-btn" onClick={() => exportCSV(calcState, t, lang)}>{t('csv_export')}</button>
               <button className="toolbar-btn" onClick={() => window.print()}>{t('sch_print')}</button>
             </div>
           </div>
