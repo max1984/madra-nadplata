@@ -8,6 +8,17 @@ import type { CalcState } from '../hooks/useCalculator';
 const MIN_MONTHS_FOR_REFI = 60;
 
 /**
+ * Liczy się rzeczywisty czas do spłaty PRZY AKTUALNEJ STRATEGII (rows.length),
+ * nie nominalny okres kredytu z formularza (calcState.months) — ten drugi się
+ * nie zmienia niezależnie od nadpłat. Kredyt wzięty na 30 lat, ale spłacany
+ * agresywną nadpłatą w 20 miesięcy, nadal miałby calcState.months=360 i moduł
+ * pokazywałby "rozważ refinansowanie" komuś, kto za chwilę skończy spłacać.
+ */
+export function hasEnoughRemainingTermForRefi(calcState: Pick<CalcState, 'rows'>): boolean {
+  return calcState.rows.length >= MIN_MONTHS_FOR_REFI;
+}
+
+/**
  * Kontekstowy moduł ofert partnerskich pod wynikami kalkulatora.
  *
  * Zasady, których ten komponent pilnuje (patrz docs/PLAN-ZYSKU.md, sekcja 1.3):
@@ -34,7 +45,7 @@ export default function PartnerOffers({ calcState }: { calcState: CalcState }) {
   }, [calcState.P, calcState.r, calcState.months, calcState.baseInterest]);
 
   if (!partnersEnabled()) return null;
-  if (calcState.months < MIN_MONTHS_FOR_REFI) return null;
+  if (!hasEnoughRemainingTermForRefi(calcState)) return null;
   if (savingPerPoint <= 0) return null;
 
   return (
