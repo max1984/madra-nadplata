@@ -76,6 +76,14 @@ describe('validateInputs', () => {
     expect(validateInputs({ ...validRefi, refiOriginationFee: -1 })).toBe('error_refi_fee');
     expect(validateInputs({ ...validRefi, refiFlat: -100 })).toBe('error_refi_fee');
   });
+
+  it('rejects an overpay start month outside the loan term — a shared link could set ?start=999999999 unchecked, which computeCalcState would turn into a huge Array allocation', () => {
+    expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: 999999999 })).toBe('error_overpay_start');
+    expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: -1 })).toBe('error_overpay_start');
+    expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: DEFAULT_INPUTS.loanMonths })).toBe('error_overpay_start');
+    expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: 0 })).toBeNull();
+    expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: DEFAULT_INPUTS.loanMonths - 1 })).toBeNull();
+  });
 });
 
 describe('resolvePerRowFixed', () => {

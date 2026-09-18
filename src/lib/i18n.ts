@@ -51,6 +51,7 @@ export type TranslationKey =
   | 'hero_note'
   | 'error_loan_amount' | 'error_months' | 'error_rate' | 'error_prepay_fee'
   | 'error_refi_rate' | 'error_refi_months' | 'error_refi_month' | 'error_refi_fee'
+  | 'error_overpay_start'
   | 'copy_link' | 'copy_link_copied'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
@@ -185,6 +186,7 @@ const pl: Translations = {
   error_refi_months: 'Okres nowego kredytu musi wynosić od 12 do 360 miesięcy.',
   error_refi_month: 'Miesiąc refinansowania musi mieścić się w okresie kredytu.',
   error_refi_fee: 'Prowizja za udzielenie nowego kredytu musi wynosić od 0% do 10%, a opłata stała nie może być ujemna.',
+  error_overpay_start: 'Opóźnienie startu nadpłaty musi mieścić się w okresie kredytu.',
   copy_link: 'Kopiuj link',
   copy_link_copied: '✓ Skopiowano!',
   csv_export: 'Pobierz CSV',
@@ -360,6 +362,7 @@ const en: Translations = {
   error_refi_months: 'New loan period must be between 12 and 360 months.',
   error_refi_month: 'The refinancing month must fall within the loan term.',
   error_refi_fee: 'The new loan origination fee must be between 0% and 10%, and the flat fee cannot be negative.',
+  error_overpay_start: 'The overpay start delay must fall within the loan term.',
   copy_link: 'Copy link',
   copy_link_copied: '✓ Copied!',
   csv_export: 'Download CSV',

@@ -169,6 +169,12 @@ export function validateInputs(inp: CalcInputs): TranslationKey | null {
       return 'error_goal_months';
     }
   }
+  // Bez tego link z ?start=999999999 trafiał wprost do computeCalcState, które
+  // alokuje tablicę Array(overpayStartMonth) — ogromna, skończona wartość z URL
+  // (nieograniczona suwakiem, którego dotyczy tylko UI) zawieszała/crashowała kartę.
+  if (!isFinite(inp.overpayStartMonth) || inp.overpayStartMonth < 0 || inp.overpayStartMonth >= inp.loanMonths) {
+    return 'error_overpay_start';
+  }
   if (inp.strategy === 'refinance') {
     if (!isFinite(inp.refiRate) || inp.refiRate < 0.01 || inp.refiRate > 25) {
       return 'error_refi_rate';
