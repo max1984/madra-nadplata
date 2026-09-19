@@ -256,7 +256,12 @@ export function naturalOverpaysFromBalance(
     const interest = b * r;
     const currentStd = calcStdPayment(b, r, remaining);
     const regularCap = Math.max(0, Math.min(currentStd - interest, b));
-    const overpay = Math.max(0, totalMonthly - currentStd);
+    // Bez górnego ograniczenia do (b - regularCap) ostatnia rata przed spłatą
+    // kredytu zwracała nadpłatę wielokrotnie większą niż realnie pozostałe
+    // saldo (np. 6972 zł przy saldzie 3936 zł) — buildSchedule i tak przycinał
+    // ją przy faktycznym wyliczeniu raty, ale to właśnie ta niewycięta wartość
+    // trafiała do pola "Nadpłata (edytuj)" w harmonogramie.
+    const overpay = Math.max(0, Math.min(totalMonthly - currentStd, b - regularCap));
     result.push(overpay);
     b = Math.max(0, b - regularCap - overpay);
   }

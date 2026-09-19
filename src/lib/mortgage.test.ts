@@ -206,6 +206,21 @@ describe('naturalOverpaysFromBalance', () => {
     const overpays = naturalOverpaysFromBalance(P, 0, Array(n).fill(r), n, 5000, r);
     expect(overpays.length).toBe(n);
   });
+
+  it('regression: never returns an overpay larger than the balance actually left to pay off — near payoff it used to hand back a raw (totalMonthly - currentStd) far above the remaining balance (e.g. 6972 zł owed against a 3936 zł balance), which buildSchedule silently clamped but the "Nadpłata (edytuj)" field in Schedule.tsx displayed unclamped', () => {
+    const r = 0.065 / 12, P = 500000, n = 360, totalMonthly = 7000;
+    const overpays = naturalOverpaysFromBalance(P, 0, Array(n).fill(r), n, totalMonthly, r);
+    let bal = P;
+    for (let i = 0; i < n && bal > 0.005; i++) {
+      const rem = n - i;
+      const interest = bal * r;
+      const std = calcStdPayment(bal, r, rem);
+      const rc = Math.max(0, Math.min(std - interest, bal));
+      const ov = overpays[i] ?? 0;
+      expect(ov).toBeLessThanOrEqual(bal - rc + 1e-6);
+      bal = Math.max(0, bal - rc - ov);
+    }
+  });
 });
 
 describe('slider minimum constraint', () => {
