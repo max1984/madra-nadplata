@@ -327,6 +327,19 @@ describe('solveOverpayForTarget', () => {
   it('handles a target of 0 without looping forever', () => {
     expect(solveOverpayForTarget(P, rates, n, 0, r, 0, std)).toBe(P);
   });
+
+  it('regression: recomputing with a mid-schedule rate change still hits the target and needs a bigger overpay than the flat-rate case — this is exactly what onRateChange must redo for the "goal" strategy, which used to skip the recompute entirely and leave a stale overpay after editing a rate', () => {
+    const target = 180, changeAt = 24, higherRate = 0.08 / 12;
+    const mixedRates = Array<number>(n).fill(r);
+    for (let i = changeAt; i < n; i++) mixedRates[i] = higherRate;
+
+    const overpay = solveOverpayForTarget(P, mixedRates, n, 0, higherRate, target, std);
+    const rows = buildSchedule(P, mixedRates, n, 0, Array<number>(n).fill(overpay), higherRate, std);
+    expect(rows.length).toBeLessThanOrEqual(target);
+
+    const flatOverpay = solveOverpayForTarget(P, rates, n, 0, r, target, std);
+    expect(overpay).toBeGreaterThan(flatOverpay);
+  });
 });
 
 describe('buildRefinanceSchedule', () => {

@@ -382,8 +382,18 @@ export function useCalculator() {
       for (let i = idx; i < prev.months; i++) newRates[i] = newRate;
 
       let newOverpay = [...prev.customOverpay];
+      let newRequiredOverpay = prev.requiredOverpay;
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
         newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, newRate, prev.overpayStartMonth);
+      } else if (prev.strategy === 'goal' && prev.goalMonths !== undefined) {
+        // Bez przeliczenia tutaj "wymagana nadpłata" i sam harmonogram cicho
+        // rozjeżdżały się po edycji stopy w trakcie — nowe raty przechodziły
+        // do rows, ale requiredOverpay/customOverpay zostawały policzone dla
+        // starej stopy i kredyt przestawał realnie spłacać się w goalMonths.
+        newRequiredOverpay = solveOverpayForTarget(
+          prev.P, newRates, prev.months, prev.prepayFee, newRate, prev.goalMonths, prev.origStdPayment,
+        );
+        newOverpay = Array<number>(prev.months).fill(newRequiredOverpay);
       }
 
       const base = buildBaseSchedule(prev.P, newRates, prev.months, newRate);
@@ -393,6 +403,8 @@ export function useCalculator() {
         ...prev,
         customRates: newRates,
         customOverpay: newOverpay,
+        requiredOverpay: newRequiredOverpay,
+        defaultOverpay: prev.strategy === 'goal' ? (newRequiredOverpay ?? prev.defaultOverpay) : prev.defaultOverpay,
         baseInterest: base.totalInterest,
         baseMonths: base.count,
         baseBalances: base.balances,
