@@ -188,7 +188,7 @@ export function validateInputs(inp: CalcInputs): TranslationKey | null {
     }
     if (
       !isFinite(inp.refiOriginationFee) || inp.refiOriginationFee < 0 || inp.refiOriginationFee > 10 ||
-      !isFinite(inp.refiFlat) || inp.refiFlat < 0
+      !isFinite(inp.refiFlat) || inp.refiFlat < 0 || inp.refiFlat > 10_000_000
     ) {
       return 'error_refi_fee';
     }
