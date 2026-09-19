@@ -4,6 +4,16 @@ import { useLang } from '../contexts/LangContext';
 
 const FAQ_KEYS = [1, 2, 3, 4, 5, 6, 7] as const;
 
+/**
+ * Przycisk pytania i panel odpowiedzi muszą wskazywać na siebie nawzajem
+ * (aria-controls / aria-labelledby) — akordeon renderował aria-expanded na
+ * przycisku, ale bez programowego powiązania z treścią, którą rozwija.
+ * Wydzielone, żeby oba id zawsze pochodziły z jednego miejsca i nie rozjechały
+ * się przy edycji.
+ */
+export const faqQuestionId = (n: number) => `faq-q-${n}`;
+export const faqPanelId = (n: number) => `faq-panel-${n}`;
+
 export default function FAQ() {
   const { t } = useLang();
   const [open, setOpen] = useState<number | null>(null);
@@ -30,7 +40,14 @@ export default function FAQ() {
         >
           {FAQ_KEYS.map((n) => (
             <div key={n} className={`faq-item${open === n ? ' open' : ''}`}>
-              <button type="button" className="faq-q" aria-expanded={open === n} onClick={() => setOpen(open === n ? null : n)}>
+              <button
+                type="button"
+                id={faqQuestionId(n)}
+                className="faq-q"
+                aria-expanded={open === n}
+                aria-controls={faqPanelId(n)}
+                onClick={() => setOpen(open === n ? null : n)}
+              >
                 <span>{t(`faq_q${n}`)}</span>
                 <span className="arrow">+</span>
               </button>
@@ -38,6 +55,9 @@ export default function FAQ() {
                 {open === n && (
                   <motion.div
                     key="answer"
+                    id={faqPanelId(n)}
+                    role="region"
+                    aria-labelledby={faqQuestionId(n)}
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
