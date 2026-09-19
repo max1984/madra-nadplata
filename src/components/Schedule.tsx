@@ -30,11 +30,12 @@ interface RowProps {
   onRowEffectChange: (idx: number, effect: 'shorten' | 'reduce') => void;
   fmtC: (n: number) => string;
   t: (key: TranslationKey) => string;
+  lang: Lang;
 }
 
 const ScheduleRowItem = memo(function ScheduleRowItem({
   idx, row, overpay, rate, globalR, isCustom, isRefi, rowEffect,
-  onOverpayChange, onRateChange, onRowEffectChange, fmtC, t,
+  onOverpayChange, onRateChange, onRowEffectChange, fmtC, t, lang,
 }: RowProps) {
   const overpayRef = useRef<HTMLInputElement>(null);
   const rateRef = useRef<HTMLInputElement>(null);
@@ -46,8 +47,8 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
 
   useEffect(() => {
     if (rateRef.current && document.activeElement !== rateRef.current)
-      rateRef.current.value = (rate * 12 * 100).toFixed(2);
-  }, [rate]);
+      rateRef.current.value = csvDec(rate * 12 * 100, lang);
+  }, [rate, lang]);
 
   const rateChanged = Math.abs(rate - globalR) > 0.0000001;
 
@@ -58,10 +59,9 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
       <td>
         <input
           ref={rateRef}
-          type="number"
+          type="text" inputMode="decimal"
           className={`rate-input${rateChanged ? ' rate-changed' : ''}`}
-          defaultValue={(rate * 12 * 100).toFixed(2)}
-          min={0.01} max={25} step={0.01}
+          defaultValue={csvDec(rate * 12 * 100, lang)}
           aria-label={`${t('sch_col_rate')} — ${t('sch_col_num')} ${row.num}`}
           readOnly={isRefi}
           aria-readonly={isRefi}
@@ -387,6 +387,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                           onRowEffectChange={onRowEffectChange}
                           fmtC={fmtC}
                           t={t}
+                          lang={lang}
                         />
                       </Fragment>
                     );

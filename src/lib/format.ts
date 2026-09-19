@@ -17,3 +17,12 @@ export function fmtC(n: number, lang: Lang = 'pl', dec = 0): string {
   const suffix = lang === 'en' ? 'PLN' : 'zł';
   return fmt(n, dec, lang) + ' ' + suffix;
 }
+
+/**
+ * W polskim nawyku separatorem dziesiętnym jest przecinek, ale pola
+ * liczbowe w tym kalkulatorze parsowały wartość przez parseFloat, który
+ * rozumie tylko kropkę — "7,5" ciszej stawało się "7".
+ */
+export function parseLocaleNumber(value: string): number {
+  return parseFloat(value.replace(',', '.'));
+}

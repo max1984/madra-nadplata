@@ -148,6 +148,10 @@ describe('clampCustomAnnualRate', () => {
     expect(clampCustomAnnualRate('-5')).toBe(0.01);
     expect(clampCustomAnnualRate('abc')).toBe(0.01);
   });
+
+  it('regression: accepts a comma decimal separator — Schedule.tsx now displays the per-row rate as "7,50" in Polish, and blurring it back unchanged must round-trip', () => {
+    expect(clampCustomAnnualRate('7,5')).toBe(7.5);
+  });
 });
 
 describe('resolveFixedStd', () => {

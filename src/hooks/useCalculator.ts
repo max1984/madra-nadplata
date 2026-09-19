@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { parseLocaleNumber } from '../lib/format';
 import {
   calcStdPayment,
   buildSchedule,
@@ -319,7 +320,7 @@ export function resolvePerRowFixed(prev: CalcState): (number | null)[] | undefin
  * z NaN jest false, więc pętla w buildSchedule kończy się od razu).
  */
 export function clampCustomAnnualRate(annualRateValue: string): number {
-  return Math.min(25, Math.max(0.01, parseFloat(annualRateValue) || 0));
+  return Math.min(25, Math.max(0.01, parseLocaleNumber(annualRateValue) || 0));
 }
 
 export function useCalculator() {

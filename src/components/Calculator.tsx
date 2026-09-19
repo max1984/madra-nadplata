@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
+import { parseLocaleNumber } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
@@ -83,7 +84,6 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     if (inputs.refiMonth > max) setInputs({ refiMonth: max });
   }, [inputs.loanMonths]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useSyncInput(refiRateRef, inputs.refiRate);
   useSyncInput(refiMonthsRef, inputs.refiMonths);
   useSyncInput(refiOriginationFeeRef, inputs.refiOriginationFee);
   useSyncInput(refiFlatRef, inputs.refiFlat);
@@ -95,7 +95,8 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   useSyncInput(overpayAmountRef, inputs.overpayAmountSlider);
   useSyncInput(shortenAmountRef, inputs.shortenAmountSlider);
   useSyncInput(loanAmountRef, inputs.loanAmount);
-  useSyncInput(interestRateRef, inputs.interestRate);
+  useSyncInput(interestRateRef, fmt(inputs.interestRate, 2));
+  useSyncInput(refiRateRef, fmt(inputs.refiRate, 2));
   useSyncInput(loanMonthsRef, inputs.loanMonths);
   useSyncInput(prepayFeeRef, inputs.prepayFee);
 
@@ -238,11 +239,11 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 <input
                   id="interest-rate"
                   ref={interestRateRef}
-                  type="number" defaultValue={inputs.interestRate} min={0.01} max={25} step={0.01}
+                  type="text" inputMode="decimal" defaultValue={fmt(inputs.interestRate, 2)}
                   onBlur={(e) => {
-                    const raw = parseFloat(e.target.value);
+                    const raw = parseLocaleNumber(e.target.value);
                     const v = isFinite(raw) ? Math.max(0.01, Math.min(25, raw)) : inputs.interestRate;
-                    e.target.value = String(v);
+                    e.target.value = fmt(v, 2);
                     setInputs({ interestRate: v });
                   }}
                   onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
@@ -420,11 +421,11 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                 <div className="form-group">
                   <label htmlFor="refi-rate">{t('refi_new_rate_label')}</label>
                   <div className="input-with-suffix">
-                    <input id="refi-rate" ref={refiRateRef} type="number" defaultValue={inputs.refiRate}
-                      min={0.01} max={25} step={0.01}
+                    <input id="refi-rate" ref={refiRateRef} type="text" inputMode="decimal" defaultValue={fmt(inputs.refiRate, 2)}
                       onBlur={(e) => {
-                        const v = isFinite(+e.target.value) ? Math.max(0.01, Math.min(25, +e.target.value)) : inputs.refiRate;
-                        e.target.value = String(v);
+                        const raw = parseLocaleNumber(e.target.value);
+                        const v = isFinite(raw) ? Math.max(0.01, Math.min(25, raw)) : inputs.refiRate;
+                        e.target.value = fmt(v, 2);
                         setInputs({ refiRate: v });
                       }}
                       onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
