@@ -80,6 +80,13 @@ export type TranslationKey =
   | 'refi_break_even' | 'refi_separator' | 'refi_new_payment_label'
   | 'refi_no_overpay_note' | 'refi_no_invest_note'
   | 'overpay_start_now'
+  | 'nav_support'
+  | 'sup_label' | 'sup_title' | 'sup_sub'
+  | 'sup_badge_active' | 'sup_badge_ended'
+  | 'sup_fwk_title' | 'sup_fwk_1' | 'sup_fwk_2' | 'sup_fwk_3' | 'sup_fwk_4' | 'sup_fwk_5'
+  | 'sup_loan_title' | 'sup_loan_1' | 'sup_loan_2' | 'sup_loan_3'
+  | 'sup_holidays_title' | 'sup_holidays_1' | 'sup_holidays_2' | 'sup_holidays_3'
+  | 'sup_note'
   | 'close';
 
 type Translations = Record<TranslationKey, string>;
@@ -257,6 +264,25 @@ const pl: Translations = {
   refi_new_payment_label: 'Nowa rata po refinansowaniu',
   refi_no_overpay_note: 'W trybie refinansowania nadpłaty nie są uwzględniane. Aby modelować nadpłaty, użyj strategii bez refinansowania.',
   refi_no_invest_note: 'Porównanie z inwestycją niedostępne w trybie refinansowania.',
+  nav_support: 'Wsparcie',
+  sup_label: 'Pomoc dla zadłużonych', sup_title: 'Aktualne wsparcie dla kredytobiorców',
+  sup_sub: 'Poza samodzielną nadpłatą istnieją ustawowe formy pomocy dla osób, które mają problem ze spłatą kredytu hipotecznego. Oto co obowiązuje we wrześniu 2026 r.',
+  sup_badge_active: 'Aktywne', sup_badge_ended: 'Zakończone',
+  sup_fwk_title: 'Fundusz Wsparcia Kredytobiorców (FWK)',
+  sup_fwk_1: 'Dla kogo: bezrobocie jednego z kredytobiorców, rata przekraczająca 40% dochodu gospodarstwa domowego (RdD) lub bardzo niski dochód po odjęciu raty.',
+  sup_fwk_2: 'Wysokość: do 3000 zł miesięcznie, maksymalnie przez 40 miesięcy — łącznie do 120 000 zł.',
+  sup_fwk_3: 'Spłata: dopiero po 2 latach od ostatniej wypłaty wsparcia, w 200 równych, nieoprocentowanych ratach.',
+  sup_fwk_4: 'Umorzenie: jeśli spłacisz terminowo pierwsze 134 raty, pozostałe do 66 rat (nawet ok. 39 600 zł) zostaje umorzone.',
+  sup_fwk_5: 'Warunek: kredytobiorca nie może być właścicielem innej nieruchomości mieszkalnej.',
+  sup_loan_title: 'Pożyczka na spłatę zadłużenia',
+  sup_loan_1: 'Dla kogo: sprzedałeś kredytowane mieszkanie lub dom, ale kwota ze sprzedaży nie wystarczyła na spłatę całego zadłużenia.',
+  sup_loan_2: 'Finansowana z tego samego funduszu co FWK — pokrywa różnicę między ceną sprzedaży a saldem kredytu.',
+  sup_loan_3: 'Zasady spłaty i możliwość częściowego umorzenia takie same jak w Funduszu Wsparcia Kredytobiorców.',
+  sup_holidays_title: 'Ustawowe wakacje kredytowe',
+  sup_holidays_1: 'Ostatnia edycja obowiązywała w 2024 r. — zawieszenie spłaty łącznie na kilka miesięcy dla kredytów w PLN zaciągniętych przed 1 lipca 2022 r.',
+  sup_holidays_2: 'Od 2025 r. nie ma nowej ustawowej edycji programu — nie licz na automatyczne zawieszenie raty z mocy prawa.',
+  sup_holidays_3: 'Alternatywa: „wakacje kredytowe umowne” — indywidualna decyzja banku. Warto zapytać o zawieszenie lub wydłużenie spłaty bezpośrednio w swoim banku.',
+  sup_note: 'Stan na wrzesień 2026 r. Progi dochodowe i szczegółowe warunki bywają aktualizowane — przed złożeniem wniosku sprawdź bieżące zasady u swojego kredytodawcy lub w Banku Gospodarstwa Krajowego (BGK), operatorze funduszu.',
   close: 'Zamknij',
 };
 
@@ -433,6 +459,25 @@ const en: Translations = {
   refi_new_payment_label: 'New payment after refinancing',
   refi_no_overpay_note: 'Overpayments are not supported in refinancing mode. To model overpayments, use a non-refinancing strategy.',
   refi_no_invest_note: 'Investment comparison is not available in refinancing mode.',
+  nav_support: 'Support',
+  sup_label: 'Help for borrowers', sup_title: 'Current support for mortgage borrowers',
+  sup_sub: 'Besides overpaying on your own, Polish law provides relief programs for borrowers struggling to keep up with a mortgage. Here is what applies as of September 2026 — this is specific to Polish mortgages (PLN, Polish law).',
+  sup_badge_active: 'Active', sup_badge_ended: 'Ended',
+  sup_fwk_title: 'Borrowers’ Support Fund (FWK)',
+  sup_fwk_1: 'Who qualifies: one borrower is unemployed, the payment exceeds 40% of household income (RdD ratio), or household income is very low after the payment.',
+  sup_fwk_2: 'Amount: up to 3,000 PLN per month, for up to 40 months — up to 120,000 PLN in total.',
+  sup_fwk_3: 'Repayment: starts only 2 years after the last support payout, spread over 200 equal, interest-free instalments.',
+  sup_fwk_4: 'Debt forgiveness: pay the first 134 instalments on time and the remaining up to 66 (roughly 39,600 PLN) get written off.',
+  sup_fwk_5: 'Condition: the borrower cannot own another residential property.',
+  sup_loan_title: 'Residual debt loan',
+  sup_loan_1: 'Who qualifies: you sold the mortgaged property but the sale price didn’t cover the full outstanding debt.',
+  sup_loan_2: 'Funded from the same pool as FWK — covers the gap between the sale price and the loan balance.',
+  sup_loan_3: 'Repayment terms and partial debt forgiveness work the same way as under the Borrowers’ Support Fund.',
+  sup_holidays_title: 'Statutory payment holidays',
+  sup_holidays_1: 'The last edition ran in 2024 — a combined few months of suspended payments for PLN mortgages taken out before 1 July 2022.',
+  sup_holidays_2: 'No new statutory edition has been introduced since 2025 — don’t expect an automatic legal suspension of your payment.',
+  sup_holidays_3: 'Alternative: bank-granted "contractual" payment holidays — an individual decision by your bank. It’s worth asking your bank directly about suspending or extending your repayment.',
+  sup_note: 'Accurate as of September 2026. Income thresholds and detailed conditions are updated periodically — check the current rules with your lender or Bank Gospodarstwa Krajowego (BGK), the fund’s operator, before applying.',
   close: 'Close',
 };
 

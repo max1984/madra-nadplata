@@ -29,6 +29,7 @@ export default function Nav() {
       <span className="nav-sec-label">{t('nav_knowledge')}</span>
       <a href="#how-it-works" onClick={() => setMenuOpen(false)}>{t('nav_how')}</a>
       <a href="#example" onClick={() => setMenuOpen(false)}>{t('nav_example')}</a>
+      <a href="#support" onClick={() => setMenuOpen(false)}>{t('nav_support')}</a>
       <a href="#faq" onClick={() => setMenuOpen(false)}>{t('nav_faq')}</a>
       <div className="nav-sep" />
       <span className="nav-sec-label">{t('nav_tools')}</span>
@@ -51,7 +52,10 @@ export default function Nav() {
 
   return (
     <nav ref={navRef}>
-      <div className="nav-logo">💰 Mądra Nadpłata</div>
+      <div className="nav-logo">
+        <span className="nav-logo-mark" aria-hidden="true">💰</span>
+        <span>Mądra Nadpłata</span>
+      </div>
 
       <div className="nav-mobile-right">
         <div className="lang-toggle" role="group" aria-label="Language">

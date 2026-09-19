@@ -11,6 +11,7 @@ import AdSlot from './components/AdSlot';
 
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const ExampleSection = lazy(() => import('./components/ExampleSection'));
+const SupportOptions = lazy(() => import('./components/SupportOptions'));
 const FAQ = lazy(() => import('./components/FAQ'));
 const Calculator = lazy(() => import('./components/Calculator'));
 const Schedule = lazy(() => import('./components/Schedule'));
@@ -33,6 +34,7 @@ function AppInner() {
       <Suspense fallback={null}>
         <HowItWorks />
         <ExampleSection />
+        <SupportOptions />
         <FAQ />
 
         <AdSlot slot="inArticle" />
