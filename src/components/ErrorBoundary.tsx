@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           padding: '2rem', textAlign: 'center',
         }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
-          <h2 style={{ color: 'var(--text1)', marginBottom: '0.5rem' }}>Coś poszło nie tak / Something went wrong</h2>
+          <h2 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>Coś poszło nie tak / Something went wrong</h2>
           <p style={{ maxWidth: 400, lineHeight: 1.6 }}>Wystąpił nieoczekiwany błąd. Odśwież stronę, aby spróbować ponownie.</p>
           <button
             type="button"
