@@ -115,6 +115,17 @@ describe('buildSchedule', () => {
     });
   });
 
+  it('regression: row.overpay never exceeds what was actually left to pay off that month, even when the raw overpay input is far larger — Schedule.tsx displays row.overpay directly in the "Nadpłata (edytuj)" field, so this row-level clamp (not just the total) must hold for every row, not only in aggregate', () => {
+    const r = 0.065 / 12, P = 500000, n = 360;
+    // A flat overpay far above what's needed forces payoff well before `n`
+    // months — the last row is exactly where an unclamped input would
+    // otherwise overshoot the remaining balance.
+    const rows = buildSchedule(P, Array(n).fill(r), n, 0, Array(n).fill(50000), r);
+    rows.forEach((row) => {
+      expect(row.overpay).toBeLessThanOrEqual(row.balanceBefore - row.regularCap + 1e-6);
+    });
+  });
+
   it('shorten_period (fixedStdPayment): shorter term than free recalc at same overpay', () => {
     const r = 0.065 / 12, P = 500000, n = 360;
     const std = calcStdPayment(P, r, n);

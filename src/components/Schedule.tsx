@@ -376,7 +376,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                         <ScheduleRowItem
                           idx={i}
                           row={row}
-                          overpay={calcState.customOverpay[i] ?? 0}
+                          overpay={row.overpay}
                           rate={refiRowRate}
                           globalR={calcState.r}
                           isCustom={calcState.strategy === 'custom'}
