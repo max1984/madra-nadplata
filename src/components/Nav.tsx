@@ -35,7 +35,7 @@ export default function Nav() {
       <span className="nav-sec-label">{t('nav_tools')}</span>
       <a href="#calculator" onClick={() => setMenuOpen(false)}>{t('nav_calc')}</a>
       <a href="#schedule" onClick={() => setMenuOpen(false)}>{t('nav_schedule')}</a>
-      <div className="lang-toggle" role="group" aria-label="Language">
+      <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>
         <button
           className={`lang-btn${lang === 'pl' ? ' active' : ''}`}
           aria-pressed={lang === 'pl'}
@@ -58,14 +58,14 @@ export default function Nav() {
       </div>
 
       <div className="nav-mobile-right">
-        <div className="lang-toggle" role="group" aria-label="Language">
+        <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>
           <button className={`lang-btn${lang === 'pl' ? ' active' : ''}`} aria-pressed={lang === 'pl'} onClick={() => setLang('pl')}>PL</button>
           <button className={`lang-btn${lang === 'en' ? ' active' : ''}`} aria-pressed={lang === 'en'} onClick={() => setLang('en')}>EN</button>
         </div>
         <button
           className={`hamburger${menuOpen ? ' open' : ''}`}
           onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Menu"
+          aria-label={t('nav_menu')}
           aria-expanded={menuOpen}
           aria-controls="mobile-nav-links"
         >

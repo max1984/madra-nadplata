@@ -3,6 +3,7 @@ export type Lang = 'pl' | 'en';
 export type TranslationKey =
   | 'nav_knowledge' | 'nav_how' | 'nav_example' | 'nav_faq'
   | 'nav_tools' | 'nav_calc' | 'nav_schedule' | 'tools_divider'
+  | 'nav_lang_group' | 'nav_menu'
   | 'hero_badge' | 'hero_h1_full' | 'hero_p'
   | 'hero_stat1_lbl' | 'hero_stat2_lbl' | 'hero_stat3_lbl'
   | 'hero_btn1' | 'hero_btn2'
@@ -95,6 +96,7 @@ const pl: Translations = {
   nav_knowledge: 'Wiedza', nav_how: 'Jak to działa', nav_example: 'Przykład', nav_faq: 'FAQ',
   nav_tools: 'Narzędzia', nav_calc: 'Kalkulator', nav_schedule: 'Harmonogram',
   tools_divider: 'Narzędzia kalkulatora',
+  nav_lang_group: 'Język', nav_menu: 'Menu',
   hero_badge: 'Edukacja finansowa',
   hero_h1_full: 'Małe nadpłaty.<br /><span>Gigantyczne oszczędności.</span>',
   hero_p: 'Dowiedz się, jak regularne nadpłacanie kredytu hipotecznego może zaoszczędzić Ci dziesiątki lub nawet setki tysięcy złotych i skrócić kredyt o kilka lat.',
@@ -290,6 +292,7 @@ const en: Translations = {
   nav_knowledge: 'Learn', nav_how: 'How it works', nav_example: 'Example', nav_faq: 'FAQ',
   nav_tools: 'Tools', nav_calc: 'Calculator', nav_schedule: 'Schedule',
   tools_divider: 'Calculator Tools',
+  nav_lang_group: 'Language', nav_menu: 'Menu',
   hero_badge: 'Financial Education',
   hero_h1_full: 'Small overpayments.<br /><span>Massive savings.</span>',
   hero_p: 'Discover how regular mortgage overpayments can save you tens or hundreds of thousands and pay off your loan years early.',
