@@ -101,6 +101,18 @@ export function buildBaseSchedule(
   return { balances, totalInterest: cumInterest, count: balances.length, cumInterestByMonth };
 }
 
+/**
+ * Suma faktycznie zaaplikowanej nadpłaty na podstawie rows (co się realnie
+ * wydarzyło w harmonogramie), a nie surowego wejścia strategii
+ * (customOverpay) — przy strategiach ze stałą kwotą ostatnia rata przed
+ * spłatą kredytu przycina nadpłatę do pozostałego salda, więc sumowanie
+ * wejściowego customOverpay zawyżało każdą zbiorczą statystykę nadpłaty
+ * w UI (nagłówek harmonogramu, średnia nadpłata, symulacja inwestycji).
+ */
+export function totalAppliedOverpay(rows: ScheduleRow[]): number {
+  return rows.reduce((acc, r) => acc + r.overpay, 0);
+}
+
 // Returns the remaining balance after applying overpays up to and including upToIdx.
 export function balanceAt(
   P: number,

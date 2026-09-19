@@ -4,7 +4,7 @@ import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber } from '../lib/format';
-import { calcStdPayment, simulatePaymentHoliday } from '../lib/mortgage';
+import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
@@ -654,7 +654,7 @@ function renderStats(
     );
   }
 
-  const totalOverpay = cs.customOverpay.slice(0, withMonths).reduce((acc, v) => acc + v, 0);
+  const totalOverpay = totalAppliedOverpay(cs.rows);
   if (totalOverpay < 1) {
     if (cs.strategy !== 'custom') return null;
     return (
@@ -680,7 +680,7 @@ function renderStats(
   const savedMonths = Math.max(0, cs.baseMonths - withMonths);
   const savedYears = Math.floor(savedMonths / 12);
   const savedRem = savedMonths % 12;
-  const avgOverpay = cs.customOverpay.slice(0, withMonths).reduce((acc, v) => acc + v, 0) / Math.max(1, withMonths);
+  const avgOverpay = totalOverpay / Math.max(1, withMonths);
 
   const timeStr = savedYears > 0
     ? savedYears + ' ' + t('years') + (savedRem > 0 ? ' ' + savedRem + ' ' + t('months_short') : '')
@@ -800,10 +800,12 @@ function renderInvestCard(
   const rm = investRate / 100 / 12;
   let investFV = 0;
   for (let i = 0; i < n; i++) {
-    const ov = cs.customOverpay[i] ?? 0;
+    // rows[i].overpay (co realnie zaaplikował buildSchedule), nie
+    // customOverpay[i] (surowe wejście strategii) — patrz totalAppliedOverpay.
+    const ov = cs.rows[i]!.overpay;
     investFV += ov * Math.pow(1 + rm, n - i);
   }
-  const totalInvested = cs.customOverpay.slice(0, n).reduce((a, b) => a + b, 0);
+  const totalInvested = totalAppliedOverpay(cs.rows);
   const investGain = Math.max(0, investFV - totalInvested);
   const withInterest = n > 0 ? cs.rows[n - 1]!.cumInterest : 0;
   const savedInterest = Math.max(0, cs.baseInterest - withInterest);
