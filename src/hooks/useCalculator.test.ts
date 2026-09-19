@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
@@ -131,6 +131,22 @@ describe('naturalOverpaysWithStart', () => {
     const fromZero = naturalOverpaysWithStart(P, rates, months, 2300, r, 0);
     expect(delayed[0]).toBe(0);
     expect(fromZero[0]).toBeGreaterThan(0);
+  });
+});
+
+describe('clampCustomAnnualRate', () => {
+  it('passes through a normal rate unchanged', () => {
+    expect(clampCustomAnnualRate('7.5')).toBe(7.5);
+  });
+
+  it('regression: caps an unbounded rate so Math.pow(1+r, n) cannot overflow to Infinity — an uncapped rate turned the whole schedule into NaN rows', () => {
+    expect(clampCustomAnnualRate('999')).toBe(25);
+  });
+
+  it('floors at the same 0.01% minimum as the Schedule.tsx input, rejecting zero/negative/garbage input', () => {
+    expect(clampCustomAnnualRate('0')).toBe(0.01);
+    expect(clampCustomAnnualRate('-5')).toBe(0.01);
+    expect(clampCustomAnnualRate('abc')).toBe(0.01);
   });
 });
 

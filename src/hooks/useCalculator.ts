@@ -311,6 +311,17 @@ export function resolvePerRowFixed(prev: CalcState): (number | null)[] | undefin
   return prev.customPerRowEffects.map((e) => (e === 'shorten' ? prev.origStdPayment : null));
 }
 
+/**
+ * Ten sam zakres co min/max na polu w Schedule.tsx (0,01–25%) — bez górnego
+ * ograniczenia stawka rzędu setek % dawała Math.pow(1+r, n) = Infinity,
+ * calcStdPayment liczyło Infinity/Infinity = NaN, a od tego wiersza cały
+ * harmonogram urywał się z jednym wierszem pełnym "NaN zł" (balance > 0.005
+ * z NaN jest false, więc pętla w buildSchedule kończy się od razu).
+ */
+export function clampCustomAnnualRate(annualRateValue: string): number {
+  return Math.min(25, Math.max(0.01, parseFloat(annualRateValue) || 0));
+}
+
 export function useCalculator() {
   const [inputs, setInputsState] = useState<CalcInputs>(() => ({
     ...DEFAULT_INPUTS,
@@ -365,7 +376,7 @@ export function useCalculator() {
   const onRateChange = useCallback((idx: number, annualRateValue: string) => {
     setCalcState((prev) => {
       if (!prev || prev.strategy === 'refinance') return prev;
-      const newRate = Math.max(0.001, parseFloat(annualRateValue) || 0) / 100 / 12;
+      const newRate = clampCustomAnnualRate(annualRateValue) / 100 / 12;
       const newRates = [...prev.customRates];
       for (let i = idx; i < prev.months; i++) newRates[i] = newRate;
 
