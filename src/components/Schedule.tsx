@@ -193,6 +193,19 @@ function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
 export const csvDec = (n: number, lang: Lang = 'pl') =>
   lang === 'en' ? n.toFixed(2) : n.toFixed(2).replace('.', ',');
 
+/**
+ * Suma faktycznie zaaplikowanej nadpłaty na podstawie rows (co się realnie
+ * wydarzyło w harmonogramie), a nie surowego calcState.customOverpay —
+ * przy strategiach "stała kwota do banku"/"stała nadpłata"/"skrócenie
+ * okresu" ostatnia rata przed spłatą kredytu przycina nadpłatę do
+ * pozostałego salda, więc sumowanie wejściowego customOverpay zawyżało
+ * "Łącznie nadpłacono" o różnicę między żądaną a realnie możliwą kwotą
+ * tej ostatniej raty.
+ */
+export function totalAppliedOverpay(rows: ScheduleRow[]): number {
+  return rows.reduce((acc, r) => acc + r.overpay, 0);
+}
+
 function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lang: Lang) {
   const sep = lang === 'en' ? ',' : ';';
   const headers = [
@@ -240,7 +253,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
     );
   }
 
-  const totalOverpay = calcState.customOverpay.slice(0, calcState.rows.length).reduce((acc, v) => acc + v, 0);
+  const totalOverpay = totalAppliedOverpay(calcState.rows);
   const paidOffCount = calcState.months - calcState.rows.length;
 
   return (
