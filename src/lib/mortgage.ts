@@ -135,6 +135,40 @@ export function balanceAt(
   return balance;
 }
 
+/**
+ * Miesiąc, w którym skumulowana oszczędność odsetkowa z refinansowania
+ * przewyższa koszt jego opłat — albo null, jeśli nigdy do tego nie dochodzi
+ * w obrębie rows.
+ *
+ * baseCumInterestByMonth (z buildBaseSchedule, bez nadpłat) ma naturalną
+ * długość oryginalnego kredytu i po jej przekroczeniu NIE rośnie dalej —
+ * kredyt bazowy byłby już spłacony, więc dalsze miesiące nie generują
+ * kolejnych odsetek do porównania. Fallback do baseInterest musi więc
+ * dotyczyć OBU końców przedziału (basePrev i baseCurr), nie tylko baseCurr:
+ * przy refinansowaniu na nowy okres dłuższy niż to, co pozostało z
+ * oryginalnego kredytu, fallback tylko dla baseCurr (a 0 dla basePrev)
+ * dawał jednorazowy, fikcyjny skok "oszczędności" o całą resztę
+ * baseInterest i fałszywie wczesny break-even.
+ */
+export function refiBreakEvenMonth(
+  baseCumInterestByMonth: number[],
+  baseInterest: number,
+  rows: ScheduleRow[],
+  refiMonth: number,
+  totalFees: number,
+): number | null {
+  if (totalFees <= 0) return null;
+  let cumulSavings = 0;
+  for (let i = refiMonth; i < rows.length; i++) {
+    const basePrev = i > 0 ? (baseCumInterestByMonth[i - 1] ?? baseInterest) : 0;
+    const baseCurr = baseCumInterestByMonth[i] ?? baseInterest;
+    const baseMonthInt = baseCurr - basePrev;
+    cumulSavings += baseMonthInt - (rows[i]?.interest ?? 0);
+    if (cumulSavings >= totalFees) return i + 1;
+  }
+  return null;
+}
+
 export interface RefiResult {
   rows: ScheduleRow[];
   refiBalance: number;

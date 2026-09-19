@@ -4,7 +4,7 @@ import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber } from '../lib/format';
-import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay } from '../lib/mortgage';
+import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
@@ -848,17 +848,7 @@ function renderRefiStats(
 
   const pctOfBase = cs.baseInterest > 0 ? (totalWithRefi / cs.baseInterest * 100).toFixed(1) : '100';
 
-  let breakEvenMonth = -1;
-  if (totalFees > 0) {
-    let cumulSavings = 0;
-    for (let i = rd.month; i < cs.rows.length; i++) {
-      const basePrev = i > 0 ? (cs.baseCumInterestByMonth[i - 1] ?? 0) : 0;
-      const baseCurr = cs.baseCumInterestByMonth[i] ?? cs.baseInterest;
-      const baseMonthInt = baseCurr - basePrev;
-      cumulSavings += baseMonthInt - (cs.rows[i]?.interest ?? 0);
-      if (cumulSavings >= totalFees) { breakEvenMonth = i + 1; break; }
-    }
-  }
+  const breakEvenMonth = refiBreakEvenMonth(cs.baseCumInterestByMonth, cs.baseInterest, cs.rows, rd.month, totalFees) ?? -1;
 
   const savedYears = Math.floor(Math.abs(savedMonths) / 12);
   const savedRem = Math.abs(savedMonths) % 12;

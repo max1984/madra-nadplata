@@ -9,6 +9,7 @@ import {
   solveOverpayForTarget,
   simulatePaymentHoliday,
   totalAppliedOverpay,
+  refiBreakEvenMonth,
 } from './mortgage';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -380,6 +381,36 @@ describe('buildRefinanceSchedule', () => {
     const result = buildRefinanceSchedule(P, oldRates, months, oldR, 60, 4, 300, 0, 0);
     const lastRow = result.rows[result.rows.length - 1];
     expect(lastRow.balanceAfter).toBeCloseTo(0, 1);
+  });
+});
+
+describe('refiBreakEvenMonth', () => {
+  const P = 300000, months = 360, r = 0.06 / 12;
+  const base = buildBaseSchedule(P, Array(months).fill(r), months, r);
+
+  it('returns null when there is no fee to recover', () => {
+    expect(refiBreakEvenMonth(base.cumInterestByMonth, base.totalInterest, [], 0, 0)).toBeNull();
+  });
+
+  it('finds an early break-even month when the new rate saves a lot relative to the fee', () => {
+    const refiMonth = 60;
+    const result = buildRefinanceSchedule(P, Array(months).fill(r), months, r, refiMonth, 4, 300, 0, 1000);
+    const be = refiBreakEvenMonth(base.cumInterestByMonth, base.totalInterest, result.rows, refiMonth, 1000);
+    expect(be).not.toBeNull();
+    expect(be!).toBeGreaterThan(refiMonth);
+    expect(be!).toBeLessThan(refiMonth + 24);
+  });
+
+  it('regression: refinancing into a term that outlasts the original loan must not fabricate a one-month interest "spike" and a fake early break-even — baseCumInterestByMonth stops growing once the original loan would be paid off, so both ends of each monthly interval must fall back to baseInterest, not just the later one', () => {
+    const refiMonth = 120, newMonths = 360; // 480 total rows, well past the original 360-month baseline
+    // Same rate as the original loan → ~no genuine monthly saving anywhere,
+    // so a large fee should never be recovered. The only way a naive
+    // implementation reaches it is the fabricated single-month spike once
+    // the index runs past baseCumInterestByMonth's natural length.
+    const result = buildRefinanceSchedule(P, Array(months).fill(r), months, r, refiMonth, 6, newMonths, 0, 0);
+    const totalFees = 300000;
+    const be = refiBreakEvenMonth(base.cumInterestByMonth, base.totalInterest, result.rows, refiMonth, totalFees);
+    expect(be).toBeNull();
   });
 });
 
