@@ -57,6 +57,8 @@ export type TranslationKey =
   | 'error_overpay_start'
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
+  | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_saved_title'
+  | 'scenario_load' | 'scenario_delete'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
@@ -211,6 +213,11 @@ const pl: Translations = {
   share_native: '📤 Udostępnij',
   copy_summary: '📋 Kopiuj podsumowanie', copy_summary_copied: '✓ Skopiowano podsumowanie!',
   share_summary_text: 'Kredyt {amount} zł, {rate}% na {months} mies.\nZ nadpłatą: spłacę w {withMonths} rat (o {savedTime} szybciej) i zaoszczędzę {saved} odsetek.\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
+  scenario_name_placeholder: 'Nazwa scenariusza (np. "Wariant z nadpłatą 500 zł")',
+  scenario_save: '💾 Zapisz scenariusz',
+  scenario_saved_title: 'Zapisane scenariusze',
+  scenario_load: 'Wczytaj',
+  scenario_delete: 'Usuń',
   csv_export: 'Pobierz CSV',
   sch_print: 'Drukuj / Zapisz PDF',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
@@ -417,6 +424,11 @@ const en: Translations = {
   share_native: '📤 Share',
   copy_summary: '📋 Copy summary', copy_summary_copied: '✓ Summary copied!',
   share_summary_text: 'Loan {amount} PLN, {rate}% for {months} mo.\nWith the overpay plan: I’ll pay it off in {withMonths} payments ({savedTime} sooner) and save {saved} in interest.\nCalculated with Mądra Nadpłata: {url}',
+  scenario_name_placeholder: 'Scenario name (e.g. "500 PLN overpay variant")',
+  scenario_save: '💾 Save scenario',
+  scenario_saved_title: 'Saved scenarios',
+  scenario_load: 'Load',
+  scenario_delete: 'Delete',
   csv_export: 'Download CSV',
   sch_print: 'Print / Save PDF',
   overpay_start_label: 'Start overpaying from month',

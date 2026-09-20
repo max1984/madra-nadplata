@@ -21,6 +21,7 @@ function AppInner() {
   const { t } = useLang();
   const {
     inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults,
+    scenarios, saveCurrentAsScenario, loadScenario, deleteScenario,
     onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange,
     resetOverpays, clearOverpays, resetRates,
   } = useCalculator();
@@ -56,6 +57,10 @@ function AppInner() {
           onResetToDefaults={resetToDefaults}
           isStale={isStale}
           calcError={calcError}
+          scenarios={scenarios}
+          onSaveScenario={saveCurrentAsScenario}
+          onLoadScenario={loadScenario}
+          onDeleteScenario={deleteScenario}
         />
         <AdSlot slot="afterResults" />
 

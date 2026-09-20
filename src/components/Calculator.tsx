@@ -5,7 +5,7 @@ import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost } from '../lib/mortgage';
-import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
+import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -121,14 +121,22 @@ interface Props {
   onResetToDefaults: () => void;
   isStale: boolean;
   calcError: TranslationKey | null;
+  scenarios: SavedScenario[];
+  onSaveScenario: (name: string) => void;
+  onLoadScenario: (id: string) => void;
+  onDeleteScenario: (id: string) => void;
 }
 
-export default function Calculator({ inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError }: Props) {
+export default function Calculator({
+  inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
+  scenarios, onSaveScenario, onLoadScenario, onDeleteScenario,
+}: Props) {
   const { t, fmt, fmtC } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [scenarioName, setScenarioName] = useState('');
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const announcement = useMemo(
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
@@ -307,6 +315,12 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
       setCopiedSummary(true);
       setTimeout(() => setCopiedSummary(false), 2000);
     });
+  };
+
+  const handleSaveScenario = () => {
+    if (!scenarioName.trim()) return;
+    onSaveScenario(scenarioName.trim());
+    setScenarioName('');
   };
 
   const handleShare = () => {
@@ -709,6 +723,45 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <button type="button" className="copy-link-btn" onClick={() => onResetToDefaults()}>
               {t('reset_defaults')}
             </button>
+
+            <div className="scenario-panel">
+              <div className="scenario-save-row">
+                <input
+                  type="text"
+                  className="scenario-name-input"
+                  placeholder={t('scenario_name_placeholder')}
+                  value={scenarioName}
+                  onChange={(e) => setScenarioName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveScenario(); }}
+                />
+                <button
+                  type="button"
+                  className="copy-link-btn"
+                  onClick={handleSaveScenario}
+                  disabled={!scenarioName.trim()}
+                  style={!scenarioName.trim() ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+                >
+                  {t('scenario_save')}
+                </button>
+              </div>
+              {scenarios.length > 0 && (
+                <div className="scenario-list">
+                  <div className="scenario-list-title">{t('scenario_saved_title')}</div>
+                  {scenarios.map((s) => (
+                    <div className="scenario-row" key={s.id}>
+                      <span className="scenario-row-name">{s.name}</span>
+                      <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
+                        {t('scenario_load')}
+                      </button>
+                      <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => onDeleteScenario(s.id)}>
+                        {t('scenario_delete')}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="info-box" style={{ fontSize: '.82rem', marginTop: 12 }}>{t('overpay_day_tip')}</div>
           </motion.div>
 

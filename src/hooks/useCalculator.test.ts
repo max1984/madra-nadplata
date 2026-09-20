@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -240,6 +240,77 @@ describe('saveInputs / loadStoredInputs', () => {
     expect(loadStoredInputs()).not.toBeNull();
     clearStoredInputs();
     expect(loadStoredInputs()).toBeNull();
+  });
+});
+
+describe('addScenario / removeScenario / loadScenarios / persistScenarios', () => {
+  let fake: FakeStorage;
+
+  beforeEach(() => {
+    fake = new FakeStorage();
+    vi.stubGlobal('localStorage', fake);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('adds a scenario with a generated id, trimmed name and the given inputs', () => {
+    const list = addScenario([], '  Wariant A  ', { ...DEFAULT_INPUTS, loanAmount: 250000 });
+    expect(list).toHaveLength(1);
+    expect(list[0]!.name).toBe('Wariant A');
+    expect(list[0]!.inputs.loanAmount).toBe(250000);
+    expect(list[0]!.id).toBeTruthy();
+  });
+
+  it('assigns distinct ids to scenarios added back to back', () => {
+    let list = addScenario([], 'A', DEFAULT_INPUTS);
+    list = addScenario(list, 'B', DEFAULT_INPUTS);
+    expect(list[0]!.id).not.toBe(list[1]!.id);
+  });
+
+  it('regression: caps the list at 10 entries by dropping the oldest — otherwise localStorage would grow without bound for anyone who saves many variants', () => {
+    let list: ReturnType<typeof addScenario> = [];
+    for (let i = 0; i < 12; i++) list = addScenario(list, `Scenariusz ${i}`, DEFAULT_INPUTS);
+    expect(list).toHaveLength(10);
+    expect(list[0]!.name).toBe('Scenariusz 2');
+    expect(list[9]!.name).toBe('Scenariusz 11');
+  });
+
+  it('removeScenario filters out only the matching id', () => {
+    let list = addScenario([], 'A', DEFAULT_INPUTS);
+    list = addScenario(list, 'B', DEFAULT_INPUTS);
+    const idToRemove = list[0]!.id;
+    const next = removeScenario(list, idToRemove);
+    expect(next).toHaveLength(1);
+    expect(next[0]!.name).toBe('B');
+  });
+
+  it('round-trips scenarios through persistScenarios / loadScenarios', () => {
+    const list = addScenario([], 'Wariant', { ...DEFAULT_INPUTS, loanAmount: 777000 });
+    persistScenarios(list);
+    const loaded = loadScenarios();
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0]!.name).toBe('Wariant');
+    expect(loaded[0]!.inputs.loanAmount).toBe(777000);
+  });
+
+  it('returns an empty list when nothing has been saved yet', () => {
+    expect(loadScenarios()).toEqual([]);
+  });
+
+  it('regression: filters out malformed entries instead of throwing — localStorage is manually editable and survives shape changes across app versions', () => {
+    localStorage.setItem('calc_scenarios_v1', 'not json {{{');
+    expect(() => loadScenarios()).not.toThrow();
+    expect(loadScenarios()).toEqual([]);
+
+    localStorage.setItem('calc_scenarios_v1', JSON.stringify([{ id: '1', name: 'ok', savedAt: 1, inputs: DEFAULT_INPUTS }, { id: '2' }, 'garbage', null]));
+    const loaded = loadScenarios();
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0]!.name).toBe('ok');
+
+    localStorage.setItem('calc_scenarios_v1', JSON.stringify({ not: 'an array' }));
+    expect(loadScenarios()).toEqual([]);
   });
 });
 

@@ -187,6 +187,66 @@ export function clearStoredInputs(): void {
   safeRemoveItem(STORED_INPUTS_KEY);
 }
 
+export interface SavedScenario {
+  id: string;
+  name: string;
+  savedAt: number;
+  inputs: CalcInputs;
+}
+
+const SCENARIOS_KEY = 'calc_scenarios_v1';
+const MAX_SCENARIOS = 10;
+
+/**
+ * Jak loadStoredInputs — localStorage jest edytowalne ręcznie i przeżywa
+ * zmiany kształtu danych między wersjami, więc każdy wpis jest osobno
+ * walidowany; jeden uszkodzony scenariusz nie może wywalić całej listy.
+ */
+export function loadScenarios(): SavedScenario[] {
+  const raw = safeGetItem(SCENARIOS_KEY);
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((s): s is SavedScenario =>
+      typeof s === 'object' && s !== null &&
+      typeof (s as SavedScenario).id === 'string' &&
+      typeof (s as SavedScenario).name === 'string' &&
+      typeof (s as SavedScenario).savedAt === 'number' &&
+      typeof (s as SavedScenario).inputs === 'object' && (s as SavedScenario).inputs !== null,
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function persistScenarios(list: SavedScenario[]): void {
+  safeSetItem(SCENARIOS_KEY, JSON.stringify(list));
+}
+
+/**
+ * Dodaje nowy scenariusz na koniec listy, obcinając najstarsze wpisy powyżej
+ * MAX_SCENARIOS — bez limitu localStorage rosłoby bez końca komuś, kto
+ * zapisuje wiele wariantów w jednej sesji. Nazwa jest przycinana, ale
+ * pusta nazwa nie jest tu domyślnie podstawiana — o to dba UI (przycisk
+ * "Zapisz" jest wyłączony bez treści w polu), żeby uniknąć hardkodowania
+ * jednego języka w kodzie biblioteki niezależnym od i18n.
+ */
+export function addScenario(list: SavedScenario[], name: string, inputs: CalcInputs): SavedScenario[] {
+  const scenario: SavedScenario = {
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    name: name.trim(),
+    savedAt: Date.now(),
+    inputs,
+  };
+  const next = [...list, scenario];
+  return next.length > MAX_SCENARIOS ? next.slice(next.length - MAX_SCENARIOS) : next;
+}
+
+export function removeScenario(list: SavedScenario[], id: string): SavedScenario[] {
+  return list.filter((s) => s.id !== id);
+}
+
 /**
  * Porównanie płytkie — CalcInputs to płaski obiekt samych prymitywów, więc
  * to wystarcza. Używane do wykrywania, czy wyświetlony wynik jest nadal
@@ -400,6 +460,7 @@ export function useCalculator() {
   });
 
   const [calcError, setCalcError] = useState<TranslationKey | null>(null);
+  const [scenarios, setScenarios] = useState<SavedScenario[]>(() => loadScenarios());
 
   const isStale = calcState !== null && lastCalculatedInputs !== null && !inputsEqual(inputs, lastCalculatedInputs);
 
@@ -407,18 +468,50 @@ export function useCalculator() {
     setInputsState((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  const calculate = useCallback(() => {
-    const err = validateInputs(inputs);
+  const applyCalculation = useCallback((inp: CalcInputs): boolean => {
+    const err = validateInputs(inp);
     if (err) {
       setCalcError(err);
-      return;
+      return false;
     }
     setCalcError(null);
-    window.history.replaceState(null, '', '?' + buildUrlParams(inputs));
-    saveInputs(inputs);
-    setLastCalculatedInputs(inputs);
-    setCalcState(computeCalcState(inputs));
+    window.history.replaceState(null, '', '?' + buildUrlParams(inp));
+    saveInputs(inp);
+    setLastCalculatedInputs(inp);
+    setCalcState(computeCalcState(inp));
+    return true;
+  }, []);
+
+  const calculate = useCallback(() => {
+    applyCalculation(inputs);
+  }, [inputs, applyCalculation]);
+
+  // Wczytanie scenariusza liczy od razu na podstawie jego danych, a nie
+  // stanu `inputs` z poprzedniego renderu — setInputsState + calculate()
+  // w tym samym wywołaniu widziałoby jeszcze stare dane sprzed aktualizacji.
+  const saveCurrentAsScenario = useCallback((name: string) => {
+    setScenarios((prev) => {
+      const next = addScenario(prev, name, inputs);
+      persistScenarios(next);
+      return next;
+    });
   }, [inputs]);
+
+  const loadScenario = useCallback((id: string) => {
+    const scenario = scenarios.find((s) => s.id === id);
+    if (!scenario) return;
+    const inp = { ...DEFAULT_INPUTS, ...scenario.inputs };
+    setInputsState(inp);
+    applyCalculation(inp);
+  }, [scenarios, applyCalculation]);
+
+  const deleteScenario = useCallback((id: string) => {
+    setScenarios((prev) => {
+      const next = removeScenario(prev, id);
+      persistScenarios(next);
+      return next;
+    });
+  }, []);
 
   // Uzupełnienie zapamiętywania danych (saveInputs) — bez tego jedyną drogą
   // powrotu do domyślnych wartości byłoby ręczne czyszczenie localStorage
@@ -583,6 +676,10 @@ export function useCalculator() {
     calculate,
     isStale,
     resetToDefaults,
+    scenarios,
+    saveCurrentAsScenario,
+    loadScenario,
+    deleteScenario,
     onOverpayChange,
     onRateChange,
     onCustomEffectChange,
