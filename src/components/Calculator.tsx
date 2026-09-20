@@ -512,7 +512,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <motion.button
               type="button"
               className="calc-btn"
-              onClick={onCalculate}
+              onClick={() => onCalculate()}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
             >

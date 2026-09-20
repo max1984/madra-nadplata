@@ -1,6 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
+
+class FakeStorage {
+  private store = new Map<string, string>();
+  getItem(key: string) { return this.store.has(key) ? this.store.get(key)! : null; }
+  setItem(key: string, value: string) { this.store.set(key, value); }
+  removeItem(key: string) { this.store.delete(key); }
+}
 
 function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
   const months = 3;
@@ -187,5 +194,44 @@ describe('flatOverpayWithStart', () => {
 
   it('is a no-op zeroing when startMonth reaches or exceeds the schedule length', () => {
     expect(flatOverpayWithStart(4, 500, 10)).toEqual([0, 0, 0, 0]);
+  });
+});
+
+describe('saveInputs / loadStoredInputs', () => {
+  let fake: FakeStorage;
+
+  beforeEach(() => {
+    fake = new FakeStorage();
+    vi.stubGlobal('localStorage', fake);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('round-trips a saved CalcInputs object', () => {
+    saveInputs({ ...DEFAULT_INPUTS, loanAmount: 456000, interestRate: 7.25 });
+    const loaded = loadStoredInputs();
+    expect(loaded?.loanAmount).toBe(456000);
+    expect(loaded?.interestRate).toBe(7.25);
+  });
+
+  it('returns null when nothing has been saved yet', () => {
+    expect(loadStoredInputs()).toBeNull();
+  });
+
+  it('regression: returns null instead of throwing on corrupted or foreign localStorage content — DevTools or a leftover value from an older app shape must not crash state initialization', () => {
+    localStorage.setItem('calc_inputs_v1', 'not json at all {{{');
+    expect(() => loadStoredInputs()).not.toThrow();
+    expect(loadStoredInputs()).toBeNull();
+
+    localStorage.setItem('calc_inputs_v1', JSON.stringify([1, 2, 3]));
+    expect(loadStoredInputs()).toBeNull();
+
+    localStorage.setItem('calc_inputs_v1', JSON.stringify(42));
+    expect(loadStoredInputs()).toBeNull();
+
+    localStorage.setItem('calc_inputs_v1', JSON.stringify(null));
+    expect(loadStoredInputs()).toBeNull();
   });
 });

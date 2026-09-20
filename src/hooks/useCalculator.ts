@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { parseLocaleNumber } from '../lib/format';
+import { safeGetItem, safeSetItem } from '../lib/safeStorage';
 import {
   calcStdPayment,
   buildSchedule,
@@ -150,6 +151,35 @@ function buildUrlParams(inp: CalcInputs): string {
     if (inp.refiFlat > 0) sp.set('refiFlat', String(inp.refiFlat));
   }
   return sp.toString();
+}
+
+const STORED_INPUTS_KEY = 'calc_inputs_v1';
+
+/**
+ * Zapisuje dane formularza po udanym wyliczeniu, żeby powracający użytkownik
+ * nie zaczynał od zera przy kolejnej wizycie — tak samo jak link URL już to
+ * robi, tylko bez konieczności zapisywania/przesyłania linku.
+ */
+export function saveInputs(inp: CalcInputs): void {
+  safeSetItem(STORED_INPUTS_KEY, JSON.stringify(inp));
+}
+
+/**
+ * Wczytuje ostatnio zapisane dane formularza. localStorage jest edytowalne
+ * ręcznie (DevTools) i przeżywa zmiany kształtu CalcInputs między wersjami
+ * aplikacji, więc parsowanie musi po cichu zwrócić null przy czymkolwiek
+ * niespodziewanym zamiast rzucić wyjątkiem w trakcie inicjalizacji stanu.
+ */
+export function loadStoredInputs(): Partial<CalcInputs> | null {
+  const raw = safeGetItem(STORED_INPUTS_KEY);
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
+    return parsed as Partial<CalcInputs>;
+  } catch {
+    return null;
+  }
 }
 
 export function validateInputs(inp: CalcInputs): TranslationKey | null {
@@ -324,15 +354,19 @@ export function clampCustomAnnualRate(annualRateValue: string): number {
 }
 
 export function useCalculator() {
-  const [inputs, setInputsState] = useState<CalcInputs>(() => ({
-    ...DEFAULT_INPUTS,
-    ...parseUrlInputs(),
-  }));
+  // Link URL to jawna, udostępniona intencja — ma pierwszeństwo przed cicho
+  // zapamiętanymi danymi z poprzedniej wizyty w tej samej przeglądarce.
+  const [inputs, setInputsState] = useState<CalcInputs>(() => {
+    const urlPatch = parseUrlInputs();
+    const patch = Object.keys(urlPatch).length ? urlPatch : loadStoredInputs();
+    return { ...DEFAULT_INPUTS, ...patch };
+  });
 
   const [calcState, setCalcState] = useState<CalcState | null>(() => {
     const urlPatch = parseUrlInputs();
-    if (!Object.keys(urlPatch).length) return null;
-    const inp = { ...DEFAULT_INPUTS, ...urlPatch };
+    const patch = Object.keys(urlPatch).length ? urlPatch : loadStoredInputs();
+    if (!patch) return null;
+    const inp = { ...DEFAULT_INPUTS, ...patch };
     if (validateInputs(inp) !== null) return null;
     return computeCalcState(inp);
   });
@@ -343,16 +377,16 @@ export function useCalculator() {
     setInputsState((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  const calculate = useCallback((overrideInputs?: Partial<CalcInputs>) => {
-    const inp = overrideInputs ? { ...inputs, ...overrideInputs } : inputs;
-    const err = validateInputs(inp);
+  const calculate = useCallback(() => {
+    const err = validateInputs(inputs);
     if (err) {
       setCalcError(err);
       return;
     }
     setCalcError(null);
-    window.history.replaceState(null, '', '?' + buildUrlParams(inp));
-    setCalcState(computeCalcState(inp));
+    window.history.replaceState(null, '', '?' + buildUrlParams(inputs));
+    saveInputs(inputs);
+    setCalcState(computeCalcState(inputs));
   }, [inputs]);
 
   const onOverpayChange = useCallback((idx: number, value: string) => {
