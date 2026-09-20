@@ -4,7 +4,7 @@ import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber } from '../lib/format';
-import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth } from '../lib/mortgage';
+import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
@@ -780,6 +780,10 @@ function renderStats(
         {savedMoney > 0 && (
           <div className="info-box mt-16" style={{ fontSize: '.82rem' }}>
             {t('stats_saving_prefix')} <strong>{(100 - +pct).toFixed(1)}%</strong> {t('stats_saving_suffix')}
+            <br />
+            {t('stats_repayment_multiple')
+              .replace('{base}', repaymentMultiple(cs.P, cs.baseInterest).toFixed(2))
+              .replace('{with}', repaymentMultiple(cs.P, withInterest).toFixed(2))}
           </div>
         )}
       </div>

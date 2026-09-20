@@ -11,6 +11,7 @@ import {
   totalAppliedOverpay,
   refiBreakEvenMonth,
   halfPrincipalMonth,
+  repaymentMultiple,
 } from './mortgage';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -223,6 +224,30 @@ describe('halfPrincipalMonth', () => {
     const P = 300000, r = 0.06 / 12, n = 360;
     const rows = buildSchedule(P, Array(n).fill(r), n, 0, [200000, ...Array(n - 1).fill(0)], r);
     expect(halfPrincipalMonth(rows, P)).toBe(1);
+  });
+});
+
+describe('repaymentMultiple', () => {
+  it('is 1.0 when there is no interest at all', () => {
+    expect(repaymentMultiple(300000, 0)).toBe(1);
+  });
+
+  it('is 2.0 when total interest equals the borrowed amount', () => {
+    expect(repaymentMultiple(300000, 300000)).toBe(2);
+  });
+
+  it('returns 0 for a non-positive principal instead of dividing by zero/negative', () => {
+    expect(repaymentMultiple(0, 100000)).toBe(0);
+    expect(repaymentMultiple(-1000, 100000)).toBe(0);
+  });
+
+  it('regression: overpaying always yields a smaller multiple than the natural schedule — the whole point of surfacing this stat is to show overpaying shrinks it', () => {
+    const P = 300000, r = 0.06 / 12, n = 360;
+    const natural = buildSchedule(P, Array(n).fill(r), n, 0, Array(n).fill(0), r);
+    const overpaid = buildSchedule(P, Array(n).fill(r), n, 0, Array(n).fill(500), r);
+    const naturalInterest = natural[natural.length - 1]!.cumInterest;
+    const overpaidInterest = overpaid[overpaid.length - 1]!.cumInterest;
+    expect(repaymentMultiple(P, overpaidInterest)).toBeLessThan(repaymentMultiple(P, naturalInterest));
   });
 });
 

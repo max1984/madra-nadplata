@@ -126,6 +126,16 @@ export function halfPrincipalMonth(rows: ScheduleRow[], P: number): number | nul
   return idx === -1 ? null : idx + 1;
 }
 
+/**
+ * Ile razy więcej niż pożyczoną kwotę oddasz bankowi łącznie (kapitał +
+ * odsetki) — dla wielu osób bardziej przemawiający sposób pokazania kosztu
+ * kredytu niż sama kwota odsetek w złotówkach.
+ */
+export function repaymentMultiple(P: number, totalInterest: number): number {
+  if (P <= 0) return 0;
+  return (P + totalInterest) / P;
+}
+
 // Returns the remaining balance after applying overpays up to and including upToIdx.
 export function balanceAt(
   P: number,

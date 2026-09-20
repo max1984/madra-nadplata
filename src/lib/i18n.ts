@@ -35,6 +35,7 @@ export type TranslationKey =
   | 'stats_saved' | 'stats_faster' | 'stats_payments_instead'
   | 'stats_avg_overpay' | 'stats_total_interest' | 'stats_comparison'
   | 'stats_without' | 'stats_with' | 'stats_saving_prefix' | 'stats_saving_suffix'
+  | 'stats_repayment_multiple'
   | 'stats_payments_label' | 'stats_loan_duration'
   | 'stats_half_label' | 'stats_half_hint'
   | 'sch_label' | 'sch_title' | 'sch_sub'
@@ -165,6 +166,7 @@ const pl: Translations = {
   stats_total_interest: 'łączne odsetki', stats_comparison: 'Porównanie łącznych kosztów',
   stats_without: 'Bez nadpłaty', stats_with: 'Z nadpłatą',
   stats_saving_prefix: 'Oszczędzasz', stats_saving_suffix: 'łącznych odsetek na tle scenariusza bez nadpłaty.',
+  stats_repayment_multiple: 'Bez nadpłaty oddałbyś bankowi łącznie {base}× pożyczonej kwoty — z nadpłatą tylko {with}×.',
   stats_payments_label: 'rat',
   stats_loan_duration: 'czas trwania kredytu',
   stats_half_label: 'połowa kapitału spłacona za', stats_half_hint: 'Za tyle czasu saldo kredytu spadnie do połowy dzisiejszej kwoty.',
@@ -362,6 +364,7 @@ const en: Translations = {
   stats_total_interest: 'total interest', stats_comparison: 'Total cost comparison',
   stats_without: 'Without overpayment', stats_with: 'With overpayment',
   stats_saving_prefix: 'You save', stats_saving_suffix: 'of total interest vs. no overpayment.',
+  stats_repayment_multiple: 'Without overpaying you’d repay the bank {base}× what you borrowed — with your plan, only {with}×.',
   stats_payments_label: 'payments',
   stats_loan_duration: 'loan duration',
   stats_half_label: 'half the principal paid off in', stats_half_hint: 'How long until the loan balance drops to half of today’s amount.',
