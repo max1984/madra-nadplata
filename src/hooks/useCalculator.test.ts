@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -232,6 +232,13 @@ describe('saveInputs / loadStoredInputs', () => {
     expect(loadStoredInputs()).toBeNull();
 
     localStorage.setItem('calc_inputs_v1', JSON.stringify(null));
+    expect(loadStoredInputs()).toBeNull();
+  });
+
+  it('clearStoredInputs removes a previously saved value — the "reset to defaults" button relies on this to actually stop restoring the old data on the next visit', () => {
+    saveInputs({ ...DEFAULT_INPUTS, loanAmount: 999000 });
+    expect(loadStoredInputs()).not.toBeNull();
+    clearStoredInputs();
     expect(loadStoredInputs()).toBeNull();
   });
 });

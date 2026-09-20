@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { parseLocaleNumber } from '../lib/format';
-import { safeGetItem, safeSetItem } from '../lib/safeStorage';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../lib/safeStorage';
 import {
   calcStdPayment,
   buildSchedule,
@@ -180,6 +180,11 @@ export function loadStoredInputs(): Partial<CalcInputs> | null {
   } catch {
     return null;
   }
+}
+
+/** Usuwa zapamiętane dane formularza — używane przez "Przywróć domyślne". */
+export function clearStoredInputs(): void {
+  safeRemoveItem(STORED_INPUTS_KEY);
 }
 
 export function validateInputs(inp: CalcInputs): TranslationKey | null {
@@ -389,6 +394,17 @@ export function useCalculator() {
     setCalcState(computeCalcState(inputs));
   }, [inputs]);
 
+  // Uzupełnienie zapamiętywania danych (saveInputs) — bez tego jedyną drogą
+  // powrotu do domyślnych wartości byłoby ręczne czyszczenie localStorage
+  // z DevTools.
+  const resetToDefaults = useCallback(() => {
+    clearStoredInputs();
+    window.history.replaceState(null, '', window.location.pathname);
+    setCalcError(null);
+    setCalcState(null);
+    setInputsState(DEFAULT_INPUTS);
+  }, []);
+
   const onOverpayChange = useCallback((idx: number, value: string) => {
     setCalcState((prev) => {
       if (!prev || prev.strategy === 'refinance') return prev;
@@ -539,6 +555,7 @@ export function useCalculator() {
     calcState,
     calcError,
     calculate,
+    resetToDefaults,
     onOverpayChange,
     onRateChange,
     onCustomEffectChange,

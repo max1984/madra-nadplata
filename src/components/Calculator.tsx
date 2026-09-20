@@ -21,10 +21,11 @@ interface Props {
   setInputs: (patch: Partial<CalcInputs>) => void;
   calcState: CalcState | null;
   onCalculate: () => void;
+  onResetToDefaults: () => void;
   calcError: TranslationKey | null;
 }
 
-export default function Calculator({ inputs, setInputs, calcState, onCalculate, calcError }: Props) {
+export default function Calculator({ inputs, setInputs, calcState, onCalculate, onResetToDefaults, calcError }: Props) {
   const { t, fmt, fmtC } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
@@ -521,6 +522,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <button type="button" className="copy-link-btn" onClick={handleCopy} disabled={!calcState}
               style={!calcState ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
               {copied ? t('copy_link_copied') : t('copy_link')}
+            </button>
+            <button type="button" className="copy-link-btn" onClick={() => onResetToDefaults()}>
+              {t('reset_defaults')}
             </button>
             <div className="info-box" style={{ fontSize: '.82rem', marginTop: 12 }}>{t('overpay_day_tip')}</div>
           </motion.div>

@@ -55,7 +55,7 @@ export type TranslationKey =
   | 'error_loan_amount' | 'error_months' | 'error_rate' | 'error_prepay_fee'
   | 'error_refi_rate' | 'error_refi_months' | 'error_refi_month' | 'error_refi_fee'
   | 'error_overpay_start'
-  | 'copy_link' | 'copy_link_copied'
+  | 'copy_link' | 'copy_link_copied' | 'reset_defaults'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
@@ -202,6 +202,7 @@ const pl: Translations = {
   error_overpay_start: 'Opóźnienie startu nadpłaty musi mieścić się w okresie kredytu.',
   copy_link: 'Kopiuj link',
   copy_link_copied: '✓ Skopiowano!',
+  reset_defaults: '↺ Przywróć domyślne dane',
   csv_export: 'Pobierz CSV',
   sch_print: 'Drukuj / Zapisz PDF',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
@@ -400,6 +401,7 @@ const en: Translations = {
   error_overpay_start: 'The overpay start delay must fall within the loan term.',
   copy_link: 'Copy link',
   copy_link_copied: '✓ Copied!',
+  reset_defaults: '↺ Reset to defaults',
   csv_export: 'Download CSV',
   sch_print: 'Print / Save PDF',
   overpay_start_label: 'Start overpaying from month',
