@@ -60,6 +60,7 @@ export type TranslationKey =
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
   | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_saved_title'
   | 'scenario_load' | 'scenario_delete' | 'scenario_diff_label' | 'scenario_rename_hint'
+  | 'scenario_delete_confirm' | 'scenario_delete_cancel'
   | 'scenario_duplicate' | 'scenario_copy_suffix'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
@@ -222,6 +223,8 @@ const pl: Translations = {
   scenario_saved_title: 'Zapisane scenariusze',
   scenario_load: 'Wczytaj',
   scenario_delete: 'Usuń',
+  scenario_delete_confirm: 'Na pewno?',
+  scenario_delete_cancel: 'Anuluj',
   scenario_diff_label: 'Różnica względem aktualnego wyniku (odsetki / raty)',
   scenario_rename_hint: 'Kliknij, aby zmienić nazwę',
   scenario_duplicate: '📄 Duplikuj',
@@ -439,6 +442,8 @@ const en: Translations = {
   scenario_saved_title: 'Saved scenarios',
   scenario_load: 'Load',
   scenario_delete: 'Delete',
+  scenario_delete_confirm: 'Sure?',
+  scenario_delete_cancel: 'Cancel',
   scenario_diff_label: 'Difference vs. current result (interest / payments)',
   scenario_rename_hint: 'Click to rename',
   scenario_duplicate: '📄 Duplicate',

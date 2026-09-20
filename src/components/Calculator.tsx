@@ -142,6 +142,7 @@ export default function Calculator({
   const [scenarioName, setScenarioName] = useState('');
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
   const [editingScenarioName, setEditingScenarioName] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const announcement = useMemo(
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
@@ -340,6 +341,7 @@ export default function Calculator({
   };
 
   const startEditingScenario = (s: SavedScenario) => {
+    setConfirmDeleteId(null);
     setEditingScenarioId(s.id);
     setEditingScenarioName(s.name);
   };
@@ -347,6 +349,16 @@ export default function Calculator({
   const commitScenarioRename = () => {
     if (editingScenarioId) onRenameScenario(editingScenarioId, editingScenarioName);
     setEditingScenarioId(null);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    if (confirmDeleteId === id) {
+      onDeleteScenario(id);
+      setConfirmDeleteId(null);
+    } else {
+      setEditingScenarioId(null);
+      setConfirmDeleteId(id);
+    }
   };
 
   const handleShare = () => {
@@ -776,6 +788,7 @@ export default function Calculator({
                   {scenarios.map((s) => {
                     const diff = scenarioDiffs.get(s.id);
                     const isEditing = editingScenarioId === s.id;
+                    const isConfirmingDelete = confirmDeleteId === s.id;
                     return (
                       <div className="scenario-row" key={s.id}>
                         {isEditing ? (
@@ -820,9 +833,24 @@ export default function Calculator({
                         >
                           {t('scenario_duplicate')}
                         </button>
-                        <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => onDeleteScenario(s.id)}>
-                          {t('scenario_delete')}
-                        </button>
+                        {isConfirmingDelete ? (
+                          <>
+                            <button
+                              type="button"
+                              className="scenario-row-btn scenario-row-btn-delete"
+                              onClick={() => handleDeleteClick(s.id)}
+                            >
+                              {t('scenario_delete_confirm')}
+                            </button>
+                            <button type="button" className="scenario-row-btn" onClick={() => setConfirmDeleteId(null)}>
+                              {t('scenario_delete_cancel')}
+                            </button>
+                          </>
+                        ) : (
+                          <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => handleDeleteClick(s.id)}>
+                            {t('scenario_delete')}
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -842,46 +870,6 @@ export default function Calculator({
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.6, delay: 0.15 }}
           >
-            {isFinite(stdPayment) && stdPayment > 0 && (
-              <div className="result-card" style={{ marginBottom: 20 }}>
-                <div className="result-card-label">{t('rate_shock_title')}</div>
-                <p className="hint" style={{ marginBottom: 12 }}>{t('rate_shock_hint')}</p>
-                <div className="result-grid">
-                  {[1, 2, 3].map((delta) => {
-                    const shockStd = calcStdPayment(inputs.loanAmount, (inputs.interestRate + delta) / 100 / 12, inputs.loanMonths);
-                    const diff = shockStd - stdPayment;
-                    return (
-                      <div className="result-item" key={delta}>
-                        <div className="r-val" style={{ color: 'var(--danger)' }}>{fmtC(shockStd, 0)}</div>
-                        <div className="r-lbl">+{delta} p.p. ({diff >= 0 ? '+' : ''}{fmtC(diff, 0)} {t('rate_shock_more')})</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {isFinite(stdPayment) && stdPayment > 0 && (
-              <div className="result-card" style={{ marginBottom: 20 }}>
-                <div className="result-card-label">{t('holiday_title')}</div>
-                <p className="hint" style={{ marginBottom: 12 }}>{t('holiday_hint')}</p>
-                <div className="result-grid">
-                  {[3, 6].map((holidayMonths) => {
-                    const result = simulatePaymentHoliday(inputs.loanAmount, inputs.interestRate / 100 / 12, inputs.loanMonths, holidayMonths);
-                    const text = t('holiday_scenario')
-                      .replace('{n}', String(holidayMonths))
-                      .replace('{amount}', fmtC(result.extraInterest, 0));
-                    return (
-                      <div className="result-item" key={holidayMonths}>
-                        <div className="r-val" style={{ color: 'var(--danger)' }}>+{result.extraMonths} {t('form_months_unit')}</div>
-                        <div className="r-lbl">{text}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {isStale && calcState && (
               <div className="info-box" style={{ marginBottom: 20, marginTop: 0, background: 'var(--warn-soft)', borderColor: '#f5dca3', color: 'var(--warn)' }}>
                 {t('calc_stale')}
@@ -931,6 +919,46 @@ export default function Calculator({
                   <canvas ref={chartRef} role="img" aria-label={t('chart_balance')} />
                 </div>
               </>
+            )}
+
+            {isFinite(stdPayment) && stdPayment > 0 && (
+              <div className="result-card" style={{ marginBottom: 20, marginTop: 20 }}>
+                <div className="result-card-label">{t('rate_shock_title')}</div>
+                <p className="hint" style={{ marginBottom: 12 }}>{t('rate_shock_hint')}</p>
+                <div className="result-grid">
+                  {[1, 2, 3].map((delta) => {
+                    const shockStd = calcStdPayment(inputs.loanAmount, (inputs.interestRate + delta) / 100 / 12, inputs.loanMonths);
+                    const diff = shockStd - stdPayment;
+                    return (
+                      <div className="result-item" key={delta}>
+                        <div className="r-val" style={{ color: 'var(--danger)' }}>{fmtC(shockStd, 0)}</div>
+                        <div className="r-lbl">+{delta} p.p. ({diff >= 0 ? '+' : ''}{fmtC(diff, 0)} {t('rate_shock_more')})</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {isFinite(stdPayment) && stdPayment > 0 && (
+              <div className="result-card" style={{ marginBottom: 20 }}>
+                <div className="result-card-label">{t('holiday_title')}</div>
+                <p className="hint" style={{ marginBottom: 12 }}>{t('holiday_hint')}</p>
+                <div className="result-grid">
+                  {[3, 6].map((holidayMonths) => {
+                    const result = simulatePaymentHoliday(inputs.loanAmount, inputs.interestRate / 100 / 12, inputs.loanMonths, holidayMonths);
+                    const text = t('holiday_scenario')
+                      .replace('{n}', String(holidayMonths))
+                      .replace('{amount}', fmtC(result.extraInterest, 0));
+                    return (
+                      <div className="result-item" key={holidayMonths}>
+                        <div className="r-val" style={{ color: 'var(--danger)' }}>+{result.extraMonths} {t('form_months_unit')}</div>
+                        <div className="r-lbl">{text}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </motion.div>
         </div>
