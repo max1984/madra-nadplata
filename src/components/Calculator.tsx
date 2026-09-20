@@ -26,6 +26,17 @@ export function canUseNativeShare(nav: unknown): boolean {
   return typeof (nav as { share?: unknown } | null | undefined)?.share === 'function';
 }
 
+/**
+ * Szybkie propozycje kwoty nadpłaty (przyciski nad suwakiem), proporcjonalne
+ * do standardowej raty — stałe kwoty typu 200/500/1000 zł miałyby sens przy
+ * kredycie na 300 000 zł, ale byłyby śmiesznie małe przy 1 500 000 zł i za
+ * duże przy 50 000 zł. Zaokrąglone do pełnych 50 zł, z dolnym progiem 50 zł.
+ */
+export function overpayPresets(stdPayment: number): number[] {
+  const round50 = (n: number) => Math.max(50, Math.round(n / 50) * 50);
+  return [0.1, 0.25, 0.5].map((fraction) => round50(stdPayment * fraction));
+}
+
 interface Props {
   inputs: CalcInputs;
   setInputs: (patch: Partial<CalcInputs>) => void;
@@ -66,6 +77,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const sliderMin = Math.ceil((Math.ceil(stdPayment) + 1) / 100) * 100;
   const sliderMax = Math.max(sliderMin + 100, Math.floor(stdPayment * 2.5 / 100) * 100);
   const overpayMax = Math.max(10000, Math.floor(stdPayment * 2 / 100) * 100);
+  const overpayChipPresets = overpayPresets(stdPayment);
   const isFixedTotal = inputs.strategy === 'fixed_total' || inputs.strategy === 'reduce_payment';
 
   const goalYears = Math.floor(inputs.goalMonths / 12);
@@ -373,6 +385,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   />
                 </div>
+                <div className="preset-chips">
+                  {overpayChipPresets.map((amount) => (
+                    <button
+                      type="button" key={amount}
+                      className={`preset-chip${inputs.overpayAmountSlider === amount ? ' active' : ''}`}
+                      onClick={() => setInputs({ overpayAmountSlider: amount })}
+                    >
+                      +{fmt(amount)} {t('currency')}
+                    </button>
+                  ))}
+                </div>
                 <input type="range" min={0} max={overpayMax} step={100} value={inputs.overpayAmountSlider}
                   aria-label={t('slider_overpay')}
                   onChange={(e) => setInputs({ overpayAmountSlider: +e.target.value })} />
@@ -397,6 +420,17 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                     }}
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   />
+                </div>
+                <div className="preset-chips">
+                  {overpayChipPresets.map((amount) => (
+                    <button
+                      type="button" key={amount}
+                      className={`preset-chip${inputs.shortenAmountSlider === amount ? ' active' : ''}`}
+                      onClick={() => setInputs({ shortenAmountSlider: amount })}
+                    >
+                      +{fmt(amount)} {t('currency')}
+                    </button>
+                  ))}
                 </div>
                 <input type="range" min={0} max={overpayMax} step={100} value={inputs.shortenAmountSlider}
                   aria-label={t('slider_overpay')}
