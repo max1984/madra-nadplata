@@ -32,6 +32,24 @@ export function canUseNativeShare(nav: unknown): boolean {
  * kredycie na 300 000 zł, ale byłyby śmiesznie małe przy 1 500 000 zł i za
  * duże przy 50 000 zł. Zaokrąglone do pełnych 50 zł, z dolnym progiem 50 zł.
  */
+/**
+ * Krótkie podsumowanie nowo wyliczonego harmonogramu dla regionu aria-live —
+ * błąd walidacji formularza już był ogłaszany czytnikom ekranu (role="alert"
+ * na .calc-error), ale udany wynik obliczeń nie miał żadnego odpowiednika:
+ * osoba korzystająca z czytnika ekranu nie miała jak się dowiedzieć, że
+ * wynik się pojawił, poza ręcznym przeszukiwaniem całej strony.
+ */
+export function formatCalcAnnouncement(
+  cs: Pick<CalcState, 'rows'>,
+  t: (key: TranslationKey) => string,
+  fmtC: (n: number) => string,
+): string {
+  const withInterest = cs.rows.length ? cs.rows[cs.rows.length - 1]!.cumInterest : 0;
+  return t('calc_announcement')
+    .replace('{months}', String(cs.rows.length))
+    .replace('{interest}', fmtC(withInterest));
+}
+
 export function overpayPresets(stdPayment: number): number[] {
   const round50 = (n: number) => Math.max(50, Math.round(n / 50) * 50);
   return [0.1, 0.25, 0.5].map((fraction) => round50(stdPayment * fraction));
@@ -52,6 +70,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const chart = useRef<Chart | null>(null);
   const [copied, setCopied] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
+  const announcement = useMemo(
+    () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
+    [calcState, t, fmtC],
+  );
   const [investRate, setInvestRate] = useState(5);
   const resultsRef = useRef<HTMLDivElement>(null);
   const prevCalcState = useRef(calcState);
@@ -587,6 +609,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             >
               {t('calc_btn')}
             </motion.button>
+            <div role="status" aria-live="polite" className="sr-only">{announcement}</div>
             <button type="button" className="copy-link-btn" onClick={handleCopy} disabled={!calcState}
               style={!calcState ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
               {copied ? t('copy_link_copied') : t('copy_link')}

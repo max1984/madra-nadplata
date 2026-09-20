@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement } from './Calculator';
+import { t as translate } from '../lib/i18n';
+import { fmtC } from '../lib/format';
+import type { ScheduleRow } from '../lib/mortgage';
+
+function makeRow(cumInterest: number): ScheduleRow {
+  return {
+    num: 1, balanceBefore: 0, totalPayment: 0, capital: 0, regularCap: 0,
+    interest: 0, overpay: 0, fee: 0, balanceAfter: 0, cumInterest, annualRate: 0,
+  };
+}
 
 describe('canUseNativeShare', () => {
   it('is true when navigator.share is a function', () => {
@@ -40,5 +50,28 @@ describe('overpayPresets', () => {
 
   it('regression: never suggests less than 50 zł, even for a tiny standard payment where 10%/25% would round to 0', () => {
     for (const v of overpayPresets(100)) expect(v).toBeGreaterThanOrEqual(50);
+  });
+});
+
+describe('formatCalcAnnouncement', () => {
+  const t = (key: Parameters<typeof translate>[1]) => translate('pl', key);
+  const fmt = (n: number) => fmtC(n, 'pl');
+
+  it('regression: announces something for a screen-reader user after a successful calculation — validation errors already used role="alert", but a successful result had no aria-live equivalent at all', () => {
+    const cs = { rows: [makeRow(1000), makeRow(2000), makeRow(3500)] };
+    const msg = formatCalcAnnouncement(cs, t, fmt);
+    expect(msg.length).toBeGreaterThan(0);
+    expect(msg).toContain('3');
+  });
+
+  it('reflects the row count and the final cumulative interest', () => {
+    const cs = { rows: [makeRow(100), makeRow(250)] };
+    const msg = formatCalcAnnouncement(cs, t, fmt);
+    expect(msg).toContain('2');
+    expect(msg).toContain(fmt(250));
+  });
+
+  it('does not throw for an empty schedule', () => {
+    expect(() => formatCalcAnnouncement({ rows: [] }, t, fmt)).not.toThrow();
   });
 });
