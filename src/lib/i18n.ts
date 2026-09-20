@@ -74,6 +74,7 @@ export type TranslationKey =
   | 'breakeven_label' | 'breakeven_result' | 'breakeven_never'
   | 'no_overpay_title' | 'no_overpay_sub'
   | 'sch_yearly_toggle' | 'sch_monthly_toggle' | 'sch_col_year'
+  | 'sch_jump_placeholder' | 'sch_jump_btn'
   | 'custom_base_title' | 'custom_base_hint'
   | 'overpay_day_tip'
   | 'ad_consent_text' | 'ad_consent_accept' | 'ad_consent_decline' | 'ad_consent_policy'
@@ -266,6 +267,8 @@ const pl: Translations = {
   no_overpay_sub: 'Ustaw kwotę wyższą niż standardowa rata, aby zobaczyć oszczędności.',
   sch_yearly_toggle: 'Widok roczny',
   sch_monthly_toggle: 'Widok miesięczny',
+  sch_jump_placeholder: 'Nr miesiąca',
+  sch_jump_btn: 'Skocz',
   sch_col_year: 'Rok',
   custom_base_title: 'Koszty bazowe kredytu',
   custom_base_hint: 'Dodaj nadpłaty w harmonogramie poniżej – wyniki zaktualizują się automatycznie.',
@@ -504,6 +507,8 @@ const en: Translations = {
   no_overpay_sub: 'Set an amount above the standard payment to see your savings.',
   sch_yearly_toggle: 'Yearly view',
   sch_monthly_toggle: 'Monthly view',
+  sch_jump_placeholder: 'Month no.',
+  sch_jump_btn: 'Jump',
   sch_col_year: 'Year',
   custom_base_title: 'Base loan costs',
   custom_base_hint: 'Add overpayments in the schedule below — results update automatically.',

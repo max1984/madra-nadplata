@@ -53,7 +53,7 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
   const rateChanged = Math.abs(rate - globalR) > 0.0000001;
 
   return (
-    <tr>
+    <tr id={`sch-row-${row.num}`}>
       <td className="td-muted">{row.num}</td>
       <td>{fmtC(row.balanceBefore)}</td>
       <td>
@@ -193,6 +193,17 @@ function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
 export const csvDec = (n: number, lang: Lang = 'pl') =>
   lang === 'en' ? n.toFixed(2) : n.toFixed(2).replace('.', ',');
 
+/**
+ * Ogranicza wpisany numer miesiąca do sensownego zakresu tabeli (1..maxMonth)
+ * — bez tego wpisanie 0, liczby ujemnej albo miesiąca poza faktyczną
+ * długością harmonogramu (np. po wcześniejszej spłacie) próbowałoby
+ * przewinąć do wiersza, którego w DOM w ogóle nie ma.
+ */
+export function clampJumpMonth(value: number, maxMonth: number): number {
+  if (!Number.isFinite(value) || maxMonth < 1) return 1;
+  return Math.min(Math.max(1, Math.round(value)), maxMonth);
+}
+
 function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lang: Lang) {
   const sep = lang === 'en' ? ',' : ';';
   const headers = [
@@ -226,6 +237,7 @@ function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lan
 export default function Schedule({ calcState, onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange, onResetOverpays, onClearOverpays, onResetRates }: Props) {
   const { t, fmtC, lang } = useLang();
   const [yearlyView, setYearlyView] = useState(false);
+  const [jumpMonth, setJumpMonth] = useState('');
 
   if (!calcState) {
     return (
@@ -242,6 +254,15 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
 
   const totalOverpay = totalAppliedOverpay(calcState.rows);
   const paidOffCount = calcState.months - calcState.rows.length;
+
+  const handleJumpToMonth = () => {
+    const target = clampJumpMonth(parseInt(jumpMonth, 10), calcState.rows.length);
+    const el = document.getElementById(`sch-row-${target}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('row-jump-highlight');
+    setTimeout(() => el.classList.remove('row-jump-highlight'), 1500);
+  };
 
   return (
     <section id="schedule">
@@ -294,6 +315,24 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                 className={`toolbar-btn${yearlyView ? ' active' : ''}`}
                 onClick={() => setYearlyView((v) => !v)}
               >{yearlyView ? t('sch_monthly_toggle') : t('sch_yearly_toggle')}</button>
+              <div className="toolbar-divider" />
+              {!yearlyView && (
+                <div className="jump-to-month">
+                  <input
+                    type="number"
+                    min={1}
+                    max={calcState.rows.length}
+                    placeholder={t('sch_jump_placeholder')}
+                    value={jumpMonth}
+                    onChange={(e) => setJumpMonth(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleJumpToMonth(); }}
+                    aria-label={t('sch_jump_placeholder')}
+                  />
+                  <button type="button" className="toolbar-btn" onClick={handleJumpToMonth}>
+                    {t('sch_jump_btn')}
+                  </button>
+                </div>
+              )}
               <div className="toolbar-divider" />
               {calcState.strategy !== 'refinance' ? (
                 <>

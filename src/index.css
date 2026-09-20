@@ -531,6 +531,12 @@ tbody td { padding: 10px 16px; white-space: nowrap; }
 .toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
 .toolbar-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .toolbar-divider { width: 1px; height: 20px; background: var(--border); align-self: center; }
+.jump-to-month { display: flex; align-items: center; gap: 6px; }
+.jump-to-month input {
+  width: 64px; padding: 6px 8px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: .8rem; font-family: inherit; color: var(--text);
+}
+.row-jump-highlight { background: var(--warn-soft) !important; transition: background 1.5s ease-out; }
 .overpay-input {
   width: 90px; padding: 5px 8px;
   background: var(--accent-soft); border: 1px solid #cfdefb;
