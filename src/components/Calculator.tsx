@@ -16,6 +16,16 @@ function useSyncInput(ref: React.RefObject<HTMLInputElement | null>, value: numb
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
+/**
+ * navigator.share() istnieje głównie na przeglądarkach mobilnych (i części
+ * desktopowych z integracją systemowego arkusza udostępniania) — wydzielone
+ * jako funkcja przyjmująca navigator jako argument, żeby dało się to
+ * przetestować bez mockowania globalnego obiektu window.
+ */
+export function canUseNativeShare(nav: unknown): boolean {
+  return typeof (nav as { share?: unknown } | null | undefined)?.share === 'function';
+}
+
 interface Props {
   inputs: CalcInputs;
   setInputs: (patch: Partial<CalcInputs>) => void;
@@ -30,6 +40,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
   const [copied, setCopied] = useState(false);
+  const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const [investRate, setInvestRate] = useState(5);
   const resultsRef = useRef<HTMLDivElement>(null);
   const prevCalcState = useRef(calcState);
@@ -180,6 +191,12 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const handleShare = () => {
+    // AbortError (użytkownik zamknął systemowy arkusz udostępniania) to nie
+    // błąd aplikacji — nic nie pokazujemy, po prostu nic się nie stało.
+    navigator.share({ title: 'Mądra Nadpłata', url: window.location.href }).catch(() => {});
   };
 
   const stats = useMemo(
@@ -523,6 +540,12 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
               style={!calcState ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
               {copied ? t('copy_link_copied') : t('copy_link')}
             </button>
+            {canShare && (
+              <button type="button" className="copy-link-btn" onClick={handleShare} disabled={!calcState}
+                style={!calcState ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
+                {t('share_native')}
+              </button>
+            )}
             <button type="button" className="copy-link-btn" onClick={() => onResetToDefaults()}>
               {t('reset_defaults')}
             </button>
