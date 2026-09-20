@@ -50,6 +50,17 @@ export function formatCalcAnnouncement(
     .replace('{interest}', fmtC(withInterest));
 }
 
+/**
+ * Ctrl/Cmd+Enter jako skrót do "Oblicz" — zwykły Enter w polu formularza
+ * już commituje wartość (onBlur), więc podpięcie go pod przeliczenie
+ * skasowałoby możliwość przejścia Tab-em między polami bez przeliczania
+ * po każdym z osobna. Modyfikator odróżnia "zatwierdź to pole" od
+ * "przelicz cały formularz".
+ */
+export function isCalculateShortcut(e: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey'>): boolean {
+  return e.key === 'Enter' && (e.ctrlKey || e.metaKey);
+}
+
 export function overpayPresets(stdPayment: number): number[] {
   const round50 = (n: number) => Math.max(50, Math.round(n / 50) * 50);
   return [0.1, 0.25, 0.5].map((fraction) => round50(stdPayment * fraction));
@@ -75,6 +86,30 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
     [calcState, t, fmtC],
   );
+
+  // Ref zamiast bezpośredniego domknięcia na onCalculate — blur() aktywnego
+  // pola (poniżej) commituje wartość asynchronicznie (React batchuje setState
+  // z natywnego zdarzenia DOM), więc wywołanie onCalculate() w tej samej
+  // klatce synchronicznej czytałoby jeszcze stary stan sprzed edycji. Ref
+  // aktualizowany co render zawsze wskazuje najświeższe domknięcie.
+  const onCalculateRef = useRef(onCalculate);
+  useEffect(() => { onCalculateRef.current = onCalculate; }, [onCalculate]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isCalculateShortcut(e)) return;
+      e.preventDefault();
+      (document.activeElement as HTMLElement | null)?.blur();
+      // setTimeout(…, 0) czeka na to, aż React przetworzy i wyrenderuje
+      // stan z powyższego blur(), zanim odczytamy (przez ref) najnowsze
+      // onCalculate — inaczej Ctrl+Enter tuż po wpisaniu wartości cicho
+      // przeliczałoby formularz sprzed tej ostatniej zmiany.
+      setTimeout(() => onCalculateRef.current(), 0);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const [investRate, setInvestRate] = useState(5);
   const resultsRef = useRef<HTMLDivElement>(null);
   const prevCalcState = useRef(calcState);
