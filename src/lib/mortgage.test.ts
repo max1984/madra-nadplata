@@ -13,6 +13,7 @@ import {
   halfPrincipalMonth,
   repaymentMultiple,
   dailyInterestCost,
+  payoffDate,
 } from './mortgage';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -225,6 +226,36 @@ describe('halfPrincipalMonth', () => {
     const P = 300000, r = 0.06 / 12, n = 360;
     const rows = buildSchedule(P, Array(n).fill(r), n, 0, [200000, ...Array(n - 1).fill(0)], r);
     expect(halfPrincipalMonth(rows, P)).toBe(1);
+  });
+});
+
+describe('payoffDate', () => {
+  it('adds the given number of months to the reference date', () => {
+    const from = new Date(2026, 0, 15); // 15 stycznia 2026
+    const result = payoffDate(18, from);
+    expect(result.getFullYear()).toBe(2027);
+    expect(result.getMonth()).toBe(6); // lipiec (0-indexed)
+  });
+
+  it('returns the reference month itself for 0 months', () => {
+    const from = new Date(2026, 5, 10);
+    const result = payoffDate(0, from);
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(5);
+  });
+
+  it('regression: always lands in the correct month regardless of the reference day-of-month — a naive Date rollover (e.g. Jan 31 + 1 month) would otherwise skip into March instead of February', () => {
+    const from = new Date(2026, 0, 31); // 31 stycznia
+    const result = payoffDate(1, from);
+    expect(result.getMonth()).toBe(1); // luty, nie marzec
+    expect(result.getFullYear()).toBe(2026);
+  });
+
+  it('rolls over the year correctly', () => {
+    const from = new Date(2026, 10, 1); // listopad 2026
+    const result = payoffDate(3, from);
+    expect(result.getFullYear()).toBe(2027);
+    expect(result.getMonth()).toBe(1); // luty 2027
   });
 });
 

@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
-import { parseLocaleNumber } from '../lib/format';
-import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost } from '../lib/mortgage';
+import { parseLocaleNumber, fmtMonthYear } from '../lib/format';
+import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
 import { compareScenarioToCurrent } from '../hooks/useCalculator';
-import type { TranslationKey } from '../lib/i18n';
+import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
 function useSyncInput(ref: React.RefObject<HTMLInputElement | null>, value: number | string) {
@@ -134,7 +134,7 @@ export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
   scenarios, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
 }: Props) {
-  const { t, fmt, fmtC } = useLang();
+  const { t, fmt, fmtC, lang } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
   const [copied, setCopied] = useState(false);
@@ -356,8 +356,8 @@ export default function Calculator({
   };
 
   const stats = useMemo(
-    () => calcState ? renderStats(calcState, t, fmtC) : null,
-    [calcState, t, fmtC]
+    () => calcState ? renderStats(calcState, t, fmtC, lang) : null,
+    [calcState, t, fmtC, lang]
   );
 
   const investCard = useMemo(
@@ -949,7 +949,8 @@ const GOAL_UNREASONABLE_MULTIPLE = 5;
 function renderStats(
   cs: CalcState,
   t: (key: TranslationKey) => string,
-  fmtC: (n: number) => string
+  fmtC: (n: number) => string,
+  lang: Lang
 ): React.ReactElement | null {
   if (cs.strategy === 'refinance' && cs.refiData) {
     return renderRefiStats(cs, cs.refiData, t, fmtC);
@@ -1006,6 +1007,8 @@ function renderStats(
   const halfStr = halfMonth === null ? null : (halfYears > 0
     ? halfYears + ' ' + t('years') + (halfRem > 0 ? ' ' + halfRem + ' ' + t('months_short') : '')
     : halfMonth + ' ' + t('months_short'));
+
+  const payoffDateStr = withMonths > 0 ? fmtMonthYear(payoffDate(withMonths), lang) : null;
 
   const pct = cs.baseInterest > 0 ? (withInterest / cs.baseInterest * 100).toFixed(1) : '0';
 
@@ -1073,6 +1076,12 @@ function renderStats(
             <div className="result-item" title={t('stats_half_hint')}>
               <div className="r-val" style={{ color: 'var(--accent2)' }}>{halfStr}</div>
               <div className="r-lbl">{t('stats_half_label')}</div>
+            </div>
+          )}
+          {payoffDateStr !== null && (
+            <div className="result-item" title={t('stats_payoff_date_hint')}>
+              <div className="r-val" style={{ color: 'var(--accent3)' }}>{payoffDateStr}</div>
+              <div className="r-lbl">{t('stats_payoff_date_label')}</div>
             </div>
           )}
         </div>

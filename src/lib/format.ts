@@ -26,3 +26,8 @@ export function fmtC(n: number, lang: Lang = 'pl', dec = 0): string {
 export function parseLocaleNumber(value: string): number {
   return parseFloat(value.replace(',', '.'));
 }
+
+/** "grudzień 2044" / "December 2044" — miesiąc i rok spłaty kredytu. */
+export function fmtMonthYear(date: Date, lang: Lang = 'pl'): string {
+  return date.toLocaleDateString(lang === 'en' ? 'en-US' : 'pl-PL', { month: 'long', year: 'numeric' });
+}

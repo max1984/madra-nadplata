@@ -127,6 +127,17 @@ export function halfPrincipalMonth(rows: ScheduleRow[], P: number): number | nul
 }
 
 /**
+ * Konkretna data (rok i miesiąc) spłaty ostatniej raty, licząc od dziś —
+ * "18 lat 3 mies." mówi ile trzeba czekać, ale "grudzień 2044" mówi, kiedy
+ * to realnie będzie. Dzień miesiąca celowo ustawiony na 1 — dodawanie
+ * miesięcy do np. 31 stycznia inaczej "przelewałoby się" na marzec zamiast
+ * lutego (JS Date normalizuje dzień, którego nie ma w docelowym miesiącu).
+ */
+export function payoffDate(monthsFromNow: number, from: Date = new Date()): Date {
+  return new Date(from.getFullYear(), from.getMonth() + monthsFromNow, 1);
+}
+
+/**
  * Ile razy więcej niż pożyczoną kwotę oddasz bankowi łącznie (kapitał +
  * odsetki) — dla wielu osób bardziej przemawiający sposób pokazania kosztu
  * kredytu niż sama kwota odsetek w złotówkach.

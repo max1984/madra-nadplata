@@ -38,6 +38,7 @@ export type TranslationKey =
   | 'stats_repayment_multiple'
   | 'stats_payments_label' | 'stats_loan_duration'
   | 'stats_half_label' | 'stats_half_hint'
+  | 'stats_payoff_date_label' | 'stats_payoff_date_hint'
   | 'sch_label' | 'sch_title' | 'sch_sub'
   | 'sch_col_num' | 'sch_col_bal_before' | 'sch_col_rate'
   | 'sch_col_interest' | 'sch_col_capital' | 'sch_col_overpay'
@@ -178,6 +179,8 @@ const pl: Translations = {
   stats_payments_label: 'rat',
   stats_loan_duration: 'czas trwania kredytu',
   stats_half_label: 'połowa kapitału spłacona za', stats_half_hint: 'Za tyle czasu saldo kredytu spadnie do połowy dzisiejszej kwoty.',
+  stats_payoff_date_label: 'spłata kredytu',
+  stats_payoff_date_hint: 'Szacowana data ostatniej raty, licząc od dzisiaj.',
   sch_label: 'Szczegóły', sch_title: 'Harmonogram spłat',
   sch_sub: 'Tabela generuje się automatycznie po obliczeniu. Edytuj nadpłatę lub oprocentowanie dla dowolnego miesiąca – zmiany propagują się automatycznie.',
   sch_col_num: 'Rata #', sch_col_bal_before: 'Saldo przed ratą', sch_col_rate: 'Oprocent. %',
@@ -393,6 +396,8 @@ const en: Translations = {
   stats_payments_label: 'payments',
   stats_loan_duration: 'loan duration',
   stats_half_label: 'half the principal paid off in', stats_half_hint: 'How long until the loan balance drops to half of today’s amount.',
+  stats_payoff_date_label: 'loan paid off by',
+  stats_payoff_date_hint: 'Estimated date of the final payment, counting from today.',
   sch_label: 'Details', sch_title: 'Repayment Schedule',
   sch_sub: 'The table is generated automatically after calculating. Edit the overpayment or interest rate for any month — changes propagate automatically.',
   sch_col_num: 'Payment #', sch_col_bal_before: 'Balance before', sch_col_rate: 'Rate %',

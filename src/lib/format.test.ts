@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fmt, fmtC, parseLocaleNumber } from './format';
+import { fmt, fmtC, parseLocaleNumber, fmtMonthYear } from './format';
 
 describe('fmt', () => {
   it('clamps negative and non-finite numbers to 0', () => {
@@ -35,5 +35,19 @@ describe('parseLocaleNumber', () => {
 
   it('returns NaN for garbage, same as parseFloat', () => {
     expect(parseLocaleNumber('abc')).toBeNaN();
+  });
+});
+
+describe('fmtMonthYear', () => {
+  it('formats a Polish month name and year', () => {
+    const result = fmtMonthYear(new Date(2044, 11, 1), 'pl');
+    expect(result.toLowerCase()).toContain('grudzień');
+    expect(result).toContain('2044');
+  });
+
+  it('formats an English month name and year', () => {
+    const result = fmtMonthYear(new Date(2044, 11, 1), 'en');
+    expect(result).toContain('December');
+    expect(result).toContain('2044');
   });
 });
