@@ -59,6 +59,7 @@ export type TranslationKey =
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
   | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_saved_title'
+  | 'scenario_sort_label' | 'scenario_sort_newest' | 'scenario_sort_oldest' | 'scenario_sort_name'
   | 'scenario_load' | 'scenario_delete' | 'scenario_diff_label' | 'scenario_rename_hint'
   | 'scenario_delete_confirm' | 'scenario_delete_cancel'
   | 'scenario_export' | 'scenario_import' | 'scenario_import_success' | 'scenario_import_empty'
@@ -229,6 +230,10 @@ const pl: Translations = {
   scenario_name_placeholder: 'Nazwa scenariusza (np. "Wariant z nadpłatą 500 zł")',
   scenario_save: '💾 Zapisz scenariusz',
   scenario_saved_title: 'Zapisane scenariusze',
+  scenario_sort_label: 'Sortuj scenariusze',
+  scenario_sort_newest: 'Najnowsze',
+  scenario_sort_oldest: 'Najstarsze',
+  scenario_sort_name: 'Nazwa (A-Z)',
   scenario_load: 'Wczytaj',
   scenario_delete: 'Usuń',
   scenario_delete_confirm: 'Na pewno?',
@@ -469,6 +474,10 @@ const en: Translations = {
   scenario_name_placeholder: 'Scenario name (e.g. "500 PLN overpay variant")',
   scenario_save: '💾 Save scenario',
   scenario_saved_title: 'Saved scenarios',
+  scenario_sort_label: 'Sort scenarios',
+  scenario_sort_newest: 'Newest',
+  scenario_sort_oldest: 'Oldest',
+  scenario_sort_name: 'Name (A-Z)',
   scenario_load: 'Load',
   scenario_delete: 'Delete',
   scenario_delete_confirm: 'Sure?',

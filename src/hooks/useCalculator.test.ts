@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -475,6 +475,36 @@ describe('mergeImportedScenarios', () => {
     expect(next).toHaveLength(10);
     expect(next[9]!.name).toBe('I3');
     expect(next[0]!.name).toBe('E1');
+  });
+});
+
+describe('sortScenarios', () => {
+  const list = [
+    { id: 'a', name: 'Banan', savedAt: 100, inputs: DEFAULT_INPUTS },
+    { id: 'b', name: 'jabłko', savedAt: 300, inputs: DEFAULT_INPUTS },
+    { id: 'c', name: 'Czereśnia', savedAt: 200, inputs: DEFAULT_INPUTS },
+  ];
+
+  it('date-desc (default) puts the most recently saved scenario first', () => {
+    expect(sortScenarios(list, 'date-desc').map((s) => s.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('date-asc puts the oldest scenario first', () => {
+    expect(sortScenarios(list, 'date-asc').map((s) => s.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('name-asc sorts case-insensitively — lowercase "jabłko" must not sort after the uppercase names purely due to case', () => {
+    expect(sortScenarios(list, 'name-asc').map((s) => s.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('regression: does not mutate the original array — callers pass the same scenarios array used elsewhere in the UI', () => {
+    const original = [...list];
+    sortScenarios(list, 'name-asc');
+    expect(list).toEqual(original);
+  });
+
+  it('returns an empty array for an empty input', () => {
+    expect(sortScenarios([], 'date-desc')).toEqual([]);
   });
 });
 

@@ -6,7 +6,7 @@ import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, type ScenarioSortKey } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -172,6 +172,9 @@ export default function Calculator({
     () => scenarios.find((s) => inputsEqual(s.inputs, inputs))?.id ?? null,
     [scenarios, inputs],
   );
+
+  const [scenarioSort, setScenarioSort] = useState<ScenarioSortKey>('date-desc');
+  const sortedScenarios = useMemo(() => sortScenarios(scenarios, scenarioSort), [scenarios, scenarioSort]);
 
   // Ref zamiast bezpośredniego domknięcia na onCalculate — blur() aktywnego
   // pola (poniżej) commituje wartość asynchronicznie (React batchuje setState
@@ -861,8 +864,22 @@ export default function Calculator({
               </div>
               {scenarios.length > 0 && (
                 <div className="scenario-list">
-                  <div className="scenario-list-title">{t('scenario_saved_title')}</div>
-                  {scenarios.map((s) => {
+                  <div className="scenario-list-header">
+                    <div className="scenario-list-title">{t('scenario_saved_title')}</div>
+                    {scenarios.length > 1 && (
+                      <select
+                        className="scenario-sort-select"
+                        value={scenarioSort}
+                        onChange={(e) => setScenarioSort(e.target.value as ScenarioSortKey)}
+                        aria-label={t('scenario_sort_label')}
+                      >
+                        <option value="date-desc">{t('scenario_sort_newest')}</option>
+                        <option value="date-asc">{t('scenario_sort_oldest')}</option>
+                        <option value="name-asc">{t('scenario_sort_name')}</option>
+                      </select>
+                    )}
+                  </div>
+                  {sortedScenarios.map((s) => {
                     const diff = scenarioDiffs.get(s.id);
                     const isEditing = editingScenarioId === s.id;
                     const isConfirmingDelete = confirmDeleteId === s.id;

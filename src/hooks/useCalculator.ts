@@ -261,6 +261,28 @@ export function mergeImportedScenarios(existing: SavedScenario[], imported: Save
   return next.length > MAX_SCENARIOS ? next.slice(next.length - MAX_SCENARIOS) : next;
 }
 
+export type ScenarioSortKey = 'date-desc' | 'date-asc' | 'name-asc';
+
+/**
+ * Kolejność wyświetlania zapisanych scenariuszy — sama lista w localStorage
+ * zawsze rośnie na końcu (najstarsze na początku), co przy kilku wariantach
+ * robi się niewygodne do przeglądania. Domyślne sortowanie w UI to
+ * 'date-desc' (najnowsze pierwsze), ale funkcja jest czystą transformacją
+ * niezależną od tego wyboru, żeby dało się ją łatwo przetestować.
+ */
+export function sortScenarios(list: SavedScenario[], sortBy: ScenarioSortKey): SavedScenario[] {
+  const sorted = [...list];
+  switch (sortBy) {
+    case 'date-asc':
+      return sorted.sort((a, b) => a.savedAt - b.savedAt);
+    case 'name-asc':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    case 'date-desc':
+    default:
+      return sorted.sort((a, b) => b.savedAt - a.savedAt);
+  }
+}
+
 /**
  * Dodaje nowy scenariusz na koniec listy, obcinając najstarsze wpisy powyżej
  * MAX_SCENARIOS — bez limitu localStorage rosłoby bez końca komuś, kto
