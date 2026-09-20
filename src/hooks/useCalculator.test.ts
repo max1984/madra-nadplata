@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -340,6 +340,57 @@ describe('renameScenario', () => {
     const list = addScenario([], 'A', DEFAULT_INPUTS);
     const next = renameScenario(list, 'nonexistent', 'X');
     expect(next).toEqual(list);
+  });
+});
+
+describe('scenariosToJSON / parseScenariosJSON', () => {
+  it('round-trips a list of scenarios through export/import text', () => {
+    const list = addScenario([], 'Wariant eksportowy', { ...DEFAULT_INPUTS, loanAmount: 456000 });
+    const json = scenariosToJSON(list);
+    const parsed = parseScenariosJSON(json);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]!.name).toBe('Wariant eksportowy');
+    expect(parsed[0]!.inputs.loanAmount).toBe(456000);
+  });
+
+  it('regression: returns an empty array instead of throwing for garbage or wrongly-shaped JSON — an imported file is untrusted input, same as localStorage', () => {
+    expect(() => parseScenariosJSON('not json {{{')).not.toThrow();
+    expect(parseScenariosJSON('not json {{{')).toEqual([]);
+    expect(parseScenariosJSON(JSON.stringify({ not: 'an array' }))).toEqual([]);
+    expect(parseScenariosJSON(JSON.stringify([{ id: '1' }, 'garbage', null]))).toEqual([]);
+  });
+});
+
+describe('mergeImportedScenarios', () => {
+  it('appends imported scenarios to the existing list under fresh ids', () => {
+    const existing = addScenario([], 'Istniejący', DEFAULT_INPUTS);
+    const imported = [{ id: 'imported-id', name: 'Zaimportowany', savedAt: 1, inputs: DEFAULT_INPUTS }];
+    const next = mergeImportedScenarios(existing, imported);
+    expect(next).toHaveLength(2);
+    expect(next[1]!.name).toBe('Zaimportowany');
+    expect(next[1]!.id).not.toBe('imported-id');
+  });
+
+  it('regression: re-assigns ids so importing a file exported from the same browser does not collide with what is already saved', () => {
+    const existing = addScenario([], 'A', DEFAULT_INPUTS);
+    const sameFileReimported = [{ ...existing[0]! }];
+    const next = mergeImportedScenarios(existing, sameFileReimported);
+    expect(next).toHaveLength(2);
+    expect(new Set(next.map((s) => s.id)).size).toBe(2);
+  });
+
+  it('caps the merged list at 10 entries, keeping the most recent', () => {
+    let existing: ReturnType<typeof addScenario> = [];
+    for (let i = 0; i < 8; i++) existing = addScenario(existing, `E${i}`, DEFAULT_INPUTS);
+    const imported = [
+      { id: 'i1', name: 'I1', savedAt: 1, inputs: DEFAULT_INPUTS },
+      { id: 'i2', name: 'I2', savedAt: 2, inputs: DEFAULT_INPUTS },
+      { id: 'i3', name: 'I3', savedAt: 3, inputs: DEFAULT_INPUTS },
+    ];
+    const next = mergeImportedScenarios(existing, imported);
+    expect(next).toHaveLength(10);
+    expect(next[9]!.name).toBe('I3');
+    expect(next[0]!.name).toBe('E1');
   });
 });
 

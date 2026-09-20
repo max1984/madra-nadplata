@@ -6,7 +6,7 @@ import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -128,11 +128,13 @@ interface Props {
   onDeleteScenario: (id: string) => void;
   onRenameScenario: (id: string, name: string) => void;
   onDuplicateScenario: (id: string, newName: string) => void;
+  onImportScenarios: (json: string) => number;
 }
 
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
   scenarios, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
+  onImportScenarios,
 }: Props) {
   const { t, fmt, fmtC, fmtSignedC, lang } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
@@ -143,6 +145,8 @@ export default function Calculator({
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
   const [editingScenarioName, setEditingScenarioName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const announcement = useMemo(
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
@@ -359,6 +363,29 @@ export default function Calculator({
       setEditingScenarioId(null);
       setConfirmDeleteId(id);
     }
+  };
+
+  const handleExportScenarios = () => {
+    const blob = new Blob([scenariosToJSON(scenarios)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `scenariusze-nadplata-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // pozwala wybrać ten sam plik ponownie i dostać onChange
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const count = onImportScenarios(String(reader.result ?? ''));
+      setImportMessage(count > 0 ? t('scenario_import_success').replace('{n}', String(count)) : t('scenario_import_empty'));
+      setTimeout(() => setImportMessage(null), 4000);
+    };
+    reader.readAsText(file);
   };
 
   const handleShare = () => {
@@ -781,6 +808,24 @@ export default function Calculator({
                 >
                   {t('scenario_save')}
                 </button>
+              </div>
+              <div className="scenario-import-export-row">
+                <input
+                  type="file"
+                  accept="application/json"
+                  ref={importInputRef}
+                  onChange={handleImportFileChange}
+                  style={{ display: 'none' }}
+                />
+                <button type="button" className="scenario-row-btn" onClick={() => importInputRef.current?.click()}>
+                  {t('scenario_import')}
+                </button>
+                {scenarios.length > 0 && (
+                  <button type="button" className="scenario-row-btn" onClick={handleExportScenarios}>
+                    {t('scenario_export')}
+                  </button>
+                )}
+                {importMessage && <span className="scenario-import-message">{importMessage}</span>}
               </div>
               {scenarios.length > 0 && (
                 <div className="scenario-list">

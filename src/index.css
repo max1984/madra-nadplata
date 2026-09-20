@@ -703,6 +703,8 @@ footer a:hover { color: var(--accent); }
   font-size: .85rem; font-family: inherit; color: var(--text);
 }
 .scenario-save-row .copy-link-btn { width: auto; margin-top: 0; flex-shrink: 0; white-space: nowrap; }
+.scenario-import-export-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.scenario-import-message { font-size: .78rem; color: var(--accent2); font-weight: 600; }
 .scenario-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .scenario-list-title {
   font-size: .72rem; font-weight: 700; text-transform: uppercase;

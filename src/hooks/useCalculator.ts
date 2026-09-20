@@ -202,9 +202,14 @@ const MAX_SCENARIOS = 10;
  * zmiany kształtu danych między wersjami, więc każdy wpis jest osobno
  * walidowany; jeden uszkodzony scenariusz nie może wywalić całej listy.
  */
-export function loadScenarios(): SavedScenario[] {
-  const raw = safeGetItem(SCENARIOS_KEY);
-  if (!raw) return [];
+/**
+ * Wydzielone z loadScenarios, żeby ta sama walidacja (jeden uszkodzony
+ * wpis nie wywala całej listy) obsługiwała też import scenariuszy z
+ * pliku wyeksportowanego wcześniej — tam JSON pochodzi z zewnątrz i może
+ * być równie niekompletny/uszkodzony jak coś ręcznie zmienionego w
+ * localStorage.
+ */
+export function parseScenariosJSON(raw: string): SavedScenario[] {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -220,8 +225,34 @@ export function loadScenarios(): SavedScenario[] {
   }
 }
 
+export function loadScenarios(): SavedScenario[] {
+  const raw = safeGetItem(SCENARIOS_KEY);
+  if (!raw) return [];
+  return parseScenariosJSON(raw);
+}
+
 export function persistScenarios(list: SavedScenario[]): void {
   safeSetItem(SCENARIOS_KEY, JSON.stringify(list));
+}
+
+/** Do przycisku "Eksportuj scenariusze" — czytelny, wcięty JSON do pliku. */
+export function scenariosToJSON(list: SavedScenario[]): string {
+  return JSON.stringify(list, null, 2);
+}
+
+/**
+ * Dokleja zaimportowane scenariusze do już zapisanych, nadając im nowe id
+ * — inaczej import pliku wyeksportowanego wcześniej z TEJ SAMEJ przeglądarki
+ * dawałby kolizję id z wpisami, które już tam są. Wynik obcięty do
+ * MAX_SCENARIOS tak samo jak w addScenario (zachowuje najnowsze).
+ */
+export function mergeImportedScenarios(existing: SavedScenario[], imported: SavedScenario[]): SavedScenario[] {
+  const reIded = imported.map((s) => ({
+    ...s,
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+  }));
+  const next = [...existing, ...reIded];
+  return next.length > MAX_SCENARIOS ? next.slice(next.length - MAX_SCENARIOS) : next;
 }
 
 /**
@@ -583,6 +614,18 @@ export function useCalculator() {
     });
   }, []);
 
+  /** Zwraca liczbę faktycznie zaimportowanych scenariuszy — do komunikatu w UI. */
+  const importScenarios = useCallback((json: string): number => {
+    const imported = parseScenariosJSON(json);
+    if (imported.length === 0) return 0;
+    setScenarios((prev) => {
+      const next = mergeImportedScenarios(prev, imported);
+      persistScenarios(next);
+      return next;
+    });
+    return imported.length;
+  }, []);
+
   // Uzupełnienie zapamiętywania danych (saveInputs) — bez tego jedyną drogą
   // powrotu do domyślnych wartości byłoby ręczne czyszczenie localStorage
   // z DevTools.
@@ -752,6 +795,7 @@ export function useCalculator() {
     deleteScenario,
     renameScenario: renameScenarioById,
     duplicateScenario: duplicateScenarioById,
+    importScenarios,
     onOverpayChange,
     onRateChange,
     onCustomEffectChange,
