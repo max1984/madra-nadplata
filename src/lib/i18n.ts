@@ -67,6 +67,7 @@ export type TranslationKey =
   | 'scenario_duplicate' | 'scenario_copy_suffix'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
+  | 'extra_annual_label' | 'extra_annual_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
   | 'invest_section_title' | 'invest_rate_label' | 'invest_gain_label' | 'invest_saved_label'
   | 'invest_verdict_overpay' | 'invest_verdict_invest'
@@ -248,6 +249,8 @@ const pl: Translations = {
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
   overpay_start_now: 'Od razu',
   overpay_start_hint: 'Miesiąc 0 = od razu. Przydatne, gdy nadpłatę planujesz za kilka miesięcy (np. po wykończeniu mieszkania).',
+  extra_annual_label: '💰 Dodatkowa (13.) rata raz w roku',
+  extra_annual_hint: 'Raz w roku wpłać dodatkowo jedną pełną standardową ratę, ponad zwykłą nadpłatę — polski odpowiednik popularnych w USA/UK płatności co dwa tygodnie (efektywnie 13 rat zamiast 12 rocznie).',
   row_effect_shorten: 'Skrócenie',
   row_effect_reduce: 'Zmniejszenie',
   invest_section_title: 'Co gdybyś inwestował zamiast nadpłacać?',
@@ -484,6 +487,8 @@ const en: Translations = {
   overpay_start_label: 'Start overpaying from month',
   overpay_start_now: 'Now',
   overpay_start_hint: 'Month 0 = immediately. Useful if you plan to start overpaying after a few months.',
+  extra_annual_label: '💰 Extra (13th) payment once a year',
+  extra_annual_hint: 'Once a year, pay one full standard payment on top of your regular overpayment — a Polish equivalent of the popular US/UK biweekly payment trick (effectively 13 payments instead of 12 per year).',
   row_effect_shorten: 'Shorten',
   row_effect_reduce: 'Reduce',
   invest_section_title: 'What if you invested instead of overpaying?',

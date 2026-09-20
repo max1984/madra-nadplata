@@ -774,6 +774,21 @@ export default function Calculator({
               </div>
             )}
 
+            {inputs.strategy !== 'custom' && inputs.strategy !== 'refinance' && inputs.strategy !== 'goal' && (
+              <div className="slider-group">
+                <label className="checkbox-row" htmlFor="extra-annual-payment">
+                  <input
+                    id="extra-annual-payment"
+                    type="checkbox"
+                    checked={inputs.extraAnnualPayment}
+                    onChange={(e) => setInputs({ extraAnnualPayment: e.target.checked })}
+                  />
+                  <span>{t('extra_annual_label')}</span>
+                </label>
+                <div className="hint">{t('extra_annual_hint')}</div>
+              </div>
+            )}
+
             {calcError && (
               <div className="calc-error" role="alert">{t(calcError)}</div>
             )}

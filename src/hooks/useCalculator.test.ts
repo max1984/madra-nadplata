@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -18,7 +18,7 @@ function makeCustomCalcState(overrides: Partial<CalcState> = {}): CalcState {
     customRates: Array<number>(months).fill(0.005),
     strategy: 'custom', customEffect: 'reduce',
     customPerRowEffects: Array<'shorten' | 'reduce'>(months).fill('reduce'),
-    overpayStartMonth: 0,
+    overpayStartMonth: 0, extraAnnualPayment: false,
     totalMonthly: 0, defaultOverpay: 0,
     baseInterest: 0, baseMonths: months, baseBalances: [], baseCumInterestByMonth: [],
     rows: [],
@@ -228,6 +228,56 @@ describe('flatOverpayWithStart', () => {
 
   it('is a no-op zeroing when startMonth reaches or exceeds the schedule length', () => {
     expect(flatOverpayWithStart(4, 500, 10)).toEqual([0, 0, 0, 0]);
+  });
+});
+
+describe('applyExtraAnnualPayment', () => {
+  it('adds the extra amount on top of the existing overpay at months 12, 24, 36...', () => {
+    const base = Array<number>(30).fill(100);
+    const result = applyExtraAnnualPayment(base, 30, 1800);
+    expect(result[11]).toBe(1900); // miesiąc 12
+    expect(result[23]).toBe(1900); // miesiąc 24
+    expect(result[10]).toBe(100);
+    expect(result[12]).toBe(100);
+  });
+
+  it('regression: does not mutate the array it was given — callers keep passing prev.customOverpay around and rely on it being untouched', () => {
+    const base = Array<number>(12).fill(0);
+    applyExtraAnnualPayment(base, 12, 1800);
+    expect(base[11]).toBe(0);
+  });
+
+  it('is a no-op for a zero or negative extra amount', () => {
+    const base = Array<number>(12).fill(500);
+    expect(applyExtraAnnualPayment(base, 12, 0)).toEqual(base);
+    expect(applyExtraAnnualPayment(base, 12, -100)).toEqual(base);
+  });
+
+  it('only bumps months that exist within a shorter schedule (e.g. a loan already paid off before month 12)', () => {
+    const base = Array<number>(10).fill(200);
+    const result = applyExtraAnnualPayment(base, 10, 1800);
+    expect(result).toEqual(Array(10).fill(200));
+  });
+});
+
+describe('computeCalcState — extraAnnualPayment integration', () => {
+  it('reduces total interest and months compared to the same strategy without the extra annual payment', () => {
+    const without = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 500, extraAnnualPayment: false });
+    const withExtra = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 500, extraAnnualPayment: true });
+    const interestWithout = without.rows[without.rows.length - 1]!.cumInterest;
+    const interestWith = withExtra.rows[withExtra.rows.length - 1]!.cumInterest;
+    expect(withExtra.rows.length).toBeLessThan(without.rows.length);
+    expect(interestWith).toBeLessThan(interestWithout);
+  });
+
+  it('regression: has no effect for the custom and goal strategies, which manage their own overpay independently', () => {
+    const goalWithout = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'goal', goalMonths: 180, extraAnnualPayment: false });
+    const goalWith = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'goal', goalMonths: 180, extraAnnualPayment: true });
+    expect(goalWith.customOverpay).toEqual(goalWithout.customOverpay);
+
+    const customWithout = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'custom', extraAnnualPayment: false });
+    const customWith = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'custom', extraAnnualPayment: true });
+    expect(customWith.customOverpay).toEqual(customWithout.customOverpay);
   });
 });
 

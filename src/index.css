@@ -389,6 +389,11 @@ section { padding: clamp(60px,8vw,100px) clamp(16px,5vw,80px); }
 }
 .form-divider { height: 1px; background: var(--border); margin: 24px 0; }
 .slider-group { margin-bottom: 20px; }
+.checkbox-row {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: .85rem; font-weight: 600; color: var(--text2);
+}
+.checkbox-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .slider-header label { font-size: .85rem; font-weight: 600; color: var(--text2); }
 .slider-header .slider-val {

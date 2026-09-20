@@ -27,6 +27,8 @@ export interface CalcInputs {
   /** Cel spłaty: docelowa liczba rat (strategia 'goal'). */
   goalMonths: number;
   overpayStartMonth: number;
+  /** "13. rata" — raz w roku dopłać jedną dodatkową standardową ratę. */
+  extraAnnualPayment: boolean;
   refiMonth: number;
   refiRate: number;
   refiMonths: number;
@@ -58,6 +60,7 @@ export interface CalcState {
   customEffect: 'shorten' | 'reduce';
   customPerRowEffects: ('shorten' | 'reduce')[];
   overpayStartMonth: number;
+  extraAnnualPayment: boolean;
   totalMonthly: number;
   defaultOverpay: number;
   /** Nadpłata wyliczona przez solver dla strategii 'goal'. */
@@ -82,6 +85,7 @@ export const DEFAULT_INPUTS: CalcInputs = {
   shortenAmountSlider: 500,
   goalMonths: 180,
   overpayStartMonth: 0,
+  extraAnnualPayment: false,
   refiMonth: 12,
   refiRate: 5,
   refiMonths: 300,
@@ -123,6 +127,7 @@ export function parseUrlInputs(search: string = window.location.search): Partial
   set('shortenAmountSlider', parseNum(sp, 'shorten'));
   set('goalMonths', parseNum(sp, 'goal'));
   set('overpayStartMonth', parseNum(sp, 'start'));
+  if (sp.get('extra13') === '1') patch.extraAnnualPayment = true;
   set('refiMonth', parseNum(sp, 'refiMonth'));
   set('refiRate', parseNum(sp, 'refiRate'));
   set('refiMonths', parseNum(sp, 'refiMonths'));
@@ -143,6 +148,7 @@ export function buildUrlParams(inp: CalcInputs): string {
   if (inp.strategy === 'shorten_period') sp.set('shorten', String(inp.shortenAmountSlider));
   if (inp.strategy === 'goal') sp.set('goal', String(inp.goalMonths));
   if (inp.overpayStartMonth > 0) sp.set('start', String(inp.overpayStartMonth));
+  if (inp.extraAnnualPayment) sp.set('extra13', '1');
   if (inp.strategy === 'refinance') {
     sp.set('refiMonth', String(inp.refiMonth));
     sp.set('refiRate', String(inp.refiRate));
@@ -415,6 +421,23 @@ export function flatOverpayWithStart(months: number, amount: number, startMonth:
   return arr;
 }
 
+/**
+ * "13. rata" — dodaje wysokość jednej standardowej raty jako nadpłatę co
+ * 12 miesięcy (indeksy 11, 23, 35, ...). Inspirowane popularną w USA/UK
+ * praktyką płatności co dwa tygodnie (26 pół-rat = 13 pełnych rat rocznie);
+ * tutaj uproszczone do jednej dodatkowej wpłaty raz w roku, bo polskie
+ * kredyty rozliczane są miesięcznie i sama zmiana częstotliwości płatności
+ * nie ma tu odpowiednika — liczy się tylko dodatkowa kwota rocznie.
+ */
+export function applyExtraAnnualPayment(overpay: number[], months: number, extraAmount: number): number[] {
+  if (extraAmount <= 0) return overpay;
+  const result = [...overpay];
+  for (let i = 11; i < months; i += 12) {
+    result[i] = (result[i] ?? 0) + extraAmount;
+  }
+  return result;
+}
+
 export function computeCalcState(inp: CalcInputs): CalcState {
   const { loanAmount: P, interestRate, loanMonths: months, prepayFee: feeRate, strategy } = inp;
   const r = interestRate / 100 / 12;
@@ -444,6 +467,14 @@ export function computeCalcState(inp: CalcInputs): CalcState {
     customOverpay = Array<number>(months).fill(requiredOverpay);
   } else {
     customOverpay = Array<number>(months).fill(0);
+  }
+
+  // "13. rata" ma sens tylko przy tych samych strategiach co opóźnienie
+  // startu nadpłaty (UI ukrywa ją dla 'custom'/'goal'/'refinance') — przy
+  // 'goal' nadpłata jest rozwiązywana pod konkretny cel w miesiącach, a
+  // przy 'custom' użytkownik sam w pełni kontroluje harmonogram.
+  if (inp.extraAnnualPayment && strategy !== 'custom' && strategy !== 'goal' && strategy !== 'refinance') {
+    customOverpay = applyExtraAnnualPayment(customOverpay, months, stdPayment);
   }
 
   const base = buildBaseSchedule(P, customRates, months, r);
@@ -478,6 +509,7 @@ export function computeCalcState(inp: CalcInputs): CalcState {
     P, r, months, prepayFee: fee, stdPayment, origStdPayment: stdPayment,
     customOverpay, customRates, strategy, customEffect: 'shorten' as const,
     customPerRowEffects, totalMonthly, defaultOverpay, overpayStartMonth: startMonth,
+    extraAnnualPayment: inp.extraAnnualPayment,
     requiredOverpay, goalMonths: strategy === 'goal' ? inp.goalMonths : undefined,
     baseInterest: base.totalInterest, baseMonths: base.count, baseBalances: base.balances,
     baseCumInterestByMonth: base.cumInterestByMonth,
@@ -667,6 +699,7 @@ export function useCalculator() {
       let newRequiredOverpay = prev.requiredOverpay;
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
         newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, newRate, prev.overpayStartMonth);
+        if (prev.extraAnnualPayment) newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment);
       } else if (prev.strategy === 'goal' && prev.goalMonths !== undefined) {
         // Bez przeliczenia tutaj "wymagana nadpłata" i sam harmonogram cicho
         // rozjeżdżały się po edycji stopy w trakcie — nowe raty przechodziły
@@ -713,6 +746,9 @@ export function useCalculator() {
         // 'goal' — nadpłata dotyczy całego okresu, bez pojęcia opóźnionego startu.
         newOverpay = Array<number>(prev.months).fill(prev.defaultOverpay);
       }
+      if (prev.extraAnnualPayment && prev.strategy !== 'custom' && prev.strategy !== 'goal') {
+        newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment);
+      }
       const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
       return { ...prev, customOverpay: newOverpay, rows };
     });
@@ -756,6 +792,7 @@ export function useCalculator() {
       let newRequiredOverpay = prev.requiredOverpay;
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
         newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, prev.r, prev.overpayStartMonth);
+        if (prev.extraAnnualPayment) newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment);
       } else if (prev.strategy === 'goal' && prev.goalMonths !== undefined) {
         // Ten sam powód co w onRateChange — bez przeliczenia "Przywróć
         // oprocentowanie" wracało do stawki bazowej, ale requiredOverpay
