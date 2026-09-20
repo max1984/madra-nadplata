@@ -113,6 +113,19 @@ export function totalAppliedOverpay(rows: ScheduleRow[]): number {
   return rows.reduce((acc, r) => acc + r.overpay, 0);
 }
 
+/**
+ * Numer raty (1-indeksowany), w której saldo kredytu po raz pierwszy spada
+ * do połowy (lub mniej) kwoty początkowej P — psychologicznie ważny kamień
+ * milowy dla kredytobiorcy, niezależny od tego, ile z tego to odsetki
+ * a ile kapitał. Zwraca null, gdy rows jest puste lub P <= 0.
+ */
+export function halfPrincipalMonth(rows: ScheduleRow[], P: number): number | null {
+  if (P <= 0) return null;
+  const half = P / 2;
+  const idx = rows.findIndex((r) => r.balanceAfter <= half);
+  return idx === -1 ? null : idx + 1;
+}
+
 // Returns the remaining balance after applying overpays up to and including upToIdx.
 export function balanceAt(
   P: number,

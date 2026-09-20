@@ -10,6 +10,7 @@ import {
   simulatePaymentHoliday,
   totalAppliedOverpay,
   refiBreakEvenMonth,
+  halfPrincipalMonth,
 } from './mortgage';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -188,6 +189,40 @@ describe('totalAppliedOverpay', () => {
 
     expect(realTotal).toBeLessThan(rawTotal);
     expect(realTotal).toBe(rows.reduce((acc, row) => acc + row.overpay, 0));
+  });
+});
+
+describe('halfPrincipalMonth', () => {
+  it('finds the first row where the balance has dropped to half the original principal', () => {
+    const P = 300000, r = 0.06 / 12, n = 360;
+    const rows = buildSchedule(P, Array(n).fill(r), n, 0, Array(n).fill(0), r);
+    const month = halfPrincipalMonth(rows, P);
+    expect(month).not.toBeNull();
+    expect(rows[month! - 1]!.balanceAfter).toBeLessThanOrEqual(P / 2);
+    if (month! > 1) expect(rows[month! - 2]!.balanceAfter).toBeGreaterThan(P / 2);
+  });
+
+  it('overpaying reaches the halfway point sooner than the natural schedule', () => {
+    const P = 300000, r = 0.06 / 12, n = 360;
+    const natural = buildSchedule(P, Array(n).fill(r), n, 0, Array(n).fill(0), r);
+    const overpaid = buildSchedule(P, Array(n).fill(r), n, 0, Array(n).fill(500), r);
+    const naturalMonth = halfPrincipalMonth(natural, P);
+    const overpaidMonth = halfPrincipalMonth(overpaid, P);
+    expect(overpaidMonth).not.toBeNull();
+    expect(naturalMonth).not.toBeNull();
+    expect(overpaidMonth!).toBeLessThan(naturalMonth!);
+  });
+
+  it('returns null for an empty schedule or a non-positive principal', () => {
+    expect(halfPrincipalMonth([], 300000)).toBeNull();
+    const rows = buildSchedule(300000, Array(12).fill(0.005), 12, 0, Array(12).fill(0), 0.005);
+    expect(halfPrincipalMonth(rows, 0)).toBeNull();
+  });
+
+  it('regression: the very first row already below half (e.g. a huge overpay) must still report month 1, not be skipped — findIndex must not assume the threshold is crossed gradually', () => {
+    const P = 300000, r = 0.06 / 12, n = 360;
+    const rows = buildSchedule(P, Array(n).fill(r), n, 0, [200000, ...Array(n - 1).fill(0)], r);
+    expect(halfPrincipalMonth(rows, P)).toBe(1);
   });
 });
 

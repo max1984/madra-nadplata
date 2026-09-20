@@ -4,7 +4,7 @@ import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber } from '../lib/format';
-import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth } from '../lib/mortgage';
+import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
@@ -686,6 +686,13 @@ function renderStats(
     ? savedYears + ' ' + t('years') + (savedRem > 0 ? ' ' + savedRem + ' ' + t('months_short') : '')
     : savedMonths > 0 ? savedMonths + ' ' + t('months_short') : '0 ' + t('months_short');
 
+  const halfMonth = halfPrincipalMonth(cs.rows, cs.P);
+  const halfYears = halfMonth ? Math.floor(halfMonth / 12) : 0;
+  const halfRem = halfMonth ? halfMonth % 12 : 0;
+  const halfStr = halfMonth === null ? null : (halfYears > 0
+    ? halfYears + ' ' + t('years') + (halfRem > 0 ? ' ' + halfRem + ' ' + t('months_short') : '')
+    : halfMonth + ' ' + t('months_short'));
+
   const pct = cs.baseInterest > 0 ? (withInterest / cs.baseInterest * 100).toFixed(1) : '0';
 
   let breakEvenMonth = -1;
@@ -748,6 +755,12 @@ function renderStats(
             <div className="r-val">{fmtC(withInterest)}</div>
             <div className="r-lbl">{t('stats_total_interest')}</div>
           </div>
+          {halfStr !== null && (
+            <div className="result-item" title={t('stats_half_hint')}>
+              <div className="r-val" style={{ color: 'var(--accent2)' }}>{halfStr}</div>
+              <div className="r-lbl">{t('stats_half_label')}</div>
+            </div>
+          )}
         </div>
       </div>
       <div className="result-card">
