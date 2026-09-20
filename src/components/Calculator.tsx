@@ -6,6 +6,7 @@ import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
+import { compareScenarioToCurrent } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -142,6 +143,17 @@ export default function Calculator({
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
     [calcState, t, fmtC],
   );
+  // Osobne useMemo od reszty komponentu — bez tego przeliczanie harmonogramu
+  // dla każdego zapisanego scenariusza (computeCalcState, do 360 wierszy)
+  // odpalałoby się na nowo przy każdym naciśnięciu klawisza w polu nazwy
+  // scenariusza, bo to ten sam komponent co scenarioName.
+  const scenarioDiffs = useMemo(() => {
+    const map = new Map<string, { interestDiff: number; monthsDiff: number } | null>();
+    if (calcState) {
+      for (const s of scenarios) map.set(s.id, compareScenarioToCurrent(s.inputs, calcState));
+    }
+    return map;
+  }, [scenarios, calcState]);
 
   // Ref zamiast bezpośredniego domknięcia na onCalculate — blur() aktywnego
   // pola (poniżej) commituje wartość asynchronicznie (React batchuje setState
@@ -747,17 +759,30 @@ export default function Calculator({
               {scenarios.length > 0 && (
                 <div className="scenario-list">
                   <div className="scenario-list-title">{t('scenario_saved_title')}</div>
-                  {scenarios.map((s) => (
-                    <div className="scenario-row" key={s.id}>
-                      <span className="scenario-row-name">{s.name}</span>
-                      <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
-                        {t('scenario_load')}
-                      </button>
-                      <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => onDeleteScenario(s.id)}>
-                        {t('scenario_delete')}
-                      </button>
-                    </div>
-                  ))}
+                  {scenarios.map((s) => {
+                    const diff = scenarioDiffs.get(s.id);
+                    return (
+                      <div className="scenario-row" key={s.id}>
+                        <span className="scenario-row-name">{s.name}</span>
+                        {diff && (diff.interestDiff !== 0 || diff.monthsDiff !== 0) && (
+                          <span
+                            className="scenario-row-diff"
+                            title={t('scenario_diff_label')}
+                            style={{ color: diff.interestDiff <= 0 ? 'var(--accent2)' : 'var(--danger)' }}
+                          >
+                            {diff.interestDiff >= 0 ? '+' : ''}{fmtC(diff.interestDiff, 0)}
+                            {diff.monthsDiff !== 0 && ` / ${diff.monthsDiff >= 0 ? '+' : ''}${diff.monthsDiff} ${t('months_short')}`}
+                          </span>
+                        )}
+                        <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
+                          {t('scenario_load')}
+                        </button>
+                        <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => onDeleteScenario(s.id)}>
+                          {t('scenario_delete')}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

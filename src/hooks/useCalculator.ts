@@ -248,6 +248,28 @@ export function removeScenario(list: SavedScenario[], id: string): SavedScenario
 }
 
 /**
+ * Różnica (scenariusz minus aktualnie wyświetlony wynik) w łącznych odsetkach
+ * i liczbie rat — pozwala pokazać przy każdym zapisanym scenariuszu, o ile
+ * byłby on lepszy/gorszy od tego, co jest teraz na ekranie, bez faktycznego
+ * przełączania widoku i utraty bieżących danych formularza. Zwraca null dla
+ * scenariusza, który sam w sobie już nie przechodzi walidacji (np. zapisany
+ * przed zmianą reguł walidacji w starszej wersji aplikacji).
+ */
+export function compareScenarioToCurrent(
+  scenarioInputs: CalcInputs,
+  current: Pick<CalcState, 'rows'>,
+): { interestDiff: number; monthsDiff: number } | null {
+  if (validateInputs(scenarioInputs) !== null) return null;
+  const scenarioRows = computeCalcState(scenarioInputs).rows;
+  const scenarioInterest = scenarioRows.length ? scenarioRows[scenarioRows.length - 1]!.cumInterest : 0;
+  const currentInterest = current.rows.length ? current.rows[current.rows.length - 1]!.cumInterest : 0;
+  return {
+    interestDiff: scenarioInterest - currentInterest,
+    monthsDiff: scenarioRows.length - current.rows.length,
+  };
+}
+
+/**
  * Porównanie płytkie — CalcInputs to płaski obiekt samych prymitywów, więc
  * to wystarcza. Używane do wykrywania, czy wyświetlony wynik jest nadal
  * aktualny względem tego, co jest teraz w formularzu (patrz isStale
@@ -330,7 +352,7 @@ export function flatOverpayWithStart(months: number, amount: number, startMonth:
   return arr;
 }
 
-function computeCalcState(inp: CalcInputs): CalcState {
+export function computeCalcState(inp: CalcInputs): CalcState {
   const { loanAmount: P, interestRate, loanMonths: months, prepayFee: feeRate, strategy } = inp;
   const r = interestRate / 100 / 12;
   const fee = feeRate / 100;

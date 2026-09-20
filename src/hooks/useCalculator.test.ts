@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, compareScenarioToCurrent, computeCalcState, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -311,6 +311,36 @@ describe('addScenario / removeScenario / loadScenarios / persistScenarios', () =
 
     localStorage.setItem('calc_scenarios_v1', JSON.stringify({ not: 'an array' }));
     expect(loadScenarios()).toEqual([]);
+  });
+});
+
+describe('compareScenarioToCurrent', () => {
+  it('returns a positive interestDiff and monthsDiff when the scenario is worse than the current result (smaller overpay leaves more interest and more months)', () => {
+    const current = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 1000 });
+    const diff = compareScenarioToCurrent({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 200 }, current);
+    expect(diff).not.toBeNull();
+    expect(diff!.interestDiff).toBeGreaterThan(0);
+    expect(diff!.monthsDiff).toBeGreaterThan(0);
+  });
+
+  it('returns a negative interestDiff and monthsDiff when the scenario is better than the current result', () => {
+    const current = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 200 });
+    const diff = compareScenarioToCurrent({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 1000 }, current);
+    expect(diff).not.toBeNull();
+    expect(diff!.interestDiff).toBeLessThan(0);
+    expect(diff!.monthsDiff).toBeLessThan(0);
+  });
+
+  it('returns a zero diff for two identical inputs', () => {
+    const current = computeCalcState(DEFAULT_INPUTS);
+    const diff = compareScenarioToCurrent(DEFAULT_INPUTS, current);
+    expect(diff).toEqual({ interestDiff: 0, monthsDiff: 0 });
+  });
+
+  it('regression: returns null for a scenario whose inputs no longer pass validation instead of throwing — a scenario saved under an older, looser validateInputs must not crash the comparison badge', () => {
+    const current = computeCalcState(DEFAULT_INPUTS);
+    const diff = compareScenarioToCurrent({ ...DEFAULT_INPUTS, loanAmount: -1 }, current);
+    expect(diff).toBeNull();
   });
 });
 
