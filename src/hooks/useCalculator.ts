@@ -248,6 +248,17 @@ export function removeScenario(list: SavedScenario[], id: string): SavedScenario
 }
 
 /**
+ * Pusta/białoznakowa nazwa jest ignorowana (scenariusz zachowuje poprzednią
+ * nazwę) zamiast dawać scenariusz bez nazwy — łatwo o to przez przypadkowe
+ * zatwierdzenie pustego pola edycji Enterem albo utratę fokusu.
+ */
+export function renameScenario(list: SavedScenario[], id: string, newName: string): SavedScenario[] {
+  const trimmed = newName.trim();
+  if (!trimmed) return list;
+  return list.map((s) => (s.id === id ? { ...s, name: trimmed } : s));
+}
+
+/**
  * Różnica (scenariusz minus aktualnie wyświetlony wynik) w łącznych odsetkach
  * i liczbie rat — pozwala pokazać przy każdym zapisanym scenariuszu, o ile
  * byłby on lepszy/gorszy od tego, co jest teraz na ekranie, bez faktycznego
@@ -535,6 +546,14 @@ export function useCalculator() {
     });
   }, []);
 
+  const renameScenarioById = useCallback((id: string, newName: string) => {
+    setScenarios((prev) => {
+      const next = renameScenario(prev, id, newName);
+      persistScenarios(next);
+      return next;
+    });
+  }, []);
+
   // Uzupełnienie zapamiętywania danych (saveInputs) — bez tego jedyną drogą
   // powrotu do domyślnych wartości byłoby ręczne czyszczenie localStorage
   // z DevTools.
@@ -702,6 +721,7 @@ export function useCalculator() {
     saveCurrentAsScenario,
     loadScenario,
     deleteScenario,
+    renameScenario: renameScenarioById,
     onOverpayChange,
     onRateChange,
     onCustomEffectChange,

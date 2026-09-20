@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, compareScenarioToCurrent, computeCalcState, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, compareScenarioToCurrent, computeCalcState, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -311,6 +311,35 @@ describe('addScenario / removeScenario / loadScenarios / persistScenarios', () =
 
     localStorage.setItem('calc_scenarios_v1', JSON.stringify({ not: 'an array' }));
     expect(loadScenarios()).toEqual([]);
+  });
+});
+
+describe('renameScenario', () => {
+  it('renames only the scenario with the matching id', () => {
+    let list = addScenario([], 'A', DEFAULT_INPUTS);
+    list = addScenario(list, 'B', DEFAULT_INPUTS);
+    const targetId = list[0]!.id;
+    const next = renameScenario(list, targetId, 'A renamed');
+    expect(next[0]!.name).toBe('A renamed');
+    expect(next[1]!.name).toBe('B');
+  });
+
+  it('trims whitespace from the new name', () => {
+    const list = addScenario([], 'A', DEFAULT_INPUTS);
+    const next = renameScenario(list, list[0]!.id, '  Nowa nazwa  ');
+    expect(next[0]!.name).toBe('Nowa nazwa');
+  });
+
+  it('regression: an empty/whitespace-only new name is ignored, keeping the previous name — otherwise blurring the rename field with nothing typed would silently erase it', () => {
+    const list = addScenario([], 'Wariant A', DEFAULT_INPUTS);
+    const next = renameScenario(list, list[0]!.id, '   ');
+    expect(next[0]!.name).toBe('Wariant A');
+  });
+
+  it('is a no-op when the id does not match any scenario', () => {
+    const list = addScenario([], 'A', DEFAULT_INPUTS);
+    const next = renameScenario(list, 'nonexistent', 'X');
+    expect(next).toEqual(list);
   });
 });
 

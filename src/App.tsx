@@ -21,7 +21,7 @@ function AppInner() {
   const { t } = useLang();
   const {
     inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults,
-    scenarios, saveCurrentAsScenario, loadScenario, deleteScenario,
+    scenarios, saveCurrentAsScenario, loadScenario, deleteScenario, renameScenario,
     onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange,
     resetOverpays, clearOverpays, resetRates,
   } = useCalculator();
@@ -61,6 +61,7 @@ function AppInner() {
           onSaveScenario={saveCurrentAsScenario}
           onLoadScenario={loadScenario}
           onDeleteScenario={deleteScenario}
+          onRenameScenario={renameScenario}
         />
         <AdSlot slot="afterResults" />
 

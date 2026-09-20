@@ -126,11 +126,12 @@ interface Props {
   onSaveScenario: (name: string) => void;
   onLoadScenario: (id: string) => void;
   onDeleteScenario: (id: string) => void;
+  onRenameScenario: (id: string, name: string) => void;
 }
 
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
-  scenarios, onSaveScenario, onLoadScenario, onDeleteScenario,
+  scenarios, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario,
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
@@ -138,6 +139,8 @@ export default function Calculator({
   const [copied, setCopied] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [scenarioName, setScenarioName] = useState('');
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
+  const [editingScenarioName, setEditingScenarioName] = useState('');
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const announcement = useMemo(
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
@@ -333,6 +336,16 @@ export default function Calculator({
     if (!scenarioName.trim()) return;
     onSaveScenario(scenarioName.trim());
     setScenarioName('');
+  };
+
+  const startEditingScenario = (s: SavedScenario) => {
+    setEditingScenarioId(s.id);
+    setEditingScenarioName(s.name);
+  };
+
+  const commitScenarioRename = () => {
+    if (editingScenarioId) onRenameScenario(editingScenarioId, editingScenarioName);
+    setEditingScenarioId(null);
   };
 
   const handleShare = () => {
@@ -761,9 +774,31 @@ export default function Calculator({
                   <div className="scenario-list-title">{t('scenario_saved_title')}</div>
                   {scenarios.map((s) => {
                     const diff = scenarioDiffs.get(s.id);
+                    const isEditing = editingScenarioId === s.id;
                     return (
                       <div className="scenario-row" key={s.id}>
-                        <span className="scenario-row-name">{s.name}</span>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            className="scenario-name-edit-input"
+                            value={editingScenarioName}
+                            autoFocus
+                            onChange={(e) => setEditingScenarioName(e.target.value)}
+                            onBlur={commitScenarioRename}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') commitScenarioRename();
+                              else if (e.key === 'Escape') setEditingScenarioId(null);
+                            }}
+                          />
+                        ) : (
+                          <span
+                            className="scenario-row-name"
+                            title={t('scenario_rename_hint')}
+                            onClick={() => startEditingScenario(s)}
+                          >
+                            {s.name}
+                          </span>
+                        )}
                         {diff && (diff.interestDiff !== 0 || diff.monthsDiff !== 0) && (
                           <span
                             className="scenario-row-diff"
