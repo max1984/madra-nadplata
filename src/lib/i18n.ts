@@ -28,7 +28,7 @@ export type TranslationKey =
   | 'form_fee' | 'form_fee_hint' | 'form_strategy' | 'form_daily_interest'
   | 'strategy_fixed_total' | 'strategy_fixed_overpay'
   | 'strategy_shorten' | 'strategy_custom'
-  | 'slider_total' | 'slider_overpay' | 'slider_std'
+  | 'slider_total' | 'slider_overpay' | 'slider_std' | 'slider_std_short'
   | 'reduce_payment_hint'
   | 'calc_btn' | 'calc_placeholder' | 'calc_placeholder_sub'
   | 'shorten_hint' | 'custom_hint'
@@ -156,6 +156,7 @@ const pl: Translations = {
   strategy_custom: 'Własne nadpłaty (wybierz miesiące w harmonogramie)',
   slider_total: 'Łączna kwota do banku', slider_overpay: 'Nadpłata miesięczna',
   slider_std: 'Standardowa rata:',
+  slider_std_short: 'Rata',
   reduce_payment_hint: 'Ustal stałą kwotę, którą chcesz co miesiąc wpłacać do banku. Każda nadwyżka ponad wymaganą ratę obniża saldo – bank co miesiąc wylicza nową, niższą ratę wymaganą, a Ty nadal płacisz tę samą kwotę. Różnica rośnie, kredyt spłaca się coraz szybciej.',
   calc_btn: 'Oblicz →',
   calc_placeholder: 'Kliknij "Oblicz" aby zobaczyć wyniki',
@@ -357,6 +358,7 @@ const en: Translations = {
   strategy_custom: 'Custom overpayments (edit in schedule)',
   slider_total: 'Total monthly to bank', slider_overpay: 'Monthly overpayment',
   slider_std: 'Standard payment:',
+  slider_std_short: 'Payment',
   reduce_payment_hint: 'Set a fixed amount you want to pay to the bank each month. Every surplus above the required installment reduces the principal — the bank recalculates a new, lower required installment each month, while you keep paying the same amount. The surplus grows and the loan is repaid faster and faster.',
   calc_btn: 'Calculate →',
   calc_placeholder: 'Click "Calculate" to see results',

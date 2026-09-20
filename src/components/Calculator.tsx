@@ -357,6 +357,20 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   />
                 </div>
+                <div className="preset-chips">
+                  {overpayChipPresets.map((amount) => {
+                    const total = Math.min(sliderMax, sliderMin + amount);
+                    return (
+                      <button
+                        type="button" key={amount}
+                        className={`preset-chip${inputs.totalMonthlySlider === total ? ' active' : ''}`}
+                        onClick={() => setInputs({ totalMonthlySlider: total })}
+                      >
+                        {t('slider_std_short')} +{fmt(amount)} {t('currency')}
+                      </button>
+                    );
+                  })}
+                </div>
                 <input type="range" min={sliderMin} max={sliderMax} step={100}
                   aria-label={t('slider_total')}
                   value={Math.max(inputs.totalMonthlySlider, sliderMin)}
