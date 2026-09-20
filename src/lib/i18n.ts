@@ -78,7 +78,7 @@ export type TranslationKey =
   | 'breakeven_label' | 'breakeven_result' | 'breakeven_never'
   | 'no_overpay_title' | 'no_overpay_sub'
   | 'sch_yearly_toggle' | 'sch_monthly_toggle' | 'sch_col_year'
-  | 'sch_jump_placeholder' | 'sch_jump_btn'
+  | 'sch_jump_placeholder' | 'sch_jump_btn' | 'sch_jump_link' | 'sch_jump_link_copied'
   | 'custom_base_title' | 'custom_base_hint'
   | 'overpay_day_tip'
   | 'ad_consent_text' | 'ad_consent_accept' | 'ad_consent_decline' | 'ad_consent_policy'
@@ -284,6 +284,8 @@ const pl: Translations = {
   sch_monthly_toggle: 'Widok miesięczny',
   sch_jump_placeholder: 'Nr miesiąca',
   sch_jump_btn: 'Skocz',
+  sch_jump_link: '🔗 Link do miesiąca',
+  sch_jump_link_copied: '✓ Skopiowano',
   sch_col_year: 'Rok',
   custom_base_title: 'Koszty bazowe kredytu',
   custom_base_hint: 'Dodaj nadpłaty w harmonogramie poniżej – wyniki zaktualizują się automatycznie.',
@@ -535,6 +537,8 @@ const en: Translations = {
   sch_monthly_toggle: 'Monthly view',
   sch_jump_placeholder: 'Month no.',
   sch_jump_btn: 'Jump',
+  sch_jump_link: '🔗 Link to month',
+  sch_jump_link_copied: '✓ Copied',
   sch_col_year: 'Year',
   custom_base_title: 'Base loan costs',
   custom_base_hint: 'Add overpayments in the schedule below — results update automatically.',

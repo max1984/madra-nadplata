@@ -4,6 +4,7 @@ import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
+import { copyToClipboard } from '../lib/clipboard';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
 import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, buildScenarioComparisonRows, strategyLabelKey, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
@@ -125,20 +126,6 @@ export function buildScenarioComparisonCSV(
     csvDec(r.totalInterest, lang),
   ].join(sep));
   return '﻿' + [headers.join(sep), ...csvRows].join('\n');
-}
-
-function copyToClipboard(text: string, onDone: () => void) {
-  navigator.clipboard.writeText(text).then(onDone).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    onDone();
-  });
 }
 
 export function overpayPresets(stdPayment: number): number[] {

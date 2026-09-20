@@ -4,6 +4,7 @@ import { useLang } from '../contexts/LangContext';
 import type { Lang, TranslationKey } from '../lib/i18n';
 import { totalAppliedOverpay, type ScheduleRow } from '../lib/mortgage';
 import { csvDec } from '../lib/format';
+import { copyToClipboard } from '../lib/clipboard';
 import type { CalcState } from '../hooks/useCalculator';
 
 interface Props {
@@ -193,6 +194,31 @@ export function clampJumpMonth(value: number, maxMonth: number): number {
   return Math.min(Math.max(1, Math.round(value)), maxMonth);
 }
 
+/**
+ * Odczytuje ?jump=N z URL wygenerowanego przez "Kopiuj link do tego
+ * miesiąca" — null zamiast rzucać/zwracać śmieciową wartość dla brakującego
+ * albo niepoprawnego parametru, żeby wywołujący mógł po prostu pominąć
+ * automatyczne przewinięcie zamiast próbować skoczyć do NaN-tego wiersza.
+ */
+export function parseJumpMonth(search: string): number | null {
+  const sp = new URLSearchParams(search);
+  if (!sp.has('jump')) return null;
+  const n = Number(sp.get('jump'));
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+}
+
+/**
+ * Dokleja/nadpisuje ?jump=N do aktualnego URL (który już zawiera parametry
+ * kredytu wpisane przez buildUrlParams przy ostatnim "Oblicz") i celuje w
+ * kotwicę #schedule, żeby odbiorca linku od razu wylądował na harmonogramie.
+ */
+export function buildJumpUrl(currentUrl: string, month: number): string {
+  const url = new URL(currentUrl);
+  url.searchParams.set('jump', String(month));
+  url.hash = 'schedule';
+  return url.toString();
+}
+
 function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lang: Lang) {
   const sep = lang === 'en' ? ',' : ';';
   const headers = [
@@ -227,6 +253,34 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
   const { t, fmtC, lang } = useLang();
   const [yearlyView, setYearlyView] = useState(false);
   const [jumpMonth, setJumpMonth] = useState('');
+  const [jumpLinkCopied, setJumpLinkCopied] = useState(false);
+  const autoJumpedRef = useRef(false);
+
+  // Odbiorca linku z "Kopiuj link do tego miesiąca" (?jump=N) ma od razu
+  // wylądować na właściwym wierszu — bez tego dostałby tylko harmonogram
+  // od góry i musiałby ręcznie przewijać/wpisywać numer na nowo. Flaga w
+  // refie, żeby zadziałało dokładnie raz na wejście, nie przy każdym
+  // przeliczeniu harmonogramu. Opóźnienie jest konieczne — sekcje nad
+  // harmonogramem (HowItWorks, Example, Support, FAQ, Calculator...) ładują
+  // się leniwie (React.lazy + Suspense fallback={null}), więc od razu po
+  // zamontowaniu Schedule strona nad nim jest jeszcze pusta/niska i
+  // scrollIntoView wyliczone teraz trafiłoby w pozycję sprzed doładowania
+  // się reszty treści, czyli dużo wyżej niż docelowa.
+  useEffect(() => {
+    if (autoJumpedRef.current || !calcState || yearlyView) return;
+    const target = parseJumpMonth(window.location.search);
+    if (target === null) return;
+    autoJumpedRef.current = true;
+    const clamped = clampJumpMonth(target, calcState.rows.length);
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`sch-row-${clamped}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('row-jump-highlight');
+      setTimeout(() => el.classList.remove('row-jump-highlight'), 1500);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [calcState, yearlyView]);
 
   if (!calcState) {
     return (
@@ -251,6 +305,14 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     el.classList.add('row-jump-highlight');
     setTimeout(() => el.classList.remove('row-jump-highlight'), 1500);
+  };
+
+  const handleCopyJumpLink = () => {
+    const target = clampJumpMonth(parseInt(jumpMonth, 10), calcState.rows.length);
+    copyToClipboard(buildJumpUrl(window.location.href, target), () => {
+      setJumpLinkCopied(true);
+      setTimeout(() => setJumpLinkCopied(false), 2000);
+    });
   };
 
   return (
@@ -319,6 +381,9 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
                   />
                   <button type="button" className="toolbar-btn" onClick={handleJumpToMonth}>
                     {t('sch_jump_btn')}
+                  </button>
+                  <button type="button" className="toolbar-btn" onClick={handleCopyJumpLink}>
+                    {jumpLinkCopied ? t('sch_jump_link_copied') : t('sch_jump_link')}
                   </button>
                 </div>
               )}
