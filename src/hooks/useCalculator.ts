@@ -471,8 +471,17 @@ export function useCalculator() {
       if (!prev || prev.strategy === 'refinance') return prev;
       const newRates = Array<number>(prev.months).fill(prev.r);
       let newOverpay = [...prev.customOverpay];
+      let newRequiredOverpay = prev.requiredOverpay;
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
         newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, prev.r, prev.overpayStartMonth);
+      } else if (prev.strategy === 'goal' && prev.goalMonths !== undefined) {
+        // Ten sam powód co w onRateChange — bez przeliczenia "Przywróć
+        // oprocentowanie" wracało do stawki bazowej, ale requiredOverpay
+        // zostawało policzone dla stawek sprzed resetu.
+        newRequiredOverpay = solveOverpayForTarget(
+          prev.P, newRates, prev.months, prev.prepayFee, prev.r, prev.goalMonths, prev.origStdPayment,
+        );
+        newOverpay = Array<number>(prev.months).fill(newRequiredOverpay);
       }
       const base = buildBaseSchedule(prev.P, newRates, prev.months, prev.r);
       const rows = buildSchedule(prev.P, newRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
@@ -480,6 +489,8 @@ export function useCalculator() {
         ...prev,
         customRates: newRates,
         customOverpay: newOverpay,
+        requiredOverpay: newRequiredOverpay,
+        defaultOverpay: prev.strategy === 'goal' ? (newRequiredOverpay ?? prev.defaultOverpay) : prev.defaultOverpay,
         baseInterest: base.totalInterest,
         baseMonths: base.count,
         baseBalances: base.balances,
