@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fmt, fmtC, parseLocaleNumber, fmtMonthYear } from './format';
+import { fmt, fmtC, parseLocaleNumber, fmtMonthYear, fmtSignedC } from './format';
 
 describe('fmt', () => {
   it('clamps negative and non-finite numbers to 0', () => {
@@ -35,6 +35,25 @@ describe('parseLocaleNumber', () => {
 
   it('returns NaN for garbage, same as parseFloat', () => {
     expect(parseLocaleNumber('abc')).toBeNaN();
+  });
+});
+
+describe('fmtSignedC', () => {
+  it('prefixes a positive difference with a plus sign', () => {
+    expect(fmtSignedC(12340, 'pl')).toBe('+12 340 zł');
+  });
+
+  it('regression: shows a real minus sign and the actual magnitude for a negative difference — fmtC alone clamps negative numbers to 0, which silently hid a favorable (negative) difference as "0 zł"', () => {
+    expect(fmtSignedC(-8500, 'pl')).toBe('-8500 zł');
+    expect(fmtSignedC(-8500, 'pl')).not.toMatch(/^0/);
+  });
+
+  it('shows no sign for exactly zero', () => {
+    expect(fmtSignedC(0, 'pl')).toBe('0 zł');
+  });
+
+  it('works for the English locale too', () => {
+    expect(fmtSignedC(-1000, 'en')).toBe('-1,000 PLN');
   });
 });
 

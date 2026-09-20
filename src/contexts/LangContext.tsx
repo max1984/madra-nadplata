@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import type { Lang } from '../lib/i18n';
 import { t as translate, type TranslationKey } from '../lib/i18n';
-import { fmt as formatNum, fmtC as formatCurrency } from '../lib/format';
+import { fmt as formatNum, fmtC as formatCurrency, fmtSignedC as formatSignedCurrency } from '../lib/format';
 import { safeGetItem, safeSetItem } from '../lib/safeStorage';
 
 interface LangContextValue {
@@ -10,6 +10,7 @@ interface LangContextValue {
   t: (key: TranslationKey) => string;
   fmt: (n: number, dec?: number) => string;
   fmtC: (n: number, dec?: number) => string;
+  fmtSignedC: (n: number, dec?: number) => string;
 }
 
 const LangContext = createContext<LangContextValue | null>(null);
@@ -35,6 +36,7 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     t: (key) => translate(lang, key),
     fmt: (n, dec = 0) => formatNum(n, dec, lang),
     fmtC: (n, dec = 0) => formatCurrency(n, lang, dec),
+    fmtSignedC: (n, dec = 0) => formatSignedCurrency(n, lang, dec),
   }), [lang]);
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;

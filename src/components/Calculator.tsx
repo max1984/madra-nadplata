@@ -134,7 +134,7 @@ export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
   scenarios, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
 }: Props) {
-  const { t, fmt, fmtC, lang } = useLang();
+  const { t, fmt, fmtC, fmtSignedC, lang } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
   const [copied, setCopied] = useState(false);
@@ -819,7 +819,7 @@ export default function Calculator({
                             title={t('scenario_diff_label')}
                             style={{ color: diff.interestDiff <= 0 ? 'var(--accent2)' : 'var(--danger)' }}
                           >
-                            {diff.interestDiff >= 0 ? '+' : ''}{fmtC(diff.interestDiff, 0)}
+                            {fmtSignedC(diff.interestDiff, 0)}
                             {diff.monthsDiff !== 0 && ` / ${diff.monthsDiff >= 0 ? '+' : ''}${diff.monthsDiff} ${t('months_short')}`}
                           </span>
                         )}

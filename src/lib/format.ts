@@ -19,6 +19,19 @@ export function fmtC(n: number, lang: Lang = 'pl', dec = 0): string {
 }
 
 /**
+ * Kwota różnicy ze znakiem, np. "+12 340 zł" / "-8 500 zł" — fmtC celowo
+ * przycina ujemne liczby do zera (bo zwykle pokazuje kwoty typu saldo czy
+ * odsetki, które w tym kalkulatorze nie bywają ujemne), więc reużycie jej
+ * wprost do wyświetlenia rzeczywistej różnicy (dodatniej lub ujemnej —
+ * "o ile drożej/taniej") po cichu gubiło znak minus i pokazywało "0 zł"
+ * zamiast korzystnej, ujemnej wartości.
+ */
+export function fmtSignedC(n: number, lang: Lang = 'pl', dec = 0): string {
+  const sign = n > 0 ? '+' : n < 0 ? '-' : '';
+  return sign + fmtC(Math.abs(n), lang, dec);
+}
+
+/**
  * W polskim nawyku separatorem dziesiętnym jest przecinek, ale pola
  * liczbowe w tym kalkulatorze parsowały wartość przez parseFloat, który
  * rozumie tylko kropkę — "7,5" ciszej stawało się "7".

@@ -14,6 +14,7 @@ const ExampleSection = lazy(() => import('./components/ExampleSection'));
 const SupportOptions = lazy(() => import('./components/SupportOptions'));
 const FAQ = lazy(() => import('./components/FAQ'));
 const Calculator = lazy(() => import('./components/Calculator'));
+const BankOffers = lazy(() => import('./components/BankOffers'));
 const Schedule = lazy(() => import('./components/Schedule'));
 const Footer = lazy(() => import('./components/Footer'));
 
@@ -65,6 +66,8 @@ function AppInner() {
           onDuplicateScenario={duplicateScenario}
         />
         <AdSlot slot="afterResults" />
+
+        <BankOffers calcState={calcState} />
 
         <Schedule
           calcState={calcState}

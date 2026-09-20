@@ -74,6 +74,9 @@ export type TranslationKey =
   | 'overpay_day_tip'
   | 'ad_consent_text' | 'ad_consent_accept' | 'ad_consent_decline' | 'ad_consent_policy'
   | 'ad_label' | 'partner_label' | 'partner_title' | 'partner_body' | 'partner_disclosure'
+  | 'bank_offers_label' | 'bank_offers_title' | 'bank_offers_sub'
+  | 'bank_offers_col_bank' | 'bank_offers_col_rate' | 'bank_offers_col_valid'
+  | 'bank_offers_col_diff' | 'bank_offers_col_note' | 'bank_offers_disclaimer'
   | 'strategy_goal' | 'goal_hint' | 'goal_years_label' | 'goal_target_label'
   | 'goal_required_overpay' | 'goal_required_total' | 'goal_already_met'
   | 'goal_unreachable' | 'error_goal_months'
@@ -259,6 +262,15 @@ const pl: Translations = {
   partner_title: 'Niższe oprocentowanie działa jak nadpłata – tylko bez wpłacania ani złotówki',
   partner_body: 'Przy Twoim saldzie i okresie spłaty oprocentowanie niższe o 1 punkt procentowy oznacza {amount} mniej odsetek. Jeśli od zaciągnięcia kredytu minęło trochę czasu, warto sprawdzić, czy inny bank nie da Ci dziś lepszych warunków.',
   partner_disclosure: 'To linki partnerskie – jeśli skorzystasz z oferty, strona może dostać prowizję. Nie zmienia to wyników kalkulatora ani warunków, które dostaniesz od banku.',
+  bank_offers_label: 'Oferty banków',
+  bank_offers_title: 'Aktualne oferty kredytów hipotecznych',
+  bank_offers_sub: 'Ręcznie zebrane oferty banków — sprawdzaj datę ważności i zawsze zweryfikuj szczegóły bezpośrednio w banku przed decyzją.',
+  bank_offers_col_bank: 'Bank',
+  bank_offers_col_rate: 'Oprocentowanie',
+  bank_offers_col_valid: 'Oferta ważna do',
+  bank_offers_col_diff: 'Różnica w odsetkach',
+  bank_offers_col_note: 'Uwagi',
+  bank_offers_disclaimer: 'Dane aktualizowane ręcznie i mogą się zdezaktualizować — to nie jest wiążąca oferta banku. Zawsze zweryfikuj warunki bezpośrednio przed podjęciem decyzji.',
   ad_consent_accept: 'Akceptuj',
   ad_consent_decline: 'Odrzuć',
   ad_consent_policy: 'Polityka prywatności',
@@ -478,6 +490,15 @@ const en: Translations = {
   partner_title: 'A lower rate works like an overpayment — without paying a single extra unit',
   partner_body: 'At your balance and remaining term, a rate lower by 1 percentage point means {amount} less interest. If some time has passed since you took the loan, it is worth checking whether another bank would offer you better terms today.',
   partner_disclosure: 'These are affiliate links — if you use an offer, this site may receive a commission. It does not change the calculator results or the terms the bank gives you.',
+  bank_offers_label: 'Bank offers',
+  bank_offers_title: 'Current mortgage offers',
+  bank_offers_sub: 'Manually collected bank offers — check the validity date and always verify the details directly with the bank before deciding.',
+  bank_offers_col_bank: 'Bank',
+  bank_offers_col_rate: 'Interest rate',
+  bank_offers_col_valid: 'Offer valid until',
+  bank_offers_col_diff: 'Interest difference',
+  bank_offers_col_note: 'Notes',
+  bank_offers_disclaimer: 'Data is updated manually and may be outdated — this is not a binding bank offer. Always verify the terms directly before making a decision.',
   ad_consent_accept: 'Accept',
   ad_consent_decline: 'Decline',
   ad_consent_policy: 'Privacy Policy',
