@@ -61,6 +61,53 @@ export function isCalculateShortcut(e: Pick<KeyboardEvent, 'key' | 'ctrlKey' | '
   return e.key === 'Enter' && (e.ctrlKey || e.metaKey);
 }
 
+/**
+ * Czytelne, tekstowe podsumowanie wyniku do wklejenia w wiadomości/czacie —
+ * inaczej niż "Kopiuj link" (goły URL) czy natywne udostępnianie (to samo,
+ * tylko przez systemowy arkusz), to faktyczna treść, którą odbiorca
+ * przeczyta od razu, bez klikania w cokolwiek.
+ */
+export function formatResultsSummaryText(
+  cs: Pick<CalcState, 'P' | 'r' | 'months' | 'rows' | 'baseMonths' | 'baseInterest'>,
+  t: (key: TranslationKey) => string,
+  fmt: (n: number, dec?: number) => string,
+  fmtC: (n: number, dec?: number) => string,
+  url: string,
+): string {
+  const withMonths = cs.rows.length;
+  const withInterest = withMonths ? cs.rows[withMonths - 1]!.cumInterest : 0;
+  const savedMoney = Math.max(0, cs.baseInterest - withInterest);
+  const savedMonths = Math.max(0, cs.baseMonths - withMonths);
+  const savedYears = Math.floor(savedMonths / 12);
+  const savedRem = savedMonths % 12;
+  const savedTime = savedYears > 0
+    ? `${savedYears} ${t('years')}${savedRem > 0 ? ' ' + savedRem + ' ' + t('months_short') : ''}`
+    : `${savedMonths} ${t('months_short')}`;
+
+  return t('share_summary_text')
+    .replace('{amount}', fmt(cs.P))
+    .replace('{rate}', fmt(cs.r * 12 * 100, 2))
+    .replace('{months}', String(cs.months))
+    .replace('{withMonths}', String(withMonths))
+    .replace('{savedTime}', savedTime)
+    .replace('{saved}', fmtC(savedMoney))
+    .replace('{url}', url);
+}
+
+function copyToClipboard(text: string, onDone: () => void) {
+  navigator.clipboard.writeText(text).then(onDone).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    onDone();
+  });
+}
+
 export function overpayPresets(stdPayment: number): number[] {
   const round50 = (n: number) => Math.max(50, Math.round(n / 50) * 50);
   return [0.1, 0.25, 0.5].map((fraction) => round50(stdPayment * fraction));
@@ -81,6 +128,7 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedSummary, setCopiedSummary] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const announcement = useMemo(
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
@@ -246,20 +294,18 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
   useEffect(() => () => { chart.current?.destroy(); chart.current = null; }, []);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
+    copyToClipboard(window.location.href, () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = window.location.href;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleCopySummary = () => {
+    if (!calcState) return;
+    const text = formatResultsSummaryText(calcState, t, fmt, fmtC, window.location.href);
+    copyToClipboard(text, () => {
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2000);
     });
   };
 
@@ -649,6 +695,10 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
             <button type="button" className="copy-link-btn" onClick={handleCopy} disabled={!calcState}
               style={!calcState ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
               {copied ? t('copy_link_copied') : t('copy_link')}
+            </button>
+            <button type="button" className="copy-link-btn" onClick={handleCopySummary} disabled={!calcState}
+              style={!calcState ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
+              {copiedSummary ? t('copy_summary_copied') : t('copy_summary')}
             </button>
             {canShare && (
               <button type="button" className="copy-link-btn" onClick={handleShare} disabled={!calcState}

@@ -56,6 +56,7 @@ export type TranslationKey =
   | 'error_refi_rate' | 'error_refi_months' | 'error_refi_month' | 'error_refi_fee'
   | 'error_overpay_start'
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
+  | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
@@ -208,6 +209,8 @@ const pl: Translations = {
   copy_link_copied: '✓ Skopiowano!',
   reset_defaults: '↺ Przywróć domyślne dane',
   share_native: '📤 Udostępnij',
+  copy_summary: '📋 Kopiuj podsumowanie', copy_summary_copied: '✓ Skopiowano podsumowanie!',
+  share_summary_text: 'Kredyt {amount} zł, {rate}% na {months} mies.\nZ nadpłatą: spłacę w {withMonths} rat (o {savedTime} szybciej) i zaoszczędzę {saved} odsetek.\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
   csv_export: 'Pobierz CSV',
   sch_print: 'Drukuj / Zapisz PDF',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
@@ -412,6 +415,8 @@ const en: Translations = {
   copy_link_copied: '✓ Copied!',
   reset_defaults: '↺ Reset to defaults',
   share_native: '📤 Share',
+  copy_summary: '📋 Copy summary', copy_summary_copied: '✓ Summary copied!',
+  share_summary_text: 'Loan {amount} PLN, {rate}% for {months} mo.\nWith the overpay plan: I’ll pay it off in {withMonths} payments ({savedTime} sooner) and save {saved} in interest.\nCalculated with Mądra Nadpłata: {url}',
   csv_export: 'Download CSV',
   sch_print: 'Print / Save PDF',
   overpay_start_label: 'Start overpaying from month',

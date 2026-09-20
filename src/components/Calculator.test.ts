@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText } from './Calculator';
 import { t as translate } from '../lib/i18n';
-import { fmtC } from '../lib/format';
+import { fmt, fmtC } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
 
 function makeRow(cumInterest: number): ScheduleRow {
@@ -88,5 +88,36 @@ describe('isCalculateShortcut', () => {
 
   it('is false for Ctrl/Cmd with a different key', () => {
     expect(isCalculateShortcut({ key: 'a', ctrlKey: true, metaKey: false })).toBe(false);
+  });
+});
+
+describe('formatResultsSummaryText', () => {
+  const t = (key: Parameters<typeof translate>[1]) => translate('pl', key);
+  const fmtPl = (n: number, dec?: number) => fmt(n, dec, 'pl');
+  const fmtCPl = (n: number, dec?: number) => fmtC(n, 'pl', dec);
+  const url = 'https://nadplata.org/?amount=300000';
+
+  const cs = {
+    P: 300000, r: 0.06 / 12, months: 360,
+    rows: [makeRow(1000), makeRow(2000), makeRow(3000)],
+    baseMonths: 360, baseInterest: 300000,
+  };
+
+  it('includes the loan amount, rate and the given url — this is meant to be pasted as-is into a chat message', () => {
+    const text = formatResultsSummaryText(cs, t, fmtPl, fmtCPl, url);
+    expect(text).toContain(fmtPl(300000));
+    expect(text).toContain('6');
+    expect(text).toContain(url);
+  });
+
+  it('reflects the actual applied schedule length, not the nominal loan term', () => {
+    const text = formatResultsSummaryText(cs, t, fmtPl, fmtCPl, url);
+    expect(text).toContain('3'); // withMonths = rows.length = 3
+    expect(text).toContain('360'); // months = nominal term
+  });
+
+  it('does not throw and has no leftover {placeholder} tokens for a normal calculation', () => {
+    const text = formatResultsSummaryText(cs, t, fmtPl, fmtCPl, url);
+    expect(text).not.toMatch(/\{[a-zA-Z]+\}/);
   });
 });
