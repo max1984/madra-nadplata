@@ -127,11 +127,12 @@ interface Props {
   onLoadScenario: (id: string) => void;
   onDeleteScenario: (id: string) => void;
   onRenameScenario: (id: string, name: string) => void;
+  onDuplicateScenario: (id: string, newName: string) => void;
 }
 
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
-  scenarios, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario,
+  scenarios, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
@@ -811,6 +812,13 @@ export default function Calculator({
                         )}
                         <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
                           {t('scenario_load')}
+                        </button>
+                        <button
+                          type="button"
+                          className="scenario-row-btn"
+                          onClick={() => onDuplicateScenario(s.id, `${s.name} ${t('scenario_copy_suffix')}`)}
+                        >
+                          {t('scenario_duplicate')}
                         </button>
                         <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => onDeleteScenario(s.id)}>
                           {t('scenario_delete')}

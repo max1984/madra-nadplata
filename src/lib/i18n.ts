@@ -59,6 +59,7 @@ export type TranslationKey =
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
   | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_saved_title'
   | 'scenario_load' | 'scenario_delete' | 'scenario_diff_label' | 'scenario_rename_hint'
+  | 'scenario_duplicate' | 'scenario_copy_suffix'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
@@ -220,6 +221,8 @@ const pl: Translations = {
   scenario_delete: 'Usuń',
   scenario_diff_label: 'Różnica względem aktualnego wyniku (odsetki / raty)',
   scenario_rename_hint: 'Kliknij, aby zmienić nazwę',
+  scenario_duplicate: '📄 Duplikuj',
+  scenario_copy_suffix: '(kopia)',
   csv_export: 'Pobierz CSV',
   sch_print: 'Drukuj / Zapisz PDF',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
@@ -433,6 +436,8 @@ const en: Translations = {
   scenario_delete: 'Delete',
   scenario_diff_label: 'Difference vs. current result (interest / payments)',
   scenario_rename_hint: 'Click to rename',
+  scenario_duplicate: '📄 Duplicate',
+  scenario_copy_suffix: '(copy)',
   csv_export: 'Download CSV',
   sch_print: 'Print / Save PDF',
   overpay_start_label: 'Start overpaying from month',

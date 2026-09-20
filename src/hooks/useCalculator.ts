@@ -259,6 +259,27 @@ export function renameScenario(list: SavedScenario[], id: string, newName: strin
 }
 
 /**
+ * Duplikuje istniejący scenariusz pod nową nazwą — punkt wyjścia do
+ * eksperymentowania z wariantem bez utraty oryginału (np. "Wariant X" →
+ * "Wariant X (kopia)", a potem edycja formularza i ponowny zapis pod tą
+ * kopią). Nazwa przychodzi z zewnątrz (a nie jest tu doklejana na sztywno
+ * jak "(kopia)"), żeby ta czysta funkcja biblioteki nie musiała znać
+ * aktualnego języka aplikacji — o tłumaczenie sufiksu dba wywołujący (UI).
+ */
+export function duplicateScenario(list: SavedScenario[], id: string, newName: string): SavedScenario[] {
+  const original = list.find((s) => s.id === id);
+  if (!original) return list;
+  const copy: SavedScenario = {
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    name: newName.trim() || original.name,
+    savedAt: Date.now(),
+    inputs: original.inputs,
+  };
+  const next = [...list, copy];
+  return next.length > MAX_SCENARIOS ? next.slice(next.length - MAX_SCENARIOS) : next;
+}
+
+/**
  * Różnica (scenariusz minus aktualnie wyświetlony wynik) w łącznych odsetkach
  * i liczbie rat — pozwala pokazać przy każdym zapisanym scenariuszu, o ile
  * byłby on lepszy/gorszy od tego, co jest teraz na ekranie, bez faktycznego
@@ -554,6 +575,14 @@ export function useCalculator() {
     });
   }, []);
 
+  const duplicateScenarioById = useCallback((id: string, newName: string) => {
+    setScenarios((prev) => {
+      const next = duplicateScenario(prev, id, newName);
+      persistScenarios(next);
+      return next;
+    });
+  }, []);
+
   // Uzupełnienie zapamiętywania danych (saveInputs) — bez tego jedyną drogą
   // powrotu do domyślnych wartości byłoby ręczne czyszczenie localStorage
   // z DevTools.
@@ -722,6 +751,7 @@ export function useCalculator() {
     loadScenario,
     deleteScenario,
     renameScenario: renameScenarioById,
+    duplicateScenario: duplicateScenarioById,
     onOverpayChange,
     onRateChange,
     onCustomEffectChange,

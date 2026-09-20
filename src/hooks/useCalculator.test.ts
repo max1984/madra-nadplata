@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, compareScenarioToCurrent, computeCalcState, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -340,6 +340,40 @@ describe('renameScenario', () => {
     const list = addScenario([], 'A', DEFAULT_INPUTS);
     const next = renameScenario(list, 'nonexistent', 'X');
     expect(next).toEqual(list);
+  });
+});
+
+describe('duplicateScenario', () => {
+  it('adds a copy with a new id, the given name and the same inputs as the original', () => {
+    const list = addScenario([], 'Oryginał', { ...DEFAULT_INPUTS, loanAmount: 250000 });
+    const originalId = list[0]!.id;
+    const next = duplicateScenario(list, originalId, 'Oryginał (kopia)');
+    expect(next).toHaveLength(2);
+    expect(next[1]!.name).toBe('Oryginał (kopia)');
+    expect(next[1]!.id).not.toBe(originalId);
+    expect(next[1]!.inputs.loanAmount).toBe(250000);
+    expect(next[0]!.name).toBe('Oryginał');
+  });
+
+  it('falls back to the original name when the given new name is blank', () => {
+    const list = addScenario([], 'Oryginał', DEFAULT_INPUTS);
+    const next = duplicateScenario(list, list[0]!.id, '   ');
+    expect(next[1]!.name).toBe('Oryginał');
+  });
+
+  it('is a no-op when the id does not match any scenario', () => {
+    const list = addScenario([], 'A', DEFAULT_INPUTS);
+    const next = duplicateScenario(list, 'nonexistent', 'X');
+    expect(next).toEqual(list);
+  });
+
+  it('regression: caps the list at 10 entries just like addScenario — duplicating must not bypass the storage growth limit', () => {
+    let list: ReturnType<typeof addScenario> = [];
+    for (let i = 0; i < 10; i++) list = addScenario(list, `S${i}`, DEFAULT_INPUTS);
+    const next = duplicateScenario(list, list[0]!.id, 'S0 (kopia)');
+    expect(next).toHaveLength(10);
+    expect(next[9]!.name).toBe('S0 (kopia)');
+    expect(next[0]!.name).toBe('S1');
   });
 });
 
