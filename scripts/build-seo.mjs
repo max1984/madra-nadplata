@@ -17,6 +17,7 @@ import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { AMOUNTS, GUIDES, REF_RATE, REF_YEARS, OVERPAY_STEPS } from './seo-content.mjs';
+import { esc } from './seo-utils.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
@@ -43,7 +44,6 @@ const { calcStdPayment, buildSchedule, buildBaseSchedule } = await importTs('src
 
 const plnFmt = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 });
 const pln = (n) => plnFmt.format(Math.round(n)) + ' zł';
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function monthsToText(m) {
   const y = Math.floor(m / 12);
