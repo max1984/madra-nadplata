@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -52,6 +52,40 @@ describe('parseUrlInputs', () => {
 
   it('returns an empty patch for an empty query string', () => {
     expect(parseUrlInputs('')).toEqual({});
+  });
+});
+
+describe('buildUrlParams', () => {
+  it('round-trips through parseUrlInputs for the default (fixed_total) strategy', () => {
+    const qs = buildUrlParams(DEFAULT_INPUTS);
+    const patch = parseUrlInputs('?' + qs);
+    expect(patch.loanAmount).toBe(DEFAULT_INPUTS.loanAmount);
+    expect(patch.interestRate).toBe(DEFAULT_INPUTS.interestRate);
+    expect(patch.strategy).toBe('fixed_total');
+    expect(patch.totalMonthlySlider).toBe(DEFAULT_INPUTS.totalMonthlySlider);
+  });
+
+  it('only includes the slider param relevant to the active strategy — fixed_overpay omits totalMonthlySlider/shortenAmountSlider', () => {
+    const qs = buildUrlParams({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 777 });
+    const sp = new URLSearchParams(qs);
+    expect(sp.get('overpay')).toBe('777');
+    expect(sp.has('total')).toBe(false);
+    expect(sp.has('shorten')).toBe(false);
+  });
+
+  it('regression: omits the start param when overpayStartMonth is 0 — a bare link should not carry a redundant ?start=0 for the common "start immediately" case', () => {
+    const qs = buildUrlParams({ ...DEFAULT_INPUTS, overpayStartMonth: 0 });
+    expect(new URLSearchParams(qs).has('start')).toBe(false);
+  });
+
+  it('includes all refinance-specific params only for the refinance strategy', () => {
+    const qs = buildUrlParams({ ...DEFAULT_INPUTS, strategy: 'refinance', refiMonth: 24, refiRate: 5.5 });
+    const sp = new URLSearchParams(qs);
+    expect(sp.get('refiMonth')).toBe('24');
+    expect(sp.get('refiRate')).toBe('5.5');
+
+    const nonRefiQs = buildUrlParams({ ...DEFAULT_INPUTS, strategy: 'fixed_total' });
+    expect(new URLSearchParams(nonRefiQs).has('refiMonth')).toBe(false);
   });
 });
 

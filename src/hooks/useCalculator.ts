@@ -131,7 +131,7 @@ export function parseUrlInputs(search: string = window.location.search): Partial
   return patch;
 }
 
-function buildUrlParams(inp: CalcInputs): string {
+export function buildUrlParams(inp: CalcInputs): string {
   const sp = new URLSearchParams();
   sp.set('amount', String(inp.loanAmount));
   sp.set('rate', String(inp.interestRate));

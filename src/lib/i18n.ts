@@ -63,6 +63,7 @@ export type TranslationKey =
   | 'scenario_delete_confirm' | 'scenario_delete_cancel'
   | 'scenario_export' | 'scenario_import' | 'scenario_import_success' | 'scenario_import_empty'
   | 'scenario_active_badge' | 'scenario_active_hint'
+  | 'scenario_copy_link' | 'scenario_copy_link_copied'
   | 'scenario_duplicate' | 'scenario_copy_suffix'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
@@ -236,6 +237,8 @@ const pl: Translations = {
   scenario_import_empty: 'Nie znaleziono poprawnych scenariuszy w pliku',
   scenario_active_badge: 'Aktywny',
   scenario_active_hint: 'Dane w formularzu dokładnie odpowiadają temu scenariuszowi',
+  scenario_copy_link: '🔗 Link',
+  scenario_copy_link_copied: '✓ Skopiowano',
   scenario_diff_label: 'Różnica względem aktualnego wyniku (odsetki / raty)',
   scenario_rename_hint: 'Kliknij, aby zmienić nazwę',
   scenario_duplicate: '📄 Duplikuj',
@@ -470,6 +473,8 @@ const en: Translations = {
   scenario_import_empty: 'No valid scenarios found in the file',
   scenario_active_badge: 'Active',
   scenario_active_hint: 'The form fields exactly match this scenario',
+  scenario_copy_link: '🔗 Link',
+  scenario_copy_link_copied: '✓ Copied',
   scenario_diff_label: 'Difference vs. current result (interest / payments)',
   scenario_rename_hint: 'Click to rename',
   scenario_duplicate: '📄 Duplicate',

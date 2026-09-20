@@ -6,7 +6,7 @@ import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON, inputsEqual } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -147,6 +147,7 @@ export default function Calculator({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const [copiedScenarioId, setCopiedScenarioId] = useState<string | null>(null);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const announcement = useMemo(
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
@@ -394,6 +395,14 @@ export default function Calculator({
       setTimeout(() => setImportMessage(null), 4000);
     };
     reader.readAsText(file);
+  };
+
+  const handleCopyScenarioLink = (s: SavedScenario) => {
+    const url = `${window.location.origin}${window.location.pathname}?${buildUrlParams(s.inputs)}`;
+    copyToClipboard(url, () => {
+      setCopiedScenarioId(s.id);
+      setTimeout(() => setCopiedScenarioId(null), 2000);
+    });
   };
 
   const handleShare = () => {
@@ -891,6 +900,9 @@ export default function Calculator({
                           onClick={() => onDuplicateScenario(s.id, `${s.name} ${t('scenario_copy_suffix')}`)}
                         >
                           {t('scenario_duplicate')}
+                        </button>
+                        <button type="button" className="scenario-row-btn" onClick={() => handleCopyScenarioLink(s)}>
+                          {copiedScenarioId === s.id ? t('scenario_copy_link_copied') : t('scenario_copy_link')}
                         </button>
                         {isConfirmingDelete ? (
                           <>
