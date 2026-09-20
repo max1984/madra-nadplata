@@ -715,6 +715,12 @@ footer a:hover { color: var(--accent); }
   padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px;
   background: var(--bg2);
 }
+.scenario-row.active { border-color: var(--accent2); background: var(--accent-soft); }
+.scenario-row-active-badge {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+  color: var(--accent2); background: #fff; border: 1px solid var(--accent2);
+  border-radius: 999px; padding: 2px 8px; white-space: nowrap;
+}
 .scenario-row-name {
   flex: 1; min-width: 0; font-size: .85rem; color: var(--text2);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;

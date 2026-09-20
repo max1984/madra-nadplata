@@ -6,7 +6,7 @@ import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -163,6 +163,14 @@ export default function Calculator({
     }
     return map;
   }, [scenarios, calcState]);
+
+  // Które zapisane dane formularza dokładnie odpowiadają temu, co jest teraz
+  // w polach — porównanie z `inputs` (nie z calcState), bo ma działać nawet
+  // zanim ktoś kliknie "Oblicz" po wczytaniu/edycji.
+  const activeScenarioId = useMemo(
+    () => scenarios.find((s) => inputsEqual(s.inputs, inputs))?.id ?? null,
+    [scenarios, inputs],
+  );
 
   // Ref zamiast bezpośredniego domknięcia na onCalculate — blur() aktywnego
   // pola (poniżej) commituje wartość asynchronicznie (React batchuje setState
@@ -834,8 +842,9 @@ export default function Calculator({
                     const diff = scenarioDiffs.get(s.id);
                     const isEditing = editingScenarioId === s.id;
                     const isConfirmingDelete = confirmDeleteId === s.id;
+                    const isActive = s.id === activeScenarioId;
                     return (
-                      <div className="scenario-row" key={s.id}>
+                      <div className={`scenario-row${isActive ? ' active' : ''}`} key={s.id}>
                         {isEditing ? (
                           <input
                             type="text"
@@ -856,6 +865,11 @@ export default function Calculator({
                             onClick={() => startEditingScenario(s)}
                           >
                             {s.name}
+                          </span>
+                        )}
+                        {isActive && (
+                          <span className="scenario-row-active-badge" title={t('scenario_active_hint')}>
+                            {t('scenario_active_badge')}
                           </span>
                         )}
                         {diff && (diff.interestDiff !== 0 || diff.monthsDiff !== 0) && (
