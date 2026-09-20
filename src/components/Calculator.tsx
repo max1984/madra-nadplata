@@ -4,7 +4,7 @@ import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber } from '../lib/format';
-import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple } from '../lib/mortgage';
+import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, Strategy } from '../hooks/useCalculator';
 import type { TranslationKey } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
@@ -267,6 +267,9 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                   onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                 />
                 <span className="input-suffix">%</span>
+              </div>
+              <div className="hint">
+                {t('form_daily_interest')} <strong>{fmtC(dailyInterestCost(inputs.loanAmount, inputs.interestRate / 100 / 12), 2)}</strong>
               </div>
             </div>
 

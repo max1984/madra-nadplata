@@ -136,6 +136,16 @@ export function repaymentMultiple(P: number, totalInterest: number): number {
   return (P + totalInterest) / P;
 }
 
+/**
+ * Przybliżony dzienny koszt odsetkowy kredytu przy aktualnym saldzie —
+ * miesięczne odsetki (balance × r) podzielone przez 30 dni. To zgrubne
+ * przybliżenie (banki liczą kapitalizację różnie), ale dobrze pokazuje
+ * "ile kredyt kosztuje Cię każdego dnia", zanim jeszcze cokolwiek spłacisz.
+ */
+export function dailyInterestCost(balance: number, r: number): number {
+  return Math.max(0, balance * r) / 30;
+}
+
 // Returns the remaining balance after applying overpays up to and including upToIdx.
 export function balanceAt(
   P: number,

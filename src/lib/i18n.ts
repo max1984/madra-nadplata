@@ -25,7 +25,7 @@ export type TranslationKey =
   | 'faq_q7' | 'faq_a7'
   | 'calc_label' | 'calc_title' | 'calc_sub'
   | 'form_loan_amount' | 'form_interest' | 'form_months' | 'form_months_unit'
-  | 'form_fee' | 'form_fee_hint' | 'form_strategy'
+  | 'form_fee' | 'form_fee_hint' | 'form_strategy' | 'form_daily_interest'
   | 'strategy_fixed_total' | 'strategy_fixed_overpay'
   | 'strategy_shorten' | 'strategy_custom'
   | 'slider_total' | 'slider_overpay' | 'slider_std'
@@ -148,6 +148,7 @@ const pl: Translations = {
   form_interest: 'Oprocentowanie roczne', form_months: 'Pozostała liczba rat (mies.)',
   form_months_unit: 'mies.', form_fee: 'Prowizja za nadpłatę',
   form_fee_hint: 'Sprawdź w umowie – często 0% po 3 latach od uruchomienia kredytu',
+  form_daily_interest: '≈ dziennie w odsetkach przy obecnym saldzie:',
   form_strategy: 'Strategia nadpłaty',
   strategy_fixed_total: 'Stała kwota do banku (rata + nadpłata)',
   strategy_fixed_overpay: 'Stała miesięczna nadpłata',
@@ -348,6 +349,7 @@ const en: Translations = {
   form_interest: 'Annual interest rate', form_months: 'Remaining months (mo.)',
   form_months_unit: 'mo.', form_fee: 'Prepayment fee',
   form_fee_hint: 'Check your contract – often 0% after 3 years from loan origination',
+  form_daily_interest: '≈ daily interest at your current balance:',
   form_strategy: 'Overpayment strategy',
   strategy_fixed_total: 'Fixed total to bank (payment + overpayment)',
   strategy_fixed_overpay: 'Fixed monthly overpayment',

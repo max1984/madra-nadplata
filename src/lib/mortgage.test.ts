@@ -12,6 +12,7 @@ import {
   refiBreakEvenMonth,
   halfPrincipalMonth,
   repaymentMultiple,
+  dailyInterestCost,
 } from './mortgage';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -248,6 +249,26 @@ describe('repaymentMultiple', () => {
     const naturalInterest = natural[natural.length - 1]!.cumInterest;
     const overpaidInterest = overpaid[overpaid.length - 1]!.cumInterest;
     expect(repaymentMultiple(P, overpaidInterest)).toBeLessThan(repaymentMultiple(P, naturalInterest));
+  });
+});
+
+describe('dailyInterestCost', () => {
+  it('is monthly interest (balance × r) divided by 30', () => {
+    expect(dailyInterestCost(300000, 0.06 / 12)).toBeCloseTo(1500 / 30, 6);
+  });
+
+  it('is 0 for a paid-off loan (zero balance)', () => {
+    expect(dailyInterestCost(0, 0.06 / 12)).toBe(0);
+  });
+
+  it('never goes negative, even with a negative balance or rate that should not occur in practice', () => {
+    expect(dailyInterestCost(-1000, 0.005)).toBe(0);
+    expect(dailyInterestCost(300000, -0.005)).toBe(0);
+  });
+
+  it('scales linearly with the balance — halving the balance halves the daily cost', () => {
+    const r = 0.07 / 12;
+    expect(dailyInterestCost(150000, r)).toBeCloseTo(dailyInterestCost(300000, r) / 2, 6);
   });
 });
 
