@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -475,6 +475,48 @@ describe('mergeImportedScenarios', () => {
     expect(next).toHaveLength(10);
     expect(next[9]!.name).toBe('I3');
     expect(next[0]!.name).toBe('E1');
+  });
+});
+
+describe('strategyLabelKey', () => {
+  it('maps each strategy to its own translation key', () => {
+    expect(strategyLabelKey('fixed_overpay')).toBe('strategy_fixed_overpay');
+    expect(strategyLabelKey('shorten_period')).toBe('strategy_shorten');
+    expect(strategyLabelKey('custom')).toBe('strategy_custom');
+    expect(strategyLabelKey('goal')).toBe('strategy_goal');
+    expect(strategyLabelKey('refinance')).toBe('strategy_refinance');
+    expect(strategyLabelKey('fixed_total')).toBe('strategy_fixed_total');
+  });
+
+  it('regression: maps the legacy "reduce_payment" strategy to the same label as fixed_total, since it was removed as an identical duplicate', () => {
+    expect(strategyLabelKey('reduce_payment')).toBe('strategy_fixed_total');
+  });
+});
+
+describe('buildScenarioComparisonRows', () => {
+  it('computes months and total interest independently for each scenario, from its own saved inputs', () => {
+    const list = [
+      addScenario([], 'Mały overpay', { ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 200 })[0]!,
+      addScenario([], 'Duży overpay', { ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 1000 })[0]!,
+    ];
+    const rows = buildScenarioComparisonRows(list);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.name).toBe('Mały overpay');
+    expect(rows[1]!.months).toBeLessThan(rows[0]!.months);
+    expect(rows[1]!.totalInterest).toBeLessThan(rows[0]!.totalInterest);
+  });
+
+  it('carries over the name, loan amount, rate, strategy and savedAt from the scenario unchanged', () => {
+    const [scenario] = addScenario([], 'Test', { ...DEFAULT_INPUTS, loanAmount: 456000, interestRate: 7.25, strategy: 'goal' });
+    const [row] = buildScenarioComparisonRows([scenario!]);
+    expect(row!.loanAmount).toBe(456000);
+    expect(row!.interestRate).toBe(7.25);
+    expect(row!.strategy).toBe('goal');
+    expect(row!.savedAt).toBe(scenario!.savedAt);
+  });
+
+  it('returns an empty array for an empty scenario list', () => {
+    expect(buildScenarioComparisonRows([])).toEqual([]);
   });
 });
 

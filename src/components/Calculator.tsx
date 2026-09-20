@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 import { Chart } from 'chart.js';
 import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
-import { parseLocaleNumber, fmtMonthYear } from '../lib/format';
+import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, type ScenarioSortKey } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, buildScenarioComparisonRows, strategyLabelKey, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -93,6 +93,38 @@ export function formatResultsSummaryText(
     .replace('{savedTime}', savedTime)
     .replace('{saved}', fmtC(savedMoney))
     .replace('{url}', url);
+}
+
+/**
+ * Buduje treść pliku CSV porównującego wszystkie zapisane scenariusze —
+ * osobna, czysta funkcja (zamiast kodu wprost w handlerze), żeby dało się
+ * ją przetestować bez klikania w prawdziwym pliku pobranym z przeglądarki.
+ */
+export function buildScenarioComparisonCSV(
+  rows: ScenarioComparisonRow[],
+  t: (key: TranslationKey) => string,
+  lang: Lang,
+): string {
+  const sep = lang === 'en' ? ',' : ';';
+  // Nazwa scenariusza to wolny tekst użytkownika — w przeciwieństwie do
+  // liczbowych kolumn może zawierać separator, cudzysłów albo nową linię,
+  // więc w razie potrzeby trzeba ją zacytować (standard CSV).
+  const csvField = (value: string) => /["\n]/.test(value) || value.includes(sep)
+    ? `"${value.replace(/"/g, '""')}"`
+    : value;
+  const headers = [
+    t('scenario_compare_col_name'), t('scenario_compare_col_amount'), t('scenario_compare_col_rate'),
+    t('scenario_compare_col_strategy'), t('scenario_compare_col_months'), t('scenario_compare_col_interest'),
+  ];
+  const csvRows = rows.map((r) => [
+    csvField(r.name),
+    csvDec(r.loanAmount, lang),
+    csvDec(r.interestRate, lang),
+    t(strategyLabelKey(r.strategy)),
+    String(r.months),
+    csvDec(r.totalInterest, lang),
+  ].join(sep));
+  return '﻿' + [headers.join(sep), ...csvRows].join('\n');
 }
 
 function copyToClipboard(text: string, onDone: () => void) {
@@ -383,6 +415,17 @@ export default function Calculator({
     const a = document.createElement('a');
     a.href = url;
     a.download = `scenariusze-nadplata-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportScenarioComparison = () => {
+    const csv = buildScenarioComparisonCSV(buildScenarioComparisonRows(scenarios), t, lang);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `porownanie-scenariuszy-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -856,9 +899,14 @@ export default function Calculator({
                   {t('scenario_import')}
                 </button>
                 {scenarios.length > 0 && (
-                  <button type="button" className="scenario-row-btn" onClick={handleExportScenarios}>
-                    {t('scenario_export')}
-                  </button>
+                  <>
+                    <button type="button" className="scenario-row-btn" onClick={handleExportScenarios}>
+                      {t('scenario_export')}
+                    </button>
+                    <button type="button" className="scenario-row-btn" onClick={handleExportScenarioComparison}>
+                      {t('scenario_export_csv')}
+                    </button>
+                  </>
                 )}
                 {importMessage && <span className="scenario-import-message">{importMessage}</span>}
               </div>

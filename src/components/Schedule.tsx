@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
 import type { Lang, TranslationKey } from '../lib/i18n';
 import { totalAppliedOverpay, type ScheduleRow } from '../lib/mortgage';
+import { csvDec } from '../lib/format';
 import type { CalcState } from '../hooks/useCalculator';
 
 interface Props {
@@ -180,18 +181,6 @@ function RefiSeparatorRow({ colSpan, refiData, fmtC, t }: {
     </tr>
   );
 }
-
-/**
- * ";" jako separator kolumn + przecinek dziesiętny to jedyny sposób, żeby
- * Excel z polskimi ustawieniami regionalnymi poprawnie rozbił plik na kolumny
- * i rozpoznał liczby (inaczej "1234.56" wczytuje się jako tekst). Wersja
- * angielska interfejsu ma jednak angielskich odbiorców z odwrotną konwencją
- * regionalną (przecinek jako separator kolumn/tysięcy, kropka dziesiętna) —
- * eksport z polskimi nagłówkami, ale w formacie EN, mieszałby dwie konwencje
- * naraz i psuł się dokładnie tak samo jak przy polskich ustawieniach na odwrót.
- */
-export const csvDec = (n: number, lang: Lang = 'pl') =>
-  lang === 'en' ? n.toFixed(2) : n.toFixed(2).replace('.', ',');
 
 /**
  * Ogranicza wpisany numer miesiąca do sensownego zakresu tabeli (1..maxMonth)

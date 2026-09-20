@@ -283,6 +283,52 @@ export function sortScenarios(list: SavedScenario[], sortBy: ScenarioSortKey): S
   }
 }
 
+/** Klucz tłumaczenia etykiety strategii — do CSV i wszędzie, gdzie trzeba pokazać nazwę strategii tekstem. */
+export function strategyLabelKey(strategy: Strategy): TranslationKey {
+  switch (strategy) {
+    case 'fixed_overpay': return 'strategy_fixed_overpay';
+    case 'shorten_period': return 'strategy_shorten';
+    case 'custom': return 'strategy_custom';
+    case 'goal': return 'strategy_goal';
+    case 'refinance': return 'strategy_refinance';
+    case 'reduce_payment':
+    case 'fixed_total':
+    default:
+      return 'strategy_fixed_total';
+  }
+}
+
+export interface ScenarioComparisonRow {
+  name: string;
+  loanAmount: number;
+  interestRate: number;
+  strategy: Strategy;
+  months: number;
+  totalInterest: number;
+  savedAt: number;
+}
+
+/**
+ * Przelicza każdy zapisany scenariusz od zera (computeCalcState na jego
+ * własnych inputs) — nie polega na tym, co akurat jest w kalkulatorze na
+ * ekranie, więc porównanie działa niezależnie od bieżącego wyniku.
+ */
+export function buildScenarioComparisonRows(scenarios: SavedScenario[]): ScenarioComparisonRow[] {
+  return scenarios.map((s) => {
+    const state = computeCalcState(s.inputs);
+    const totalInterest = state.rows.length ? state.rows[state.rows.length - 1]!.cumInterest : 0;
+    return {
+      name: s.name,
+      loanAmount: s.inputs.loanAmount,
+      interestRate: s.inputs.interestRate,
+      strategy: s.inputs.strategy,
+      months: state.rows.length,
+      totalInterest,
+      savedAt: s.savedAt,
+    };
+  });
+}
+
 /**
  * Dodaje nowy scenariusz na koniec listy, obcinając najstarsze wpisy powyżej
  * MAX_SCENARIOS — bez limitu localStorage rosłoby bez końca komuś, kto

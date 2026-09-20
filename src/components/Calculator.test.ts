@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
+import type { ScenarioComparisonRow } from '../hooks/useCalculator';
 
 function makeRow(cumInterest: number): ScheduleRow {
   return {
@@ -119,5 +120,58 @@ describe('formatResultsSummaryText', () => {
   it('does not throw and has no leftover {placeholder} tokens for a normal calculation', () => {
     const text = formatResultsSummaryText(cs, t, fmtPl, fmtCPl, url);
     expect(text).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+});
+
+describe('buildScenarioComparisonCSV', () => {
+  const t = (key: Parameters<typeof translate>[1]) => translate('pl', key);
+
+  function makeRow(overrides: Partial<ScenarioComparisonRow> = {}): ScenarioComparisonRow {
+    return {
+      name: 'Wariant', loanAmount: 300000, interestRate: 6, strategy: 'fixed_total',
+      months: 212, totalInterest: 186999, savedAt: 1,
+      ...overrides,
+    };
+  }
+
+  it('starts with a UTF-8 BOM and a semicolon-separated pl header row', () => {
+    const csv = buildScenarioComparisonCSV([makeRow()], t, 'pl');
+    expect(csv.charCodeAt(0)).toBe(0xfeff);
+    const firstLine = csv.slice(1).split('\n')[0];
+    expect(firstLine).toContain(';');
+    expect(firstLine).toContain('Nazwa');
+  });
+
+  it('uses a comma separator for en, matching the app-wide CSV locale convention', () => {
+    const csv = buildScenarioComparisonCSV([makeRow()], (k) => translate('en', k), 'en');
+    const firstLine = csv.slice(1).split('\n')[0];
+    expect(firstLine).toContain(',');
+  });
+
+  it('one data row per scenario, in the given order', () => {
+    const csv = buildScenarioComparisonCSV([makeRow({ name: 'A' }), makeRow({ name: 'B' })], t, 'pl');
+    const lines = csv.slice(1).split('\n');
+    expect(lines).toHaveLength(3); // header + 2 data rows
+    expect(lines[1]).toContain('A');
+    expect(lines[2]).toContain('B');
+  });
+
+  it('regression: quotes a scenario name that contains the column separator, so it does not get split into an extra column', () => {
+    const csv = buildScenarioComparisonCSV([makeRow({ name: 'Wariant; z nadpłatą' })], t, 'pl');
+    const dataLine = csv.slice(1).split('\n')[1]!;
+    expect(dataLine.startsWith('"Wariant; z nadpłatą"')).toBe(true);
+  });
+
+  it('regression: escapes a double quote inside the scenario name instead of producing invalid CSV', () => {
+    const csv = buildScenarioComparisonCSV([makeRow({ name: 'Mój "ulubiony"' })], t, 'pl');
+    const dataLine = csv.slice(1).split('\n')[1]!;
+    expect(dataLine).toContain('"Mój ""ulubiony"""');
+  });
+
+  it('translates the strategy into a human-readable label instead of the raw internal key', () => {
+    const csv = buildScenarioComparisonCSV([makeRow({ strategy: 'fixed_overpay' })], t, 'pl');
+    const dataLine = csv.slice(1).split('\n')[1]!;
+    expect(dataLine).not.toContain('fixed_overpay');
+    expect(dataLine).toContain(t('strategy_fixed_overpay'));
   });
 });
