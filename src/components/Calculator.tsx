@@ -61,10 +61,11 @@ interface Props {
   calcState: CalcState | null;
   onCalculate: () => void;
   onResetToDefaults: () => void;
+  isStale: boolean;
   calcError: TranslationKey | null;
 }
 
-export default function Calculator({ inputs, setInputs, calcState, onCalculate, onResetToDefaults, calcError }: Props) {
+export default function Calculator({ inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError }: Props) {
   const { t, fmt, fmtC } = useLang();
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
@@ -672,6 +673,12 @@ export default function Calculator({ inputs, setInputs, calcState, onCalculate, 
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {isStale && calcState && (
+              <div className="info-box" style={{ marginBottom: 20, marginTop: 0, background: 'var(--warn-soft)', borderColor: '#f5dca3', color: 'var(--warn)' }}>
+                {t('calc_stale')}
               </div>
             )}
 

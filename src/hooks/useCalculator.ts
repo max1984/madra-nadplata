@@ -187,6 +187,17 @@ export function clearStoredInputs(): void {
   safeRemoveItem(STORED_INPUTS_KEY);
 }
 
+/**
+ * Porównanie płytkie — CalcInputs to płaski obiekt samych prymitywów, więc
+ * to wystarcza. Używane do wykrywania, czy wyświetlony wynik jest nadal
+ * aktualny względem tego, co jest teraz w formularzu (patrz isStale
+ * zwracane przez useCalculator()).
+ */
+export function inputsEqual(a: CalcInputs, b: CalcInputs): boolean {
+  const keys = Object.keys(a) as (keyof CalcInputs)[];
+  return keys.every((k) => a[k] === b[k]);
+}
+
 export function validateInputs(inp: CalcInputs): TranslationKey | null {
   if (!isFinite(inp.loanAmount) || inp.loanAmount < 1000 || inp.loanAmount > 10_000_000) {
     return 'error_loan_amount';
@@ -376,7 +387,21 @@ export function useCalculator() {
     return computeCalcState(inp);
   });
 
+  // Dane wejściowe, dla których policzono aktualny calcState — potrzebne,
+  // żeby wykryć, że użytkownik zmienił formularz po obliczeniu, ale jeszcze
+  // nie kliknął "Oblicz" ponownie (isStale niżej), inaczej wyniki na ekranie
+  // po cichu przestają odpowiadać temu, co widać w polach formularza.
+  const [lastCalculatedInputs, setLastCalculatedInputs] = useState<CalcInputs | null>(() => {
+    const urlPatch = parseUrlInputs();
+    const patch = Object.keys(urlPatch).length ? urlPatch : loadStoredInputs();
+    if (!patch) return null;
+    const inp = { ...DEFAULT_INPUTS, ...patch };
+    return validateInputs(inp) === null ? inp : null;
+  });
+
   const [calcError, setCalcError] = useState<TranslationKey | null>(null);
+
+  const isStale = calcState !== null && lastCalculatedInputs !== null && !inputsEqual(inputs, lastCalculatedInputs);
 
   const setInputs = useCallback((patch: Partial<CalcInputs>) => {
     setInputsState((prev) => ({ ...prev, ...patch }));
@@ -391,6 +416,7 @@ export function useCalculator() {
     setCalcError(null);
     window.history.replaceState(null, '', '?' + buildUrlParams(inputs));
     saveInputs(inputs);
+    setLastCalculatedInputs(inputs);
     setCalcState(computeCalcState(inputs));
   }, [inputs]);
 
@@ -555,6 +581,7 @@ export function useCalculator() {
     calcState,
     calcError,
     calculate,
+    isStale,
     resetToDefaults,
     onOverpayChange,
     onRateChange,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, DEFAULT_INPUTS, type CalcState } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -240,5 +240,22 @@ describe('saveInputs / loadStoredInputs', () => {
     expect(loadStoredInputs()).not.toBeNull();
     clearStoredInputs();
     expect(loadStoredInputs()).toBeNull();
+  });
+});
+
+describe('inputsEqual', () => {
+  it('is true for two separate objects with identical field values', () => {
+    expect(inputsEqual({ ...DEFAULT_INPUTS }, { ...DEFAULT_INPUTS })).toBe(true);
+  });
+
+  it('is false when any single field differs', () => {
+    expect(inputsEqual(DEFAULT_INPUTS, { ...DEFAULT_INPUTS, loanAmount: 123 })).toBe(false);
+    expect(inputsEqual(DEFAULT_INPUTS, { ...DEFAULT_INPUTS, strategy: 'goal' })).toBe(false);
+  });
+
+  it('regression: this is what drives the "results are stale" banner — editing any field after calculating must be detected so the displayed results are not silently presented as current', () => {
+    const before = { ...DEFAULT_INPUTS };
+    const after = { ...DEFAULT_INPUTS, overpayStartMonth: 12 };
+    expect(inputsEqual(before, after)).toBe(false);
   });
 });

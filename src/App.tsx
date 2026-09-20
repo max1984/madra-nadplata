@@ -20,7 +20,7 @@ const Footer = lazy(() => import('./components/Footer'));
 function AppInner() {
   const { t } = useLang();
   const {
-    inputs, setInputs, calcState, calcError, calculate, resetToDefaults,
+    inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults,
     onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange,
     resetOverpays, clearOverpays, resetRates,
   } = useCalculator();
@@ -54,6 +54,7 @@ function AppInner() {
           calcState={calcState}
           onCalculate={calculate}
           onResetToDefaults={resetToDefaults}
+          isStale={isStale}
           calcError={calcError}
         />
         <AdSlot slot="afterResults" />

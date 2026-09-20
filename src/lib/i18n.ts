@@ -30,7 +30,7 @@ export type TranslationKey =
   | 'strategy_shorten' | 'strategy_custom'
   | 'slider_total' | 'slider_overpay' | 'slider_std' | 'slider_std_short'
   | 'reduce_payment_hint'
-  | 'calc_btn' | 'calc_placeholder' | 'calc_placeholder_sub' | 'calc_announcement'
+  | 'calc_btn' | 'calc_placeholder' | 'calc_placeholder_sub' | 'calc_announcement' | 'calc_stale'
   | 'shorten_hint' | 'custom_hint'
   | 'stats_saved' | 'stats_faster' | 'stats_payments_instead'
   | 'stats_avg_overpay' | 'stats_total_interest' | 'stats_comparison'
@@ -162,6 +162,7 @@ const pl: Translations = {
   calc_placeholder: 'Kliknij "Oblicz" aby zobaczyć wyniki',
   calc_placeholder_sub: 'Wypełnij formularz po lewej i wciśnij przycisk. Wyniki pojawią się tutaj razem z wykresem i harmonogramem spłat.',
   calc_announcement: 'Wyliczono harmonogram: {months} rat, łączne odsetki {interest}.',
+  calc_stale: '⚠ Zmieniłeś dane — wyniki poniżej są nieaktualne. Kliknij „Oblicz”, aby je odświeżyć.',
   shorten_hint: 'Rata regularnej spłaty pozostaje stała na poziomie oryginalnej raty. Stała nadpłata co miesiąc skraca okres kredytowania – im wyższa, tym szybciej kredyt zostanie spłacony. Ostatnia rata może być mniejsza niż standardowa.',
   custom_hint: 'Po kliknięciu <strong>Oblicz</strong> pojawią się wszystkie raty z pustymi polami nadpłat. Wpisz dowolną kwotę w wybranym miesiącu – wyniki zaktualizują się automatycznie.',
   stats_saved: 'zaoszczędzone odsetki', stats_faster: 'szybsza spłata',
@@ -365,6 +366,7 @@ const en: Translations = {
   calc_placeholder: 'Click "Calculate" to see results',
   calc_placeholder_sub: 'Fill in the form on the left and press the button. Results will appear here along with a chart and repayment schedule.',
   calc_announcement: 'Schedule calculated: {months} payments, total interest {interest}.',
+  calc_stale: '⚠ You changed the inputs — the results below are outdated. Click “Calculate” to refresh them.',
   shorten_hint: 'The standard payment stays fixed at the original amount. A fixed monthly overpayment on top shortens the loan term — the higher the overpayment, the faster the loan is paid off. The last payment may be smaller than a standard payment.',
   custom_hint: 'After clicking <strong>Calculate</strong>, all payments appear with empty overpayment fields. Enter any amount for a specific month — results update automatically.',
   stats_saved: 'interest saved', stats_faster: 'faster payoff',
