@@ -15,6 +15,7 @@ export default function CreditworthinessNav() {
       </div>
       <div className="nav-links">
         <a href="/">{t('cw_nav_back')}</a>
+        <a href="/wynagrodzenia.html">{t('nav_salary_calc')}</a>
         <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>
           <button
             className={`lang-btn${lang === 'pl' ? ' active' : ''}`}
