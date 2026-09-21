@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, type CalcState, type CalcInputs } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, filterScenariosByName, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, type CalcState, type CalcInputs } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -680,6 +680,35 @@ describe('sortScenarios', () => {
 
   it('returns an empty array for an empty input', () => {
     expect(sortScenarios([], 'date-desc')).toEqual([]);
+  });
+});
+
+describe('filterScenariosByName', () => {
+  const list = [
+    { id: 'a', name: 'Mieszkanie Warszawa', savedAt: 100, inputs: DEFAULT_INPUTS },
+    { id: 'b', name: 'Dom pod Krakowem', savedAt: 200, inputs: DEFAULT_INPUTS },
+    { id: 'c', name: 'mieszkanie na wynajem', savedAt: 300, inputs: DEFAULT_INPUTS },
+  ];
+
+  it('returns the full list unchanged for an empty query', () => {
+    expect(filterScenariosByName(list, '')).toEqual(list);
+  });
+
+  it('returns the full list unchanged for a whitespace-only query', () => {
+    expect(filterScenariosByName(list, '   ')).toEqual(list);
+  });
+
+  it('matches case-insensitively and by substring, not just prefix', () => {
+    expect(filterScenariosByName(list, 'mieszkanie').map((s) => s.id)).toEqual(['a', 'c']);
+    expect(filterScenariosByName(list, 'KRAKOWEM').map((s) => s.id)).toEqual(['b']);
+  });
+
+  it('trims surrounding whitespace from the query before matching', () => {
+    expect(filterScenariosByName(list, '  dom  ').map((s) => s.id)).toEqual(['b']);
+  });
+
+  it('returns an empty array when nothing matches', () => {
+    expect(filterScenariosByName(list, 'nieistniejący')).toEqual([]);
   });
 });
 

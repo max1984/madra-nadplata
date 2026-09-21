@@ -7,7 +7,7 @@ import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, filterScenariosByName, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -221,7 +221,11 @@ export default function Calculator({
   );
 
   const [scenarioSort, setScenarioSort] = useState<ScenarioSortKey>('date-desc');
-  const sortedScenarios = useMemo(() => sortScenarios(scenarios, scenarioSort), [scenarios, scenarioSort]);
+  const [scenarioFilter, setScenarioFilter] = useState('');
+  const sortedScenarios = useMemo(
+    () => filterScenariosByName(sortScenarios(scenarios, scenarioSort), scenarioFilter),
+    [scenarios, scenarioSort, scenarioFilter],
+  );
 
   // Ref zamiast bezpośredniego domknięcia na onCalculate — blur() aktywnego
   // pola (poniżej) commituje wartość asynchronicznie (React batchuje setState
@@ -963,6 +967,16 @@ export default function Calculator({
                   <div className="scenario-list-header">
                     <div className="scenario-list-title">{t('scenario_saved_title')}</div>
                     {scenarios.length > 1 && (
+                      <input
+                        type="text"
+                        className="scenario-filter-input"
+                        value={scenarioFilter}
+                        onChange={(e) => setScenarioFilter(e.target.value)}
+                        placeholder={t('scenario_filter_placeholder')}
+                        aria-label={t('scenario_filter_placeholder')}
+                      />
+                    )}
+                    {scenarios.length > 1 && (
                       <select
                         className="scenario-sort-select"
                         value={scenarioSort}
@@ -975,6 +989,9 @@ export default function Calculator({
                       </select>
                     )}
                   </div>
+                  {scenarios.length > 1 && scenarioFilter.trim() !== '' && sortedScenarios.length === 0 && (
+                    <div className="scenario-filter-empty">{t('scenario_filter_no_match')}</div>
+                  )}
                   {sortedScenarios.map((s) => {
                     const diff = scenarioDiffs.get(s.id);
                     const isEditing = editingScenarioId === s.id;

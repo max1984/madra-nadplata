@@ -290,6 +290,18 @@ export function sortScenarios(list: SavedScenario[], sortBy: ScenarioSortKey): S
   }
 }
 
+/**
+ * Filtruje zapisane scenariusze po nazwie — bez rozróżniania wielkości liter
+ * i z przyciętymi spacjami, żeby przy kilkunastu wariantach dało się szybko
+ * odnaleźć właściwy zamiast przewijać całą listę. Pusty (po trim) filtr
+ * zwraca całą listę bez zmian.
+ */
+export function filterScenariosByName(list: SavedScenario[], query: string): SavedScenario[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return list;
+  return list.filter((s) => s.name.toLowerCase().includes(q));
+}
+
 /** Klucz tłumaczenia etykiety strategii — do CSV i wszędzie, gdzie trzeba pokazać nazwę strategii tekstem. */
 export function strategyLabelKey(strategy: Strategy): TranslationKey {
   switch (strategy) {

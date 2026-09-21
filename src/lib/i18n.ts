@@ -62,6 +62,7 @@ export type TranslationKey =
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
   | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_save_storage_error' | 'scenario_saved_title'
   | 'scenario_sort_label' | 'scenario_sort_newest' | 'scenario_sort_oldest' | 'scenario_sort_name'
+  | 'scenario_filter_placeholder' | 'scenario_filter_no_match'
   | 'scenario_load' | 'scenario_delete' | 'scenario_diff_label' | 'scenario_rename_hint'
   | 'scenario_delete_confirm' | 'scenario_delete_cancel'
   | 'scenario_export' | 'scenario_import' | 'scenario_import_success' | 'scenario_import_empty'
@@ -246,6 +247,8 @@ const pl: Translations = {
   scenario_sort_newest: 'Najnowsze',
   scenario_sort_oldest: 'Najstarsze',
   scenario_sort_name: 'Nazwa (A-Z)',
+  scenario_filter_placeholder: '🔍 Szukaj scenariusza…',
+  scenario_filter_no_match: 'Brak scenariuszy pasujących do wyszukiwania.',
   scenario_load: 'Wczytaj',
   scenario_delete: 'Usuń',
   scenario_delete_confirm: 'Na pewno?',
@@ -509,6 +512,8 @@ const en: Translations = {
   scenario_sort_newest: 'Newest',
   scenario_sort_oldest: 'Oldest',
   scenario_sort_name: 'Name (A-Z)',
+  scenario_filter_placeholder: '🔍 Search scenarios…',
+  scenario_filter_no_match: 'No scenarios match your search.',
   scenario_load: 'Load',
   scenario_delete: 'Delete',
   scenario_delete_confirm: 'Sure?',
