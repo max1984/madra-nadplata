@@ -37,6 +37,17 @@ function numberField(
   };
 }
 
+/**
+ * Link z wyniku zdolności kredytowej z powrotem do kalkulatora kredytu,
+ * z zaokrągloną kwotą jako `?amount=` — ten sam param, który `useCalculator.ts`
+ * (parseUrlInputs) już rozpoznaje, więc kalkulator kredytu otwiera się od
+ * razu z wypełnioną kwotą. Wydzielone jako czysta funkcja, żeby dało się
+ * przetestować zaokrąglenie bez renderowania komponentu.
+ */
+export function buildMortgageLinkHref(maxLoanAmount: number): string {
+  return `/?amount=${Math.round(maxLoanAmount)}#calculator`;
+}
+
 export default function CreditworthinessCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
 }: Props) {
@@ -255,6 +266,15 @@ export default function CreditworthinessCalculator({
                 <div>{t('cw_result_buffer')}: +{fmt(calcState.bufferPercent, 1)} p.p.</div>
               </div>
             </div>
+            {calcState.maxLoanAmount > 0 && (
+              <a
+                className="toolbar-btn"
+                style={{ display: 'inline-block', marginTop: 12 }}
+                href={buildMortgageLinkHref(calcState.maxLoanAmount)}
+              >
+                {t('cw_check_mortgage_link')}
+              </a>
+            )}
           </div>
         )}
       </div>
