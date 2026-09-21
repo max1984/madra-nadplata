@@ -4,6 +4,7 @@ import { useLang } from '../../contexts/LangContext';
 import { CHART } from '../../lib/chartTheme';
 import AnimatedNumber from '../AnimatedNumber';
 import { barSegments } from '../../lib/resultBars';
+import { copyToClipboard } from '../../lib/clipboard';
 import type { TranslationKey } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
 import {
@@ -120,6 +121,31 @@ function setPrimaryAmount(inputs: SalaryInputs, v: number): Partial<SalaryInputs
   }
 }
 
+/**
+ * Jak formatCreditworthinessSummaryText w CreditworthinessCalculator.tsx —
+ * czysty tekst wyniku do wklejenia w wiadomość. Mortgage i creditworthiness
+ * miały to od dawna; salary nie miało żadnej wersji "kopiuj wynik". Dwa
+ * warianty tekstu (single/annual), bo tryb roczny nie ma jednego `net`,
+ * tylko sumę 12 miesięcy.
+ */
+export function formatSalarySummaryText(
+  state: SalaryState,
+  t: (key: TranslationKey) => string,
+  fmtC: (n: number, dec?: number) => string,
+  url: string,
+): string {
+  if (state.mode === 'single') {
+    return t('salary_share_summary_text_single')
+      .replace('{net}', fmtC(state.result.net))
+      .replace('{tax}', fmtC(state.result.tax))
+      .replace('{url}', url);
+  }
+  return t('salary_share_summary_text_annual')
+    .replace('{totalNet}', fmtC(state.result.totalNet))
+    .replace('{totalTax}', fmtC(state.result.totalTax))
+    .replace('{url}', url);
+}
+
 export default function SalaryCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
   scenarios = [], scenarioSaveError = false, scenarioLimitReached = false,
@@ -128,6 +154,7 @@ export default function SalaryCalculator({
 }: Props) {
   const { t, fmt, fmtC, lang } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [copiedSummary, setCopiedSummary] = useState(false);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
 
@@ -207,6 +234,15 @@ export default function SalaryCalculator({
     };
     reader.onerror = () => showImportMessage('salary_scenario_import_error');
     reader.readAsText(file);
+  };
+
+  const handleCopySummary = () => {
+    if (!calcState) return;
+    const text = formatSalarySummaryText(calcState, t, fmtC, window.location.href);
+    copyToClipboard(text, () => {
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2000);
+    });
   };
 
   // Wykres roczny: destroy+create (jak ExampleSection.tsx) — aktualizuje się
@@ -985,6 +1021,9 @@ export default function SalaryCalculator({
             )}
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <button type="button" className="toolbar-btn" onClick={handleCopySummary}>
+                {copiedSummary ? t('copy_summary_copied') : t('copy_summary')}
+              </button>
               <button type="button" className="toolbar-btn" onClick={() => window.print()}>
                 {t('salary_print')}
               </button>
