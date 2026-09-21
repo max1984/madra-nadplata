@@ -265,6 +265,29 @@ export function removeCreditworthinessScenario(list: SavedCreditworthinessScenar
  * useSalaryCalculator.ts, pozwala UI sprawdzić z wyprzedzeniem, czy zapis
  * coś wypchnie, żeby pokazać ostrzeżenie zamiast ciszy.
  */
+export type CwScenarioSortKey = 'date-desc' | 'date-asc' | 'name-asc';
+
+/** Jak sortSalaryScenarios w useSalaryCalculator.ts. */
+export function sortCwScenarios(list: SavedCreditworthinessScenario[], sortBy: CwScenarioSortKey): SavedCreditworthinessScenario[] {
+  const sorted = [...list];
+  switch (sortBy) {
+    case 'date-asc':
+      return sorted.sort((a, b) => a.savedAt - b.savedAt);
+    case 'name-asc':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    case 'date-desc':
+    default:
+      return sorted.sort((a, b) => b.savedAt - a.savedAt);
+  }
+}
+
+/** Jak filterSalaryScenariosByName w useSalaryCalculator.ts. */
+export function filterCwScenariosByName(list: SavedCreditworthinessScenario[], query: string): SavedCreditworthinessScenario[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return list;
+  return list.filter((s) => s.name.toLowerCase().includes(q));
+}
+
 export function willDropOldestCwScenario(currentCount: number, addingCount: number): boolean {
   return currentCount + addingCount > MAX_CW_SCENARIOS;
 }

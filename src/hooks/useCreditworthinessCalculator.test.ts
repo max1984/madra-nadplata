@@ -14,6 +14,8 @@ import {
   persistCreditworthinessScenarios,
   parseCwScenariosJSON,
   willDropOldestCwScenario,
+  sortCwScenarios,
+  filterCwScenariosByName,
   MAX_CW_SCENARIOS,
   MAX_CW_SCENARIO_NAME_LENGTH,
 } from './useCreditworthinessCalculator';
@@ -279,6 +281,51 @@ describe('willDropOldestCwScenario', () => {
       expect(willDropOldestCwScenario(MAX_CW_SCENARIOS - 1, 2)).toBe(true);
     }
   );
+});
+
+describe('sortCwScenarios', () => {
+  const mk = (name: string, savedAt: number) => ({ id: name, name, savedAt, inputs: DEFAULT_CREDITWORTHINESS_INPUTS });
+
+  const list = [mk('Bravo', 200), mk('alfa', 100), mk('Charlie', 300)];
+
+  it('sorts by date descending (newest first) by default', () => {
+    expect(sortCwScenarios(list, 'date-desc').map((s) => s.name)).toEqual(['Charlie', 'Bravo', 'alfa']);
+  });
+
+  it('sorts by date ascending (oldest first)', () => {
+    expect(sortCwScenarios(list, 'date-asc').map((s) => s.name)).toEqual(['alfa', 'Bravo', 'Charlie']);
+  });
+
+  it('sorts by name, case-insensitively', () => {
+    expect(sortCwScenarios(list, 'name-asc').map((s) => s.name)).toEqual(['alfa', 'Bravo', 'Charlie']);
+  });
+
+  it('does not mutate the original array', () => {
+    const copy = [...list];
+    sortCwScenarios(list, 'name-asc');
+    expect(list).toEqual(copy);
+  });
+});
+
+describe('filterCwScenariosByName', () => {
+  const list = [
+    { id: '1', name: 'Rodzina, 2 osoby', savedAt: 1, inputs: DEFAULT_CREDITWORTHINESS_INPUTS },
+    { id: '2', name: 'Singiel', savedAt: 2, inputs: DEFAULT_CREDITWORTHINESS_INPUTS },
+  ];
+
+  it('returns the full list for an empty or whitespace-only query', () => {
+    expect(filterCwScenariosByName(list, '')).toEqual(list);
+    expect(filterCwScenariosByName(list, '   ')).toEqual(list);
+  });
+
+  it('filters case-insensitively by substring match', () => {
+    expect(filterCwScenariosByName(list, 'rodzin').map((s) => s.id)).toEqual(['1']);
+    expect(filterCwScenariosByName(list, 'SINGIEL').map((s) => s.id)).toEqual(['2']);
+  });
+
+  it('returns an empty array when nothing matches', () => {
+    expect(filterCwScenariosByName(list, 'nieistniejący')).toEqual([]);
+  });
 });
 
 describe('parseCwScenariosJSON', () => {

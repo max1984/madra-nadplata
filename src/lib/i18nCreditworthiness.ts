@@ -23,6 +23,8 @@ export type CreditworthinessTranslationKey =
   | 'cw_scenario_name_placeholder' | 'cw_scenario_save' | 'cw_scenario_save_storage_error'
   | 'cw_scenario_saved_title' | 'cw_scenario_load' | 'cw_scenario_delete'
   | 'cw_scenario_delete_confirm' | 'cw_scenario_delete_cancel' | 'cw_scenario_limit_reached'
+  | 'cw_scenario_filter_placeholder' | 'cw_scenario_filter_no_match' | 'cw_scenario_sort_label'
+  | 'cw_scenario_sort_newest' | 'cw_scenario_sort_oldest' | 'cw_scenario_sort_name'
   | 'error_cw_income' | 'error_cw_household_size' | 'error_cw_years' | 'error_cw_nominal_rate'
   | 'error_cw_income_recognition' | 'error_cw_out_of_range_field';
 
@@ -72,6 +74,12 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_delete_confirm: 'Na pewno?',
   cw_scenario_delete_cancel: 'Anuluj',
   cw_scenario_limit_reached: 'Limit 10 zapisanych scenariuszy osiągnięty — najstarszy został usunięty, żeby zrobić miejsce na nowy.',
+  cw_scenario_filter_placeholder: 'Szukaj scenariusza…',
+  cw_scenario_filter_no_match: 'Brak scenariuszy pasujących do wyszukiwania',
+  cw_scenario_sort_label: 'Sortuj scenariusze',
+  cw_scenario_sort_newest: 'Najnowsze',
+  cw_scenario_sort_oldest: 'Najstarsze',
+  cw_scenario_sort_name: 'Nazwa',
   error_cw_income: 'Podaj poprawną kwotę dochodu netto',
   error_cw_household_size: 'Liczba osób w gospodarstwie musi wynosić co najmniej 1',
   error_cw_years: 'Okres kredytowania musi być między 1 a 40 lat',
@@ -126,6 +134,12 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_delete_confirm: 'Sure?',
   cw_scenario_delete_cancel: 'Cancel',
   cw_scenario_limit_reached: 'Reached the 10 saved-scenario limit — the oldest one was removed to make room for this one.',
+  cw_scenario_filter_placeholder: 'Search scenarios…',
+  cw_scenario_filter_no_match: 'No scenarios match your search',
+  cw_scenario_sort_label: 'Sort scenarios',
+  cw_scenario_sort_newest: 'Newest',
+  cw_scenario_sort_oldest: 'Oldest',
+  cw_scenario_sort_name: 'Name',
   error_cw_income: 'Enter a valid net income amount',
   error_cw_household_size: 'Household size must be at least 1',
   error_cw_years: 'Loan term must be between 1 and 40 years',

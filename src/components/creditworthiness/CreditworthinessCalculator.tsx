@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
-import { MAX_CW_SCENARIOS, MAX_CW_SCENARIO_NAME_LENGTH, type SavedCreditworthinessScenario } from '../../hooks/useCreditworthinessCalculator';
+import {
+  MAX_CW_SCENARIOS, MAX_CW_SCENARIO_NAME_LENGTH, sortCwScenarios, filterCwScenariosByName,
+  type SavedCreditworthinessScenario, type CwScenarioSortKey,
+} from '../../hooks/useCreditworthinessCalculator';
 
 /** Jak formatSalaryScenarioCount w SalaryCalculator.tsx. */
 function formatCwScenarioCount(count: number): string {
@@ -92,6 +95,12 @@ export default function CreditworthinessCalculator({
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [scenarioName, setScenarioName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [scenarioSort, setScenarioSort] = useState<CwScenarioSortKey>('date-desc');
+  const [scenarioFilter, setScenarioFilter] = useState('');
+  const sortedScenarios = useMemo(
+    () => filterCwScenariosByName(sortCwScenarios(scenarios, scenarioSort), scenarioFilter),
+    [scenarios, scenarioSort, scenarioFilter],
+  );
 
   const handleSaveScenario = () => {
     if (!scenarioName.trim()) return;
@@ -350,8 +359,34 @@ export default function CreditworthinessCalculator({
                     {t('cw_scenario_saved_title')}
                     <span className="scenario-count"> ({formatCwScenarioCount(scenarios.length)})</span>
                   </div>
+                  {scenarios.length > 1 && (
+                    <input
+                      type="text"
+                      className="scenario-filter-input"
+                      value={scenarioFilter}
+                      onChange={(e) => setScenarioFilter(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Escape' && scenarioFilter) setScenarioFilter(''); }}
+                      placeholder={t('cw_scenario_filter_placeholder')}
+                      aria-label={t('cw_scenario_filter_placeholder')}
+                    />
+                  )}
+                  {scenarios.length > 1 && (
+                    <select
+                      className="scenario-sort-select"
+                      value={scenarioSort}
+                      onChange={(e) => setScenarioSort(e.target.value as CwScenarioSortKey)}
+                      aria-label={t('cw_scenario_sort_label')}
+                    >
+                      <option value="date-desc">{t('cw_scenario_sort_newest')}</option>
+                      <option value="date-asc">{t('cw_scenario_sort_oldest')}</option>
+                      <option value="name-asc">{t('cw_scenario_sort_name')}</option>
+                    </select>
+                  )}
                 </div>
-                {scenarios.map((s) => {
+                {scenarios.length > 1 && scenarioFilter.trim() !== '' && sortedScenarios.length === 0 && (
+                  <div className="scenario-filter-empty">{t('cw_scenario_filter_no_match')}</div>
+                )}
+                {sortedScenarios.map((s) => {
                   const isConfirmingDelete = confirmDeleteId === s.id;
                   return (
                     <div className="scenario-row" key={s.id}>
