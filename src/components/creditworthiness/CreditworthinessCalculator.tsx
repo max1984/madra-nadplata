@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
+import { canUseNativeShare } from '../../lib/share';
 import AnimatedNumber from '../AnimatedNumber';
 import { comparisonBars } from '../../lib/resultBars';
 import type { TranslationKey } from '../../lib/i18n';
@@ -148,6 +149,7 @@ export default function CreditworthinessCalculator({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const [scenarioName, setScenarioName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
@@ -234,6 +236,10 @@ export default function CreditworthinessCalculator({
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     });
+  };
+
+  const handleShare = () => {
+    navigator.share({ title: 'Mądra Nadpłata', url: window.location.href }).catch(() => {});
   };
 
   return (
@@ -596,6 +602,11 @@ export default function CreditworthinessCalculator({
               <button type="button" className="toolbar-btn" onClick={handleCopySummary}>
                 {copiedSummary ? t('copy_summary_copied') : t('cw_copy_summary')}
               </button>
+              {canShare && (
+                <button type="button" className="toolbar-btn" onClick={handleShare}>
+                  {t('share_native')}
+                </button>
+              )}
               {calcState.maxLoanAmount > 0 && (
                 <a className="toolbar-btn" href={buildMortgageLinkHref(calcState.maxLoanAmount)}>
                   {t('cw_check_mortgage_link')}

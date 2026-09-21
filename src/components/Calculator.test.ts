@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape, shouldCancelDeleteConfirmOnEscape } from './Calculator';
+import { overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape, shouldCancelDeleteConfirmOnEscape } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -11,25 +11,6 @@ function makeRow(cumInterest: number): ScheduleRow {
     interest: 0, overpay: 0, fee: 0, balanceAfter: 0, cumInterest, annualRate: 0,
   };
 }
-
-describe('canUseNativeShare', () => {
-  it('is true when navigator.share is a function', () => {
-    expect(canUseNativeShare({ share: () => Promise.resolve() })).toBe(true);
-  });
-
-  it('is false when navigator has no share method — most desktop browsers', () => {
-    expect(canUseNativeShare({})).toBe(false);
-  });
-
-  it('is false when navigator itself is unavailable (e.g. SSR/build-time)', () => {
-    expect(canUseNativeShare(undefined)).toBe(false);
-    expect(canUseNativeShare(null)).toBe(false);
-  });
-
-  it('is false when share exists but is not callable (defensive against a broken polyfill)', () => {
-    expect(canUseNativeShare({ share: 'not a function' })).toBe(false);
-  });
-});
 
 describe('overpayPresets', () => {
   it('scales with the standard payment — a bigger loan gets bigger preset suggestions', () => {

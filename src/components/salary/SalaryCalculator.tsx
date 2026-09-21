@@ -5,6 +5,7 @@ import { CHART } from '../../lib/chartTheme';
 import AnimatedNumber from '../AnimatedNumber';
 import { barSegments } from '../../lib/resultBars';
 import { copyToClipboard } from '../../lib/clipboard';
+import { canUseNativeShare } from '../../lib/share';
 import type { TranslationKey } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
 import {
@@ -156,6 +157,7 @@ export default function SalaryCalculator({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
 
@@ -255,6 +257,10 @@ export default function SalaryCalculator({
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     });
+  };
+
+  const handleShare = () => {
+    navigator.share({ title: 'Mądra Nadpłata', url: window.location.href }).catch(() => {});
   };
 
   // Wykres roczny: destroy+create (jak ExampleSection.tsx) — aktualizuje się
@@ -1039,6 +1045,11 @@ export default function SalaryCalculator({
               <button type="button" className="toolbar-btn" onClick={handleCopySummary}>
                 {copiedSummary ? t('copy_summary_copied') : t('copy_summary')}
               </button>
+              {canShare && (
+                <button type="button" className="toolbar-btn" onClick={handleShare}>
+                  {t('share_native')}
+                </button>
+              )}
               <button type="button" className="toolbar-btn" onClick={() => window.print()}>
                 {t('salary_print')}
               </button>

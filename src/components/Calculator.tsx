@@ -5,6 +5,7 @@ import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
+import { canUseNativeShare } from '../lib/share';
 import AnimatedNumber from './AnimatedNumber';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
@@ -19,15 +20,8 @@ function useSyncInput(ref: React.RefObject<HTMLInputElement | null>, value: numb
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
-/**
- * navigator.share() istnieje głównie na przeglądarkach mobilnych (i części
- * desktopowych z integracją systemowego arkusza udostępniania) — wydzielone
- * jako funkcja przyjmująca navigator jako argument, żeby dało się to
- * przetestować bez mockowania globalnego obiektu window.
- */
-export function canUseNativeShare(nav: unknown): boolean {
-  return typeof (nav as { share?: unknown } | null | undefined)?.share === 'function';
-}
+// Przeniesione do ../lib/share.ts (wspólne dla wszystkich trzech kalkulatorów) — re-eksport dla zgodności z Calculator.test.ts.
+export { canUseNativeShare };
 
 /**
  * Szybkie propozycje kwoty nadpłaty (przyciski nad suwakiem), proporcjonalne
