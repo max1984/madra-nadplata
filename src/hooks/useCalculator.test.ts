@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, filterScenariosByName, willDropOldestScenario, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, MAX_SCENARIO_NAME_LENGTH, type CalcState, type CalcInputs } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
+import { LANGS } from '../lib/i18n';
 
 class FakeStorage {
   private store = new Map<string, string>();
@@ -159,6 +160,17 @@ describe('validateInputs', () => {
     expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: DEFAULT_INPUTS.loanMonths })).toBe('error_overpay_start');
     expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: 0 })).toBeNull();
     expect(validateInputs({ ...DEFAULT_INPUTS, overpayStartMonth: DEFAULT_INPUTS.loanMonths - 1 })).toBeNull();
+  });
+
+  it('regression: rejects settings where overpayStartMonth was set high and loanMonths was shortened afterwards, leaving overpayStartMonth past the new (shorter) term, and the error key resolves to real, non-empty text in both languages', () => {
+    const inp = { ...DEFAULT_INPUTS, overpayStartMonth: 300, loanMonths: 120 };
+    const key = validateInputs(inp);
+    expect(key).toBe('error_overpay_start');
+    expect(key).not.toBeNull();
+    if (key) {
+      expect(LANGS.pl[key]?.trim()).toBeTruthy();
+      expect(LANGS.en[key]?.trim()).toBeTruthy();
+    }
   });
 });
 
