@@ -613,7 +613,11 @@ export function computeCalcState(inp: CalcInputs): CalcState {
 
   return {
     P, r, months, prepayFee: fee, stdPayment, origStdPayment: stdPayment,
-    customOverpay, customRates, strategy, customEffect: 'shorten' as const,
+    // 'reduce', zgodnie z domyślną wartością customPerRowEffects poniżej —
+    // inaczej przycisk "Skróć okres" w toolbarze Schedule.tsx pokazywał się
+    // jako aktywny zaraz po przeliczeniu strategii 'custom', mimo że faktycznie
+    // zastosowany efekt (per wiersz, z customPerRowEffects) to 'reduce'.
+    customOverpay, customRates, strategy, customEffect: 'reduce' as const,
     customPerRowEffects, totalMonthly, defaultOverpay, overpayStartMonth: startMonth,
     extraAnnualPayment: inp.extraAnnualPayment,
     requiredOverpay, goalMonths: strategy === 'goal' ? inp.goalMonths : undefined,

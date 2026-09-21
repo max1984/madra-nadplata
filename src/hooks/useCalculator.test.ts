@@ -340,6 +340,14 @@ describe('computeCalcState — extraAnnualPayment integration', () => {
   });
 });
 
+describe('computeCalcState — custom strategy customEffect default', () => {
+  it('regression: customEffect starts as "reduce", matching the default customPerRowEffects — a mismatched "shorten" default made the toolbar\'s "Skróć okres" button show as active right after calculating, even though every row actually used the "reduce" effect', () => {
+    const state = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'custom' });
+    expect(state.customEffect).toBe('reduce');
+    expect(state.customPerRowEffects.every((e) => e === 'reduce')).toBe(true);
+  });
+});
+
 describe('saveInputs / loadStoredInputs', () => {
   let fake: FakeStorage;
 
