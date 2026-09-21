@@ -92,6 +92,18 @@ describe('buildSchedule', () => {
     expect(() => buildSchedule(300000, Array(6).fill(r), 12, 0, Array(6).fill(0), r)).toThrow();
   });
 
+  it('oznacza wiersz interestOnly, gdy po ręcznej podwyżce stopy rata (fixedStdPayment) nie pokrywa odsetek', () => {
+    const r = 0.005;
+    const months = 12;
+    const customRates = Array(months).fill(r);
+    customRates[5] = 0.5; // ręczna, ekstremalna podwyżka na jeden miesiąc
+    const rows = buildSchedule(100000, customRates, months, 0, Array(months).fill(0), r, 1000);
+    expect(rows[5]!.interestOnly).toBe(true);
+    expect(rows[5]!.regularCap).toBe(0);
+    // pozostałe wiersze (rata pokrywa odsetki) nie mają flagi
+    expect(rows[0]!.interestOnly).toBeUndefined();
+  });
+
   it('zero overpay: rows.length equals months (full term)', () => {
     const r = 0.065 / 12;
     const rows = buildSchedule(300000, Array(360).fill(r), 360, 0, Array(360).fill(0), r);

@@ -56,9 +56,15 @@ describe('validateCreditworthinessInputs', () => {
     }
   );
 
-  it('rejects years outside 1-40', () => {
+  it('rejects years outside 1-35', () => {
     expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, years: 0 })).toBe('error_cw_years');
-    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, years: 41 })).toBe('error_cw_years');
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, years: 36 })).toBe('error_cw_years');
+  });
+
+  it('regression: resolveInitialCreditworthinessInputs clamps years from an old saved scenario (e.g. 40, from before MAX_LOAN_YEARS was lowered to 35) instead of discarding the whole scenario back to defaults', () => {
+    const resolved = resolveInitialCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, netIncome: 12345, years: 40 });
+    expect(resolved.years).toBe(35);
+    expect(resolved.netIncome).toBe(12345);
   });
 
   it('rejects nominalRatePercent outside 0-30', () => {

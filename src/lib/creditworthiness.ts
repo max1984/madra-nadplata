@@ -59,6 +59,12 @@ export const CREDIT_CARD_LIMIT_MONTHLY_RATE = 0.05;
 // Bank nigdy nie zaokrągla oszacowania kwoty kredytu w górę.
 const LOAN_AMOUNT_ROUNDING_STEP = 100;
 
+// Polskie banki w praktyce rzadko przekraczają 30-35 lat okresu kredytowania
+// (wiążą go dodatkowo z wiekiem wnioskodawcy) — 40 lat sugerowało nierealny
+// scenariusz. Jedna stała, żeby limit nie rozjeżdżał się między walidacją,
+// UI i tym plikiem.
+export const MAX_LOAN_YEARS = 35;
+
 // ------------------------------------------------------------- helpery ---
 
 function clamp(n: number, min: number, max: number): number {
@@ -177,7 +183,7 @@ export function computeCreditworthiness(inputs: CreditworthinessInputs): Creditw
   const effectiveAnnualRatePercent = round2(nominalRate + bufferPercent);
   const monthlyRate = effectiveAnnualRatePercent / 100 / 12;
 
-  const years = clamp(Math.round(inputs.years), 1, 40);
+  const years = clamp(Math.round(inputs.years), 1, MAX_LOAN_YEARS);
   const months = years * 12;
   const maxLoanAmount = maxLoanFromInstallment(maxInstallment, monthlyRate, months);
 

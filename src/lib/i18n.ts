@@ -78,7 +78,7 @@ export type TranslationKey =
   | 'scenario_active_badge' | 'scenario_active_hint'
   | 'scenario_copy_link' | 'scenario_copy_link_copied' | 'scenario_copy_summary' | 'scenario_summary_invalid'
   | 'scenario_duplicate' | 'scenario_copy_suffix'
-  | 'csv_export' | 'sch_print'
+  | 'csv_export' | 'sch_csv_filename' | 'sch_interest_only_hint' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
   | 'extra_annual_label' | 'extra_annual_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
@@ -285,6 +285,8 @@ const pl: Translations = {
   scenario_duplicate: '📄 Duplikuj',
   scenario_copy_suffix: '(kopia)',
   csv_export: 'Pobierz CSV',
+  sch_csv_filename: 'harmonogram',
+  sch_interest_only_hint: 'Po podwyżce oprocentowania cała rata pokrywa same odsetki — kapitał w tym miesiącu nie maleje.',
   sch_print: 'Drukuj / Zapisz PDF',
   overpay_start_label: 'Zacznij nadpłacać od miesiąca',
   overpay_start_now: 'Od razu',
@@ -555,6 +557,8 @@ const en: Translations = {
   scenario_duplicate: '📄 Duplicate',
   scenario_copy_suffix: '(copy)',
   csv_export: 'Download CSV',
+  sch_csv_filename: 'schedule',
+  sch_interest_only_hint: 'After a rate increase the whole installment covers interest only — the principal did not decrease this month.',
   sch_print: 'Print / Save PDF',
   overpay_start_label: 'Start overpaying from month',
   overpay_start_now: 'Now',

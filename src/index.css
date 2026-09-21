@@ -530,6 +530,13 @@ tbody td { padding: 10px 16px; white-space: nowrap; }
 .td-overpay { color: var(--accent); font-weight: 600; }
 .row-paid { color: var(--text3); background: #fafbfd; }
 .row-paid td:first-child { background: #fafbfd; }
+.row-interest-only td:first-child { background: var(--warn-soft); }
+.interest-only-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; margin-left: 5px; border-radius: 50%;
+  background: var(--warn); color: #fff; font-size: .68rem; font-weight: 700;
+  cursor: help; vertical-align: middle;
+}
 .schedule-toolbar {
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 12px; padding: 16px 22px;

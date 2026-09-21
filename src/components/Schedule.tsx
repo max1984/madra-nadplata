@@ -55,8 +55,11 @@ const ScheduleRowItem = memo(function ScheduleRowItem({
   const rateChanged = Math.abs(rate - globalR) > 0.0000001;
 
   return (
-    <tr id={`sch-row-${row.num}`}>
-      <td className="td-muted">{row.num}</td>
+    <tr id={`sch-row-${row.num}`} className={row.interestOnly ? 'row-interest-only' : undefined}>
+      <td className="td-muted">
+        {row.num}
+        {row.interestOnly && <span className="interest-only-badge" title={t('sch_interest_only_hint')}>!</span>}
+      </td>
       <td>{fmtC(row.balanceBefore)}</td>
       <td>
         <input
@@ -219,6 +222,13 @@ export function buildJumpUrl(currentUrl: string, month: number): string {
   return url.toString();
 }
 
+export function scheduleCsvFilename(base: string, date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${base}-${y}-${m}-${d}.csv`;
+}
+
 function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lang: Lang) {
   const sep = lang === 'en' ? ',' : ';';
   const headers = [
@@ -244,7 +254,7 @@ function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lan
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `harmonogram-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = scheduleCsvFilename(t('sch_csv_filename'), new Date());
   a.click();
   URL.revokeObjectURL(url);
 }

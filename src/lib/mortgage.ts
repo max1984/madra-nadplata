@@ -11,6 +11,8 @@ export interface ScheduleRow {
   cumInterest: number;
   annualRate: number;
   isRefiRow?: boolean;
+  /** Po ręcznej podwyżce oprocentowania rata w całości poszła na odsetki — kapitał w tym miesiącu nie zmalał. */
+  interestOnly?: boolean;
 }
 
 export interface BaseScheduleResult {
@@ -79,6 +81,7 @@ export function buildSchedule(
       balanceAfter: balance,
       cumInterest,
       annualRate: r * 12,
+      ...(regularCap === 0 && overpay === 0 && interest > 0 ? { interestOnly: true } : {}),
     });
   }
   return rows;

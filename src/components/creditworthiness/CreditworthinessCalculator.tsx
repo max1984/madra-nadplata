@@ -3,6 +3,7 @@ import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
+import { MAX_LOAN_YEARS } from '../../lib/creditworthiness';
 import {
   MAX_CW_SCENARIOS, MAX_CW_SCENARIO_NAME_LENGTH, sortCwScenarios, filterCwScenariosByName, cwScenariosToJSON,
   type SavedCreditworthinessScenario, type CwScenarioSortKey,
@@ -247,9 +248,9 @@ export default function CreditworthinessCalculator({
               type="number"
               defaultValue={inputs.years}
               min={1}
-              max={40}
+              max={MAX_LOAN_YEARS}
               step={1}
-              {...numberField(inputs.years, 1, 40, (v) => setInputs({ years: Math.round(v) }))}
+              {...numberField(inputs.years, 1, MAX_LOAN_YEARS, (v) => setInputs({ years: Math.round(v) }))}
             />
           </div>
 

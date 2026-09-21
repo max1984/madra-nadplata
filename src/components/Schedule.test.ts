@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { clampJumpMonth, parseJumpMonth, buildJumpUrl } from './Schedule';
+import { clampJumpMonth, parseJumpMonth, buildJumpUrl, scheduleCsvFilename } from './Schedule';
+
+describe('scheduleCsvFilename', () => {
+  it('regression: filename base is localized (lang-aware) instead of hardcoded Polish, unlike the rest of the CSV export which already localizes separators/numbers/headers', () => {
+    expect(scheduleCsvFilename('harmonogram', new Date(2026, 8, 21))).toBe('harmonogram-2026-09-21.csv');
+    expect(scheduleCsvFilename('schedule', new Date(2026, 8, 21))).toBe('schedule-2026-09-21.csv');
+  });
+
+  it('pads single-digit month and day with a leading zero', () => {
+    expect(scheduleCsvFilename('schedule', new Date(2026, 0, 5))).toBe('schedule-2026-01-05.csv');
+  });
+});
 
 describe('clampJumpMonth', () => {
   it('passes a valid in-range month through unchanged', () => {

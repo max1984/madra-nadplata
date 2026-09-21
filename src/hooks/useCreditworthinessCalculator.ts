@@ -8,6 +8,7 @@ import {
   type CreditRateType,
   DEFAULT_FIRST_PERSON_COST,
   DEFAULT_ADDITIONAL_PERSON_COST,
+  MAX_LOAN_YEARS,
 } from '../lib/creditworthiness';
 import type { TranslationKey } from '../lib/i18n';
 
@@ -54,7 +55,7 @@ export function validateCreditworthinessInputs(inputs: CreditworthinessInputs): 
   if (!Number.isFinite(inputs.householdSize) || inputs.householdSize < 1 || inputs.householdSize > 20) {
     return 'error_cw_household_size';
   }
-  if (!Number.isFinite(inputs.years) || inputs.years < 1 || inputs.years > 40) return 'error_cw_years';
+  if (!Number.isFinite(inputs.years) || inputs.years < 1 || inputs.years > MAX_LOAN_YEARS) return 'error_cw_years';
   if (!Number.isFinite(inputs.nominalRatePercent) || inputs.nominalRatePercent < 0 || inputs.nominalRatePercent > 30) {
     return 'error_cw_nominal_rate';
   }
@@ -184,6 +185,15 @@ export function resolveInitialCreditworthinessInputs(
   patch: Partial<CreditworthinessInputs> | null
 ): CreditworthinessInputs {
   const merged: CreditworthinessInputs = { ...DEFAULT_CREDITWORTHINESS_INPUTS, ...patch };
+  // Scenariusz zapisany przed obniżeniem MAX_LOAN_YEARS z 40 do 35 (legalna
+  // wartość w tamtym czasie) ma klampowany okres zamiast wywalać CAŁY
+  // wczytany stan do domyślnego — reszta pól użytkownika (dochód, koszty,
+  // zobowiązania...) zostaje. Jawnie ograniczone do dawnego zakresu (≤40) —
+  // wartości poza nim to zaśmiecone/nieprawdopodobne dane, nie migracja, więc
+  // nadal trafiają w pełny fallback do domyślnych niżej.
+  if (Number.isFinite(merged.years) && merged.years > MAX_LOAN_YEARS && merged.years <= 40) {
+    merged.years = MAX_LOAN_YEARS;
+  }
   return validateCreditworthinessInputs(merged) === null ? merged : DEFAULT_CREDITWORTHINESS_INPUTS;
 }
 
