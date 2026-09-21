@@ -417,6 +417,14 @@ export default function Calculator({
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadChart = () => {
+    if (!chart.current) return;
+    const a = document.createElement('a');
+    a.href = chart.current.toBase64Image('image/png', 1);
+    a.download = `wykres-nadplata-${new Date().toISOString().slice(0, 10)}.png`;
+    a.click();
+  };
+
   const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // pozwala wybrać ten sam plik ponownie i dostać onChange
@@ -1056,6 +1064,9 @@ export default function Calculator({
                 <div className="calc-chart-box">
                   <canvas ref={chartRef} role="img" aria-label={t('chart_balance')} />
                 </div>
+                <button type="button" className="copy-link-btn" onClick={handleDownloadChart}>
+                  {t('chart_download')}
+                </button>
               </>
             )}
 

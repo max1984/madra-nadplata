@@ -17,7 +17,7 @@ export type TranslationKey =
   | 'impact_loan' | 'impact_period' | 'impact_payment'
   | 'impact_monthly_total' | 'impact_interest_total'
   | 'impact_total' | 'impact_saved'
-  | 'chart_balance' | 'chart_breakdown'
+  | 'chart_balance' | 'chart_breakdown' | 'chart_download'
   | 'faq_label' | 'faq_title'
   | 'faq_q1' | 'faq_a1' | 'faq_q2' | 'faq_a2'
   | 'faq_q3' | 'faq_a3' | 'faq_q4' | 'faq_a4'
@@ -145,6 +145,7 @@ const pl: Translations = {
   impact_monthly_total: 'Miesięczna wpłata', impact_interest_total: 'Łączne odsetki',
   impact_total: 'Łącznie do banku', impact_saved: 'Oszczędność',
   chart_balance: 'Saldo kredytu w czasie', chart_breakdown: 'Odsetki vs. kapitał (podział roczny)',
+  chart_download: '🖼️ Pobierz wykres (PNG)',
   faq_label: 'Pytania i odpowiedzi', faq_title: 'Najczęstsze pytania',
   faq_q1: 'Czy nadpłata zawsze się opłaca?',
   faq_a1: 'W ogromnej większości przypadków tak – szczególnie przy kredytach ze zmiennym oprocentowaniem. Porównaj oprocentowanie kredytu z potencjalnym zyskiem z inwestycji. Jeśli kredyt kosztuje Cię 6–8%, a bezpieczna lokata daje 4–5%, nadpłata jest racjonalnym wyborem.',
@@ -398,6 +399,7 @@ const en: Translations = {
   impact_monthly_total: 'Monthly total', impact_interest_total: 'Total interest',
   impact_total: 'Total to bank', impact_saved: 'Savings',
   chart_balance: 'Loan balance over time', chart_breakdown: 'Interest vs. principal (annual breakdown)',
+  chart_download: '🖼️ Download chart (PNG)',
   faq_label: 'Q&A', faq_title: 'Frequently Asked Questions',
   faq_q1: 'Is overpaying always worth it?',
   faq_a1: "In the vast majority of cases, yes — especially with variable rate mortgages. Compare your loan rate with potential investment returns. If your loan costs 6–8% and safe deposits offer 4–5%, overpaying is the rational choice.",
