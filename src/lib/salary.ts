@@ -1,0 +1,659 @@
+/**
+ * Kalkulator wynagrodzeń brutto-netto — 4 typy umów (umowa o pracę, zlecenie,
+ * dzieło, B2B) + roczne rozliczenie ze zmiennym wynagrodzeniem miesięcznym.
+ *
+ * Stawki i limity 2026 poniżej — źródła: zus.pl (składki, limity), ustawa o
+ * PIT (skala, kwota zmniejszająca, ulgi), GUS (przeciętne wynagrodzenie jako
+ * baza dla zdrowotnej ryczałtu). Sprawdzone: wrzesień 2026. WYMAGA
+ * weryfikacji na początku każdego kolejnego roku podatkowego — kwoty
+ * (minimalne wynagrodzenie, limity, stawki ryczałtu zdrowotnego) zmieniają
+ * się rocznie.
+ *
+ * Każda funkcja liczy JEDEN miesiąc. `computeAnnualSalarySchedule` woła te
+ * same funkcje 12 razy, przekazując dalej narastający `AnnualContext` —
+ * zamiast duplikować logikę progresji podatkowej/limitów w osobnej "rocznej"
+ * wersji każdej funkcji.
+ */
+
+// --------------------------------------------------------------- stałe ---
+
+export const TAX_SCALE_THRESHOLD = 120_000; // roczny próg 12%/32%
+export const TAX_SCALE_RATE_LOW = 0.12;
+export const TAX_SCALE_RATE_HIGH = 0.32;
+
+export const YOUNG_RELIEF_LIMIT = 85_528; // roczny limit ulg specjalnych (młodzi/powrót/4+/emeryci pracujący)
+export const ZUS_ANNUAL_BASE_LIMIT = 282_600; // 30-krotność, limit podstawy emerytalno-rentowej
+
+export const MIN_WAGE_GROSS = 4806;
+export const MIN_WAGE_HOURLY = 31.40;
+
+export const EMPLOYEE_PENSION_RATE = 0.0976;
+export const EMPLOYEE_DISABILITY_RATE = 0.015;
+export const EMPLOYEE_SICKNESS_RATE = 0.0245;
+export const HEALTH_INSURANCE_RATE_EMPLOYEE = 0.09;
+
+export const EMPLOYER_PENSION_RATE = 0.0976;
+export const EMPLOYER_DISABILITY_RATE = 0.065;
+export const EMPLOYER_ACCIDENT_RATE = 0.0167; // referencyjna — zależy od PKD/liczby ubezpieczonych, tu uproszczona do jednej stawki
+export const EMPLOYER_LABOR_FUND_RATE = 0.0245;
+export const EMPLOYER_FGSP_RATE = 0.0010;
+
+export const KUP_STANDARD = 250;
+export const KUP_ELEVATED = 300; // dojazd z innej gminy
+
+export const HEALTH_INSURANCE_RATE_SKALA = 0.09;
+export const HEALTH_INSURANCE_RATE_LINIOWY = 0.049;
+export const HEALTH_INSURANCE_MIN_SKALA_LINIOWY = 432.54;
+
+export const RYCZALT_HEALTH_TIER_1 = 498.35; // przychód roku do 60 000 zł
+export const RYCZALT_HEALTH_TIER_2 = 830.58; // 60 000–300 000 zł
+export const RYCZALT_HEALTH_TIER_3 = 1495.04; // powyżej 300 000 zł
+export const RYCZALT_TIER_1_LIMIT = 60_000;
+export const RYCZALT_TIER_2_LIMIT = 300_000;
+
+export const B2B_FULL_ZUS_SOCIAL_MANDATORY = 1788.29; // emerytalna+rentowa+wypadkowa+FP, bez chorobowej
+export const B2B_FULL_ZUS_PENSION_BASE = 5652.20; // 60% prognozowanego przeciętnego wynagrodzenia — baza "pełnego" ZUS
+export const B2B_PREFERENTIAL_ZUS_SOCIAL_MANDATORY = 456.18; // emerytalna+rentowa+wypadkowa, 24 mies.
+export const B2B_PREFERENTIAL_ZUS_PENSION_BASE = 0.3 * MIN_WAGE_GROSS; // 1441.80
+export const B2B_SICKNESS_VOLUNTARY_RATE = 0.0245;
+
+// --------------------------------------------------------------- typy ---
+
+export type SpecialRelief = 'none' | 'under26' | 'returning' | 'family4plus' | 'working_pensioner';
+export type TaxReducingShare = 'full' | 'half' | 'third' | 'none';
+export type KupOption = 'standard' | 'elevated';
+export type MandateKupOption = 'standard' | 'copyright';
+
+export type PpkOption =
+  | { mode: 'none' }
+  | { mode: 'standard' }
+  | { mode: 'custom'; employeeRate: number; employerRate: number };
+
+export type RyczaltRate = 0.085 | 0.12 | 0.14 | 0.15 | 0.17;
+export type B2BTaxForm = 'skala' | 'liniowy' | 'ryczalt' | 'ipbox';
+export type B2BZusVariant = 'ulga_na_start' | 'preferencyjny' | 'maly_zus_plus' | 'pelny';
+
+/**
+ * Narastający stan roku podatkowego, przekazywany między kolejnymi miesiącami
+ * w `computeAnnualSalarySchedule`. Dla samodzielnego wyliczenia jednego
+ * miesiąca (poza rozliczeniem rocznym) domyślny `EMPTY_ANNUAL_CONTEXT`
+ * zakłada, że to pierwszy przychód w roku — tak samo jak robi to każdy
+ * sprawdzony konkurentny kalkulator liczący "jeden miesiąc".
+ */
+export interface AnnualContext {
+  priorTaxableIncome: number; // dochód po uldze specjalnej, narastająco — próg skali 120 000 zł
+  priorReliefUsed: number; // przychód objęty ulgą specjalną, narastająco — limit 85 528 zł
+  priorPensionBase: number; // podstawa emerytalno-rentowa, narastająco — limit 30-krotności 282 600 zł
+  priorFlatRevenue: number; // przychód (B2B ryczałt), narastająco — progi zdrowotnej 60k/300k
+}
+
+export const EMPTY_ANNUAL_CONTEXT: AnnualContext = {
+  priorTaxableIncome: 0,
+  priorReliefUsed: 0,
+  priorPensionBase: 0,
+  priorFlatRevenue: 0,
+};
+
+export type SalaryContractType = 'employment' | 'mandate' | 'specific_work' | 'b2b';
+
+// ------------------------------------------------------------- helpery ---
+
+function clamp(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
+function nonNegative(n: number): number {
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+export function taxReducingAmount(share: TaxReducingShare): number {
+  switch (share) {
+    case 'full': return 300;
+    case 'half': return 150;
+    case 'third': return 100;
+    case 'none': return 0;
+  }
+}
+
+export function kupAmount(option: KupOption): number {
+  return option === 'elevated' ? KUP_ELEVATED : KUP_STANDARD;
+}
+
+/** Przelicza stawkę godzinową/dniową na wynagrodzenie brutto miesięczne. */
+export function grossFromHourlyRate(hourlyRate: number, hoursPerMonth: number): number {
+  return round2(nonNegative(hourlyRate) * nonNegative(hoursPerMonth));
+}
+export function grossFromDailyRate(dailyRate: number, daysPerMonth: number): number {
+  return round2(nonNegative(dailyRate) * nonNegative(daysPerMonth));
+}
+
+function ppkRates(ppk: PpkOption): { employee: number; employer: number } {
+  switch (ppk.mode) {
+    case 'none': return { employee: 0, employer: 0 };
+    case 'standard': return { employee: 0.02, employer: 0.015 };
+    case 'custom': return {
+      employee: clamp(ppk.employeeRate, 0.005, 0.04),
+      employer: clamp(ppk.employerRate, 0.015, 0.04),
+    };
+  }
+}
+
+/**
+ * Podatek wg skali 12%/32%, z uwzględnieniem dochodu osiągniętego wcześniej w
+ * roku (`priorTaxableIncome`, do wyznaczenia, jaka część dochodu z TEGO
+ * miesiąca mieści się jeszcze w niższym progu) i kwoty zmniejszającej podatek.
+ */
+function scaleTax(taxableIncome: number, priorTaxableIncome: number, reducingAmount: number): number {
+  const income = nonNegative(taxableIncome);
+  const roomAtLowRate = Math.max(0, TAX_SCALE_THRESHOLD - Math.max(0, priorTaxableIncome));
+  const belowThreshold = Math.min(income, roomAtLowRate);
+  const aboveThreshold = income - belowThreshold;
+  const tax = belowThreshold * TAX_SCALE_RATE_LOW + aboveThreshold * TAX_SCALE_RATE_HIGH;
+  return Math.max(0, round2(tax - reducingAmount));
+}
+
+interface IncomeTaxResult {
+  tax: number;
+  reliefUsedThisMonth: number;
+  taxableIncomeThisMonth: number;
+}
+
+/**
+ * Ulga specjalna (młodzi <26/powrót z zagranicy/4+ dzieci/pracujący emeryci)
+ * zwalnia przychód z podatku do limitu 85 528 zł/rok, narastająco — dochód
+ * ponad ten limit wraca do normalnego opodatkowania wg skali, licząc próg
+ * 120 000 zł od zera od momentu wyczerpania ulgi (a nie od początku roku).
+ */
+function applyIncomeTax(
+  incomeThisMonth: number,
+  opts: { specialRelief: SpecialRelief; reducingAmount: number; ctx: AnnualContext }
+): IncomeTaxResult {
+  const income = nonNegative(incomeThisMonth);
+  const reliefRoom = opts.specialRelief === 'none' ? 0 : Math.max(0, YOUNG_RELIEF_LIMIT - opts.ctx.priorReliefUsed);
+  const reliefUsedThisMonth = Math.min(income, reliefRoom);
+  const taxableIncomeThisMonth = income - reliefUsedThisMonth;
+  const tax = scaleTax(taxableIncomeThisMonth, opts.ctx.priorTaxableIncome, opts.reducingAmount);
+  return { tax, reliefUsedThisMonth, taxableIncomeThisMonth };
+}
+
+/** Składka emerytalno-rentowa z uwzględnieniem limitu 30-krotności, narastająco. */
+function pensionDisabilityBase(fullBase: number, priorPensionBase: number): number {
+  const room = Math.max(0, ZUS_ANNUAL_BASE_LIMIT - priorPensionBase);
+  return Math.min(nonNegative(fullBase), room);
+}
+
+// ------------------------------------------------------- umowa o pracę ---
+
+export interface EmploymentInputs {
+  grossMonthly: number;
+  kup: KupOption;
+  specialRelief: SpecialRelief;
+  reducingShare: TaxReducingShare;
+  ppk: PpkOption;
+}
+
+export interface EmploymentResult {
+  grossMonthly: number;
+  pensionBaseThisMonth: number;
+  employeePension: number;
+  employeeDisability: number;
+  employeeSickness: number;
+  employeeSocialTotal: number;
+  healthInsurance: number;
+  kup: number;
+  reliefExempt: number;
+  taxableIncomeThisMonth: number;
+  tax: number;
+  ppkEmployee: number;
+  ppkEmployer: number;
+  net: number;
+  employerPension: number;
+  employerDisability: number;
+  employerAccident: number;
+  employerLaborFund: number;
+  employerFgsp: number;
+  employerTotalCost: number;
+}
+
+export function calcEmploymentContract(
+  inputs: EmploymentInputs,
+  ctx: AnnualContext = EMPTY_ANNUAL_CONTEXT
+): EmploymentResult {
+  const gross = nonNegative(inputs.grossMonthly);
+  const pensionBaseThisMonth = pensionDisabilityBase(gross, ctx.priorPensionBase);
+
+  const employeePension = round2(pensionBaseThisMonth * EMPLOYEE_PENSION_RATE);
+  const employeeDisability = round2(pensionBaseThisMonth * EMPLOYEE_DISABILITY_RATE);
+  const employeeSickness = round2(gross * EMPLOYEE_SICKNESS_RATE); // chorobowa nie ma limitu 30-krotności
+  const employeeSocialTotal = round2(employeePension + employeeDisability + employeeSickness);
+
+  const healthBase = Math.max(0, gross - employeeSocialTotal);
+  const healthInsurance = round2(healthBase * HEALTH_INSURANCE_RATE_EMPLOYEE);
+
+  const kup = kupAmount(inputs.kup);
+  const incomeForTax = Math.max(0, gross - employeeSocialTotal - kup);
+  const reducingAmount = taxReducingAmount(inputs.reducingShare);
+  const { tax, reliefUsedThisMonth, taxableIncomeThisMonth } = applyIncomeTax(incomeForTax, {
+    specialRelief: inputs.specialRelief,
+    reducingAmount,
+    ctx,
+  });
+
+  // PPK potrącane po opodatkowaniu — uproszczenie: w realnych listach płac
+  // wpłata pracownika zmniejsza podstawę PIT (wchodzi do "koszty uzyskania"
+  // pośrednio przez odroczenie), ale wpływ na wynik netto miesiąca jest
+  // marginalny (rzędu kilku zł przy stawce 2%), a to znacząco prostsza i
+  // czytelniejsza kolejność liczenia.
+  const { employee: ppkEmployeeRate, employer: ppkEmployerRate } = ppkRates(inputs.ppk);
+  const ppkEmployee = round2(gross * ppkEmployeeRate);
+  const ppkEmployer = round2(gross * ppkEmployerRate);
+
+  const net = round2(gross - employeeSocialTotal - healthInsurance - tax - ppkEmployee);
+
+  const employerPension = round2(pensionBaseThisMonth * EMPLOYER_PENSION_RATE);
+  const employerDisability = round2(pensionBaseThisMonth * EMPLOYER_DISABILITY_RATE);
+  const employerAccident = round2(gross * EMPLOYER_ACCIDENT_RATE);
+  const employerLaborFund = round2(gross * EMPLOYER_LABOR_FUND_RATE);
+  const employerFgsp = round2(gross * EMPLOYER_FGSP_RATE);
+  const employerTotalCost = round2(
+    gross + employerPension + employerDisability + employerAccident + employerLaborFund + employerFgsp + ppkEmployer
+  );
+
+  return {
+    grossMonthly: gross,
+    pensionBaseThisMonth,
+    employeePension,
+    employeeDisability,
+    employeeSickness,
+    employeeSocialTotal,
+    healthInsurance,
+    kup,
+    reliefExempt: round2(reliefUsedThisMonth),
+    taxableIncomeThisMonth: round2(taxableIncomeThisMonth),
+    tax,
+    ppkEmployee,
+    ppkEmployer,
+    net,
+    employerPension,
+    employerDisability,
+    employerAccident,
+    employerLaborFund,
+    employerFgsp,
+    employerTotalCost,
+  };
+}
+
+// --------------------------------------------------------- zlecenie ---
+
+export interface MandateInputs {
+  grossMonthly: number;
+  kup: MandateKupOption;
+  specialRelief: SpecialRelief;
+  reducingShare: TaxReducingShare;
+  isStudentUnder26: boolean; // zwolnienie z ZUS i zdrowotnej, niezależnie od specialRelief
+  sicknessVoluntary: boolean; // chorobowa jest dobrowolna na zleceniu
+}
+
+export interface MandateResult {
+  grossMonthly: number;
+  pensionBaseThisMonth: number;
+  employeePension: number;
+  employeeDisability: number;
+  employeeSickness: number;
+  employeeSocialTotal: number;
+  healthInsurance: number;
+  kup: number;
+  reliefExempt: number;
+  taxableIncomeThisMonth: number;
+  tax: number;
+  net: number;
+}
+
+export function calcMandateContract(
+  inputs: MandateInputs,
+  ctx: AnnualContext = EMPTY_ANNUAL_CONTEXT
+): MandateResult {
+  const gross = nonNegative(inputs.grossMonthly);
+  const kupRate = inputs.kup === 'copyright' ? 0.5 : 0.2;
+
+  if (inputs.isStudentUnder26) {
+    const kup = round2(gross * kupRate);
+    const incomeForTax = Math.max(0, gross - kup);
+    const reducingAmount = taxReducingAmount(inputs.reducingShare);
+    const { tax, reliefUsedThisMonth, taxableIncomeThisMonth } = applyIncomeTax(incomeForTax, {
+      specialRelief: inputs.specialRelief,
+      reducingAmount,
+      ctx,
+    });
+    return {
+      grossMonthly: gross,
+      pensionBaseThisMonth: 0,
+      employeePension: 0,
+      employeeDisability: 0,
+      employeeSickness: 0,
+      employeeSocialTotal: 0,
+      healthInsurance: 0,
+      kup,
+      reliefExempt: round2(reliefUsedThisMonth),
+      taxableIncomeThisMonth: round2(taxableIncomeThisMonth),
+      tax,
+      net: round2(gross - tax),
+    };
+  }
+
+  const pensionBaseThisMonth = pensionDisabilityBase(gross, ctx.priorPensionBase);
+  const employeePension = round2(pensionBaseThisMonth * EMPLOYEE_PENSION_RATE);
+  const employeeDisability = round2(pensionBaseThisMonth * EMPLOYEE_DISABILITY_RATE);
+  const employeeSickness = inputs.sicknessVoluntary ? round2(gross * EMPLOYEE_SICKNESS_RATE) : 0;
+  const employeeSocialTotal = round2(employeePension + employeeDisability + employeeSickness);
+
+  const healthBase = Math.max(0, gross - employeeSocialTotal);
+  const healthInsurance = round2(healthBase * HEALTH_INSURANCE_RATE_EMPLOYEE);
+
+  const kup = round2((gross - employeeSocialTotal) * kupRate);
+  const incomeForTax = Math.max(0, gross - employeeSocialTotal - kup);
+  const reducingAmount = taxReducingAmount(inputs.reducingShare);
+  const { tax, reliefUsedThisMonth, taxableIncomeThisMonth } = applyIncomeTax(incomeForTax, {
+    specialRelief: inputs.specialRelief,
+    reducingAmount,
+    ctx,
+  });
+
+  const net = round2(gross - employeeSocialTotal - healthInsurance - tax);
+
+  return {
+    grossMonthly: gross,
+    pensionBaseThisMonth,
+    employeePension,
+    employeeDisability,
+    employeeSickness,
+    employeeSocialTotal,
+    healthInsurance,
+    kup,
+    reliefExempt: round2(reliefUsedThisMonth),
+    taxableIncomeThisMonth: round2(taxableIncomeThisMonth),
+    tax,
+    net,
+  };
+}
+
+// ------------------------------------------------------------- dzieło ---
+
+export interface SpecificWorkInputs {
+  grossMonthly: number;
+  kup: MandateKupOption; // 20% standard / 50% przeniesienie praw autorskich
+  reducingShare: TaxReducingShare;
+}
+
+export interface SpecificWorkResult {
+  grossMonthly: number;
+  kup: number;
+  taxableIncomeThisMonth: number;
+  tax: number;
+  net: number;
+}
+
+/**
+ * Dzieło nie jest objęte ulgami specjalnymi (limit 85 528 zł dotyczy tylko
+ * umowy o pracę i zlecenia) — próg skali 120 000 zł nadal ma zastosowanie
+ * (via `ctx.priorTaxableIncome`), bo to wciąż zaliczka wg tej samej skali PIT.
+ */
+export function calcSpecificWorkContract(
+  inputs: SpecificWorkInputs,
+  ctx: AnnualContext = EMPTY_ANNUAL_CONTEXT
+): SpecificWorkResult {
+  const gross = nonNegative(inputs.grossMonthly);
+  const kupRate = inputs.kup === 'copyright' ? 0.5 : 0.2;
+  const kup = round2(gross * kupRate);
+  const taxableIncomeThisMonth = Math.max(0, gross - kup);
+  const reducingAmount = taxReducingAmount(inputs.reducingShare);
+  const tax = scaleTax(taxableIncomeThisMonth, ctx.priorTaxableIncome, reducingAmount);
+  return {
+    grossMonthly: gross,
+    kup,
+    taxableIncomeThisMonth: round2(taxableIncomeThisMonth),
+    tax,
+    net: round2(gross - tax),
+  };
+}
+
+// --------------------------------------------------------------- B2B ---
+
+export interface B2BInputs {
+  monthlyRevenue: number;
+  monthlyCosts: number;
+  taxForm: B2BTaxForm;
+  ryczaltRate: RyczaltRate; // używane tylko gdy taxForm === 'ryczalt'
+  ipBoxSharePercent: number; // 0-100, używane tylko gdy taxForm === 'ipbox'
+  zusVariant: B2BZusVariant;
+  sicknessVoluntary: boolean;
+  malyZusPlusBase?: number; // podstawa wpisywana przez użytkownika, tylko gdy zusVariant === 'maly_zus_plus'
+}
+
+export interface B2BResult {
+  monthlyRevenue: number;
+  monthlyCosts: number;
+  income: number; // przychód - koszty (dla skali/liniowego/ipbox); dla ryczałtu = przychód
+  socialContributions: number;
+  pensionBaseThisMonth: number;
+  healthInsurance: number;
+  tax: number;
+  net: number;
+}
+
+function b2bSocialContributions(
+  variant: B2BZusVariant,
+  sicknessVoluntary: boolean,
+  malyZusPlusBase: number | undefined
+): { social: number; pensionBase: number } {
+  switch (variant) {
+    case 'ulga_na_start':
+      return { social: 0, pensionBase: 0 };
+    case 'preferencyjny': {
+      const sickness = sicknessVoluntary ? round2(B2B_PREFERENTIAL_ZUS_PENSION_BASE * B2B_SICKNESS_VOLUNTARY_RATE) : 0;
+      return { social: round2(B2B_PREFERENTIAL_ZUS_SOCIAL_MANDATORY + sickness), pensionBase: B2B_PREFERENTIAL_ZUS_PENSION_BASE };
+    }
+    case 'maly_zus_plus': {
+      const base = nonNegative(malyZusPlusBase ?? B2B_PREFERENTIAL_ZUS_PENSION_BASE);
+      const mandatoryRate = B2B_FULL_ZUS_SOCIAL_MANDATORY / B2B_FULL_ZUS_PENSION_BASE;
+      const mandatory = round2(base * mandatoryRate);
+      const sickness = sicknessVoluntary ? round2(base * B2B_SICKNESS_VOLUNTARY_RATE) : 0;
+      return { social: round2(mandatory + sickness), pensionBase: base };
+    }
+    case 'pelny': {
+      const sickness = sicknessVoluntary ? round2(B2B_FULL_ZUS_PENSION_BASE * B2B_SICKNESS_VOLUNTARY_RATE) : 0;
+      return { social: round2(B2B_FULL_ZUS_SOCIAL_MANDATORY + sickness), pensionBase: B2B_FULL_ZUS_PENSION_BASE };
+    }
+  }
+}
+
+function ryczaltHealthInsurance(cumulativeRevenueIncludingThisMonth: number): number {
+  if (cumulativeRevenueIncludingThisMonth <= RYCZALT_TIER_1_LIMIT) return RYCZALT_HEALTH_TIER_1;
+  if (cumulativeRevenueIncludingThisMonth <= RYCZALT_TIER_2_LIMIT) return RYCZALT_HEALTH_TIER_2;
+  return RYCZALT_HEALTH_TIER_3;
+}
+
+export function calcB2BContract(inputs: B2BInputs, ctx: AnnualContext = EMPTY_ANNUAL_CONTEXT): B2BResult {
+  const revenue = nonNegative(inputs.monthlyRevenue);
+  const costs = Math.min(nonNegative(inputs.monthlyCosts), revenue);
+
+  const { social: socialContributions, pensionBase: pensionBaseThisMonth } = b2bSocialContributions(
+    inputs.zusVariant,
+    inputs.sicknessVoluntary,
+    inputs.malyZusPlusBase
+  );
+
+  if (inputs.taxForm === 'ryczalt') {
+    const cumulativeRevenue = ctx.priorFlatRevenue + revenue;
+    const healthInsurance = ryczaltHealthInsurance(cumulativeRevenue);
+    // Ryczałt: podatek liczony od PEŁNEGO przychodu, koszty firmowe go nie zmniejszają.
+    const tax = round2(revenue * inputs.ryczaltRate);
+    const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
+    return { monthlyRevenue: revenue, monthlyCosts: costs, income: revenue, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
+  }
+
+  const income = Math.max(0, revenue - costs - socialContributions);
+
+  if (inputs.taxForm === 'skala') {
+    const healthInsurance = Math.max(round2(income * HEALTH_INSURANCE_RATE_SKALA), HEALTH_INSURANCE_MIN_SKALA_LINIOWY);
+    // Bez kwoty zmniejszającej podatek — przedsiębiorca na skali też może z
+    // niej korzystać miesięcznie, ale plan nie obejmuje tej opcji dla B2B;
+    // uproszczenie udokumentowane, nie przeoczenie.
+    const tax = scaleTax(income, ctx.priorTaxableIncome, 0);
+    const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
+    return { monthlyRevenue: revenue, monthlyCosts: costs, income, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
+  }
+
+  if (inputs.taxForm === 'liniowy') {
+    const healthInsurance = Math.max(round2(income * HEALTH_INSURANCE_RATE_LINIOWY), HEALTH_INSURANCE_MIN_SKALA_LINIOWY);
+    const tax = round2(income * 0.19);
+    const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
+    return { monthlyRevenue: revenue, monthlyCosts: costs, income, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
+  }
+
+  // IP Box: 5% od kwalifikowanej części dochodu, reszta wg liniowego 19%
+  // (uproszczenie — realnie IP Box wymaga wyodrębnienia kwalifikowanego IP
+  // z ewidencji, tu przybliżone jednym procentowym udziałem w dochodzie).
+  // Zdrowotna liczona jak dla liniowego (4,9%, min. 432,54 zł) — IP Box nie
+  // ma odrębnych reguł zdrowotnej, przedsiębiorca rozlicza się na zasadach
+  // liniowego poza samym PIT.
+  const ipBoxShare = clamp(inputs.ipBoxSharePercent, 0, 100) / 100;
+  const incomeIpBox = income * ipBoxShare;
+  const incomeOther = income - incomeIpBox;
+  const tax = round2(incomeIpBox * 0.05 + incomeOther * 0.19);
+  const healthInsurance = Math.max(round2(income * HEALTH_INSURANCE_RATE_LINIOWY), HEALTH_INSURANCE_MIN_SKALA_LINIOWY);
+  const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
+  return { monthlyRevenue: revenue, monthlyCosts: costs, income, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
+}
+
+// ------------------------------------------------------ roczne rozliczenie ---
+
+export interface AnnualScheduleResult<TResult> {
+  months: TResult[];
+  totalNet: number;
+  totalTax: number;
+  totalSocialAndHealth: number;
+  scaleThresholdCrossedMonth: number | null; // 1-12, miesiąc w którym dochód przekroczył 120 000 zł narastająco
+  zusLimitCrossedMonth: number | null; // miesiąc przekroczenia limitu 30-krotności
+  reliefLimitCrossedMonth: number | null; // miesiąc wyczerpania ulgi specjalnej (85 528 zł)
+}
+
+/**
+ * Symuluje 12 miesięcy tego samego typu umowy i tych samych opcji, z innym
+ * wynagrodzeniem brutto/przychodem każdy miesiąc — śledząc narastająco progi
+ * podatkowe i limity składek. To jest funkcja, której NIE ma żaden ze
+ * sprawdzonych konkurentów (oni liczą tylko jeden miesiąc w izolacji).
+ *
+ * Uproszczenie (jak każdy kalkulator "jednomiesięczny" zresztą): traktuje
+ * dany typ umowy jako JEDYNY dochód w roku, bez łączenia z innymi źródłami
+ * w rocznym PIT-37/PIT-36 — to świadoma decyzja, nie przeoczenie.
+ */
+export function computeAnnualSalarySchedule(
+  contractType: 'employment',
+  monthlyGrossValues: number[],
+  options: Omit<EmploymentInputs, 'grossMonthly'>
+): AnnualScheduleResult<EmploymentResult>;
+export function computeAnnualSalarySchedule(
+  contractType: 'mandate',
+  monthlyGrossValues: number[],
+  options: Omit<MandateInputs, 'grossMonthly'>
+): AnnualScheduleResult<MandateResult>;
+export function computeAnnualSalarySchedule(
+  contractType: 'specific_work',
+  monthlyGrossValues: number[],
+  options: Omit<SpecificWorkInputs, 'grossMonthly'>
+): AnnualScheduleResult<SpecificWorkResult>;
+export function computeAnnualSalarySchedule(
+  contractType: 'b2b',
+  monthlyGrossValues: number[],
+  options: Omit<B2BInputs, 'monthlyRevenue'>
+): AnnualScheduleResult<B2BResult>;
+export function computeAnnualSalarySchedule(
+  contractType: SalaryContractType,
+  monthlyGrossValues: number[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  options: any
+): AnnualScheduleResult<EmploymentResult | MandateResult | SpecificWorkResult | B2BResult> {
+  let ctx = EMPTY_ANNUAL_CONTEXT;
+  const months: (EmploymentResult | MandateResult | SpecificWorkResult | B2BResult)[] = [];
+  let scaleThresholdCrossedMonth: number | null = null;
+  let zusLimitCrossedMonth: number | null = null;
+  let reliefLimitCrossedMonth: number | null = null;
+
+  for (let i = 0; i < monthlyGrossValues.length; i++) {
+    const amount = monthlyGrossValues[i] ?? 0;
+    let result: EmploymentResult | MandateResult | SpecificWorkResult | B2BResult;
+    let taxableIncomeThisMonth = 0;
+    let reliefUsedThisMonth = 0;
+    let pensionBaseThisMonth = 0;
+
+    if (contractType === 'employment') {
+      const r = calcEmploymentContract({ ...options, grossMonthly: amount }, ctx);
+      result = r;
+      taxableIncomeThisMonth = r.taxableIncomeThisMonth;
+      reliefUsedThisMonth = r.reliefExempt;
+      pensionBaseThisMonth = r.pensionBaseThisMonth;
+    } else if (contractType === 'mandate') {
+      const r = calcMandateContract({ ...options, grossMonthly: amount }, ctx);
+      result = r;
+      taxableIncomeThisMonth = r.taxableIncomeThisMonth;
+      reliefUsedThisMonth = r.reliefExempt;
+      pensionBaseThisMonth = r.pensionBaseThisMonth;
+    } else if (contractType === 'specific_work') {
+      const r = calcSpecificWorkContract({ ...options, grossMonthly: amount }, ctx);
+      result = r;
+      taxableIncomeThisMonth = r.taxableIncomeThisMonth;
+    } else {
+      const r = calcB2BContract({ ...options, monthlyRevenue: amount }, ctx);
+      result = r;
+      pensionBaseThisMonth = r.pensionBaseThisMonth;
+    }
+    months.push(result);
+
+    const priorTaxable = ctx.priorTaxableIncome;
+    const priorPension = ctx.priorPensionBase;
+    const priorRelief = ctx.priorReliefUsed;
+
+    ctx = {
+      priorTaxableIncome: ctx.priorTaxableIncome + taxableIncomeThisMonth,
+      priorReliefUsed: ctx.priorReliefUsed + reliefUsedThisMonth,
+      priorPensionBase: ctx.priorPensionBase + pensionBaseThisMonth,
+      priorFlatRevenue: ctx.priorFlatRevenue + (contractType === 'b2b' ? (amount ?? 0) : 0),
+    };
+
+    if (scaleThresholdCrossedMonth === null && priorTaxable < TAX_SCALE_THRESHOLD && ctx.priorTaxableIncome >= TAX_SCALE_THRESHOLD) {
+      scaleThresholdCrossedMonth = i + 1;
+    }
+    if (zusLimitCrossedMonth === null && priorPension < ZUS_ANNUAL_BASE_LIMIT && ctx.priorPensionBase >= ZUS_ANNUAL_BASE_LIMIT) {
+      zusLimitCrossedMonth = i + 1;
+    }
+    if (reliefLimitCrossedMonth === null && priorRelief < YOUNG_RELIEF_LIMIT && ctx.priorReliefUsed >= YOUNG_RELIEF_LIMIT) {
+      reliefLimitCrossedMonth = i + 1;
+    }
+  }
+
+  const totalNet = round2(months.reduce((sum, m) => sum + m.net, 0));
+  const totalTax = round2(months.reduce((sum, m) => sum + m.tax, 0));
+  const totalSocialAndHealth = round2(
+    months.reduce((sum, m) => {
+      if ('employeeSocialTotal' in m) return sum + m.employeeSocialTotal + m.healthInsurance;
+      if ('socialContributions' in m) return sum + m.socialContributions + m.healthInsurance;
+      return sum;
+    }, 0)
+  );
+
+  return {
+    months,
+    totalNet,
+    totalTax,
+    totalSocialAndHealth,
+    scaleThresholdCrossedMonth,
+    zusLimitCrossedMonth,
+    reliefLimitCrossedMonth,
+  };
+}

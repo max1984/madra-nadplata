@@ -1,0 +1,361 @@
+import { describe, it, expect } from 'vitest';
+import {
+  calcEmploymentContract,
+  calcMandateContract,
+  calcSpecificWorkContract,
+  calcB2BContract,
+  computeAnnualSalarySchedule,
+  grossFromHourlyRate,
+  grossFromDailyRate,
+  taxReducingAmount,
+  kupAmount,
+  TAX_SCALE_THRESHOLD,
+  ZUS_ANNUAL_BASE_LIMIT,
+  RYCZALT_TIER_1_LIMIT,
+  type EmploymentInputs,
+  type MandateInputs,
+  type B2BInputs,
+} from './salary';
+
+const employmentDefaults: EmploymentInputs = {
+  grossMonthly: 8000,
+  kup: 'standard',
+  specialRelief: 'none',
+  reducingShare: 'full',
+  ppk: { mode: 'none' },
+};
+
+const mandateDefaults: MandateInputs = {
+  grossMonthly: 5000,
+  kup: 'standard',
+  specialRelief: 'none',
+  reducingShare: 'full',
+  isStudentUnder26: false,
+  sicknessVoluntary: true,
+};
+
+const b2bDefaults: B2BInputs = {
+  monthlyRevenue: 10000,
+  monthlyCosts: 0,
+  taxForm: 'liniowy',
+  ryczaltRate: 0.12,
+  ipBoxSharePercent: 0,
+  zusVariant: 'pelny',
+  sicknessVoluntary: false,
+};
+
+describe('grossFromHourlyRate / grossFromDailyRate', () => {
+  it('multiplies rate by hours/days', () => {
+    expect(grossFromHourlyRate(40, 160)).toBe(6400);
+    expect(grossFromDailyRate(300, 21)).toBe(6300);
+  });
+
+  it('clamps negative inputs to 0', () => {
+    expect(grossFromHourlyRate(-10, 160)).toBe(0);
+    expect(grossFromDailyRate(300, -5)).toBe(0);
+  });
+});
+
+describe('taxReducingAmount / kupAmount', () => {
+  it('maps PIT-2 share to the correct monthly amount', () => {
+    expect(taxReducingAmount('full')).toBe(300);
+    expect(taxReducingAmount('half')).toBe(150);
+    expect(taxReducingAmount('third')).toBe(100);
+    expect(taxReducingAmount('none')).toBe(0);
+  });
+
+  it('maps KUP option to the correct amount', () => {
+    expect(kupAmount('standard')).toBe(250);
+    expect(kupAmount('elevated')).toBe(300);
+  });
+});
+
+describe('calcEmploymentContract', () => {
+  it(
+    'regression: 8000 zł brutto, PIT-2 pełne, KUP standard, bez ulg/PPK — wynik krok po kroku: ' +
+      'ZUS pracownika 13,71% z 8000 = 1096,80 (emerytalna 780,80 + rentowa 120 + chorobowa 196); ' +
+      'zdrowotna 9% z (8000-1096,80=6903,20) = 621,29 (grosze, bez zaokrąglenia do pełnego złotego, ' +
+      'jak reszta tej apki liczy na groszach); dochód do podatku = 6903,20-250(KUP) = 6653,20; ' +
+      'podatek 12% z 6653,20 = 798,38, minus 300 (PIT-2) = 498,38; netto = 8000-1096,80-621,29-498,38 = 5783,53',
+    () => {
+      const r = calcEmploymentContract(employmentDefaults);
+      expect(r.employeeSocialTotal).toBeCloseTo(1096.8, 2);
+      expect(r.healthInsurance).toBeCloseTo(621.29, 2);
+      expect(r.tax).toBeCloseTo(498.38, 2);
+      expect(r.net).toBeCloseTo(5783.53, 2);
+    }
+  );
+
+  it('higher KUP (elevated) lowers the tax vs standard, all else equal', () => {
+    const standard = calcEmploymentContract({ ...employmentDefaults, kup: 'standard' });
+    const elevated = calcEmploymentContract({ ...employmentDefaults, kup: 'elevated' });
+    expect(elevated.tax).toBeLessThan(standard.tax);
+    expect(elevated.net).toBeGreaterThan(standard.net);
+  });
+
+  it('special relief (under 26) zeroes the tax when income stays under the 85 528 zł limit', () => {
+    const r = calcEmploymentContract({ ...employmentDefaults, specialRelief: 'under26' });
+    expect(r.tax).toBe(0);
+    expect(r.reliefExempt).toBeGreaterThan(0);
+    // ZUS/zdrowotna są nadal potrącane — ulga dotyczy tylko podatku.
+    expect(r.employeeSocialTotal).toBeGreaterThan(0);
+    expect(r.healthInsurance).toBeGreaterThan(0);
+  });
+
+  it('custom PPK contribution reduces net by exactly the employee rate on gross', () => {
+    const noPpk = calcEmploymentContract({ ...employmentDefaults, ppk: { mode: 'none' } });
+    const withPpk = calcEmploymentContract({
+      ...employmentDefaults,
+      ppk: { mode: 'custom', employeeRate: 0.03, employerRate: 0.02 },
+    });
+    expect(withPpk.ppkEmployee).toBeCloseTo(8000 * 0.03, 2);
+    expect(noPpk.net - withPpk.net).toBeCloseTo(8000 * 0.03, 2);
+    expect(withPpk.employerTotalCost).toBeGreaterThan(noPpk.employerTotalCost);
+  });
+
+  it(
+    'regression: pension/disability base is capped at the remaining room under the 30-krotność limit ' +
+      '(282 600 zł) when prior annual income already used most of it — ZUS_ANNUAL_BASE_LIMIT is the exact ' +
+      'boundary, so a gross above the remaining room must not push the base past it',
+    () => {
+      const ctx = { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: ZUS_ANNUAL_BASE_LIMIT - 1000, priorFlatRevenue: 0 };
+      const r = calcEmploymentContract(employmentDefaults, ctx);
+      expect(r.pensionBaseThisMonth).toBe(1000);
+      // Powyżej limitu nie potrąca się już emerytalnej/rentowej (tylko chorobowa i zdrowotna liczą się od pełnego brutto).
+      expect(r.employeePension).toBeCloseTo(1000 * 0.0976, 2);
+    }
+  );
+
+  it('employer total cost is always greater than gross (employer-side contributions are additive)', () => {
+    const r = calcEmploymentContract(employmentDefaults);
+    expect(r.employerTotalCost).toBeGreaterThan(r.grossMonthly);
+  });
+});
+
+describe('calcMandateContract', () => {
+  it('student under 26 pays zero ZUS and zero health insurance, only tax on income after KUP', () => {
+    const r = calcMandateContract({ ...mandateDefaults, isStudentUnder26: true });
+    expect(r.employeeSocialTotal).toBe(0);
+    expect(r.healthInsurance).toBe(0);
+    expect(r.kup).toBeCloseTo(5000 * 0.2, 2);
+  });
+
+  it('non-student pays ZUS and health insurance like an employment contract (minus employer side)', () => {
+    const r = calcMandateContract(mandateDefaults);
+    expect(r.employeeSocialTotal).toBeGreaterThan(0);
+    expect(r.healthInsurance).toBeGreaterThan(0);
+  });
+
+  it('copyright KUP (50%) yields a lower tax than standard KUP (20%), all else equal', () => {
+    const standard = calcMandateContract({ ...mandateDefaults, kup: 'standard' });
+    const copyright = calcMandateContract({ ...mandateDefaults, kup: 'copyright' });
+    expect(copyright.kup).toBeGreaterThan(standard.kup);
+    expect(copyright.tax).toBeLessThan(standard.tax);
+  });
+
+  it('sickness insurance is voluntary — disabling it raises net pay slightly', () => {
+    const withSickness = calcMandateContract({ ...mandateDefaults, sicknessVoluntary: true });
+    const withoutSickness = calcMandateContract({ ...mandateDefaults, sicknessVoluntary: false });
+    expect(withSickness.employeeSickness).toBeGreaterThan(0);
+    expect(withoutSickness.employeeSickness).toBe(0);
+    expect(withoutSickness.net).toBeGreaterThan(withSickness.net);
+  });
+});
+
+describe('calcSpecificWorkContract', () => {
+  it('never deducts ZUS or health insurance — only KUP and tax', () => {
+    const r = calcSpecificWorkContract({ grossMonthly: 4000, kup: 'standard', reducingShare: 'full' });
+    expect(r.kup).toBeCloseTo(800, 2);
+    expect(r.taxableIncomeThisMonth).toBeCloseTo(3200, 2);
+    expect(r.net).toBeCloseTo(4000 - r.tax, 2);
+  });
+
+  it('copyright transfer (50% KUP) roughly halves the taxable income vs 20% standard', () => {
+    const standard = calcSpecificWorkContract({ grossMonthly: 4000, kup: 'standard', reducingShare: 'full' });
+    const copyright = calcSpecificWorkContract({ grossMonthly: 4000, kup: 'copyright', reducingShare: 'full' });
+    expect(copyright.taxableIncomeThisMonth).toBeLessThan(standard.taxableIncomeThisMonth);
+    expect(copyright.net).toBeGreaterThan(standard.net);
+  });
+
+  it('the 120 000 zł scale threshold still applies via prior annual context (dzieło is not relief-exempt but is still taxed on the scale)', () => {
+    const belowThreshold = calcSpecificWorkContract(
+      { grossMonthly: 4000, kup: 'standard', reducingShare: 'none' },
+      { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0 }
+    );
+    const acrossThreshold = calcSpecificWorkContract(
+      { grossMonthly: 4000, kup: 'standard', reducingShare: 'none' },
+      { priorTaxableIncome: TAX_SCALE_THRESHOLD - 1000, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0 }
+    );
+    // Ten sam brutto, ale druga część nadwyżki jest opodatkowana 32% zamiast 12% — wyższy podatek.
+    expect(acrossThreshold.tax).toBeGreaterThan(belowThreshold.tax);
+  });
+});
+
+describe('calcB2BContract', () => {
+  it('skala: costs reduce taxable income, tax uses 12%/32% scale', () => {
+    const r = calcB2BContract({ ...b2bDefaults, taxForm: 'skala', monthlyCosts: 2000, zusVariant: 'ulga_na_start' });
+    expect(r.income).toBeCloseTo(10000 - 2000, 2);
+    expect(r.socialContributions).toBe(0); // ulga na start
+  });
+
+  it('liniowy: flat 19% tax on income after costs and social contributions', () => {
+    const r = calcB2BContract({ ...b2bDefaults, taxForm: 'liniowy', zusVariant: 'ulga_na_start' });
+    const expectedIncome = 10000 - 0 - 0;
+    expect(r.tax).toBeCloseTo(expectedIncome * 0.19, 2);
+  });
+
+  it(
+    'regression: ryczałt taxes the FULL revenue (costs are not deductible), unlike skala/liniowy which ' +
+      'tax revenue minus costs — same revenue+costs but different tax forms must diverge exactly by the cost amount',
+    () => {
+      const liniowy = calcB2BContract({ ...b2bDefaults, taxForm: 'liniowy', monthlyCosts: 3000, zusVariant: 'ulga_na_start' });
+      const ryczalt = calcB2BContract({ ...b2bDefaults, taxForm: 'ryczalt', monthlyCosts: 3000, ryczaltRate: 0.12, zusVariant: 'ulga_na_start' });
+      expect(liniowy.income).toBeCloseTo(7000, 2); // 10000 - 3000
+      expect(ryczalt.income).toBeCloseTo(10000, 2); // pełny przychód, koszty nieodliczane od podatku
+      expect(ryczalt.tax).toBeCloseTo(10000 * 0.12, 2);
+    }
+  );
+
+  it('IP Box applies 5% to the declared IP share and 19% to the rest of the income', () => {
+    const full = calcB2BContract({ ...b2bDefaults, taxForm: 'ipbox', ipBoxSharePercent: 100 });
+    const none = calcB2BContract({ ...b2bDefaults, taxForm: 'ipbox', ipBoxSharePercent: 0 });
+    const linear = calcB2BContract({ ...b2bDefaults, taxForm: 'liniowy' });
+    expect(full.tax).toBeCloseTo(full.income * 0.05, 2);
+    expect(none.tax).toBeCloseTo(linear.tax, 2);
+  });
+
+  it('pełny ZUS costs more than preferencyjny, which costs more than ulga na start (zero)', () => {
+    const start = calcB2BContract({ ...b2bDefaults, zusVariant: 'ulga_na_start' });
+    const pref = calcB2BContract({ ...b2bDefaults, zusVariant: 'preferencyjny' });
+    const full = calcB2BContract({ ...b2bDefaults, zusVariant: 'pelny' });
+    expect(start.socialContributions).toBe(0);
+    expect(pref.socialContributions).toBeGreaterThan(start.socialContributions);
+    expect(full.socialContributions).toBeGreaterThan(pref.socialContributions);
+  });
+
+  it(
+    'regression: ryczałt health insurance tier depends on CUMULATIVE annual revenue including this month, ' +
+      `not just this month's revenue — crossing ${RYCZALT_TIER_1_LIMIT} zł mid-year raises the tier for this month`,
+    () => {
+      const belowTier = calcB2BContract(
+        { ...b2bDefaults, taxForm: 'ryczalt', monthlyRevenue: 5000 },
+        { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0 }
+      );
+      const crossingTier = calcB2BContract(
+        { ...b2bDefaults, taxForm: 'ryczalt', monthlyRevenue: 5000 },
+        { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: RYCZALT_TIER_1_LIMIT - 1000 }
+      );
+      expect(crossingTier.healthInsurance).toBeGreaterThan(belowTier.healthInsurance);
+    }
+  );
+
+  it('mały ZUS Plus scales social contributions proportionally to the user-entered base', () => {
+    const half = calcB2BContract({ ...b2bDefaults, zusVariant: 'maly_zus_plus', malyZusPlusBase: 2826.10 });
+    const full = calcB2BContract({ ...b2bDefaults, zusVariant: 'maly_zus_plus', malyZusPlusBase: 5652.20 });
+    expect(full.socialContributions).toBeCloseTo(half.socialContributions * 2, 1);
+  });
+});
+
+describe('computeAnnualSalarySchedule', () => {
+  it('with a flat gross every month and no threshold crossed, all 12 months compute identical tax/net', () => {
+    const result = computeAnnualSalarySchedule('employment', Array(12).fill(5000), {
+      kup: 'standard',
+      specialRelief: 'none',
+      reducingShare: 'full',
+      ppk: { mode: 'none' },
+    });
+    expect(result.months).toHaveLength(12);
+    expect(result.months[0]!.tax).toBeCloseTo(result.months[11]!.tax, 2);
+    expect(result.scaleThresholdCrossedMonth).toBeNull();
+  });
+
+  it(
+    'regression: flags the exact month the cumulative taxable income crosses 120 000 zł — a high, ' +
+      'constant monthly gross of 12 000 zł (employment) accumulates ~9 800 zł/month taxable after ZUS+KUP, ' +
+      'crossing 120 000 zł partway through the year',
+    () => {
+      const result = computeAnnualSalarySchedule('employment', Array(12).fill(12000), {
+        kup: 'standard',
+        specialRelief: 'none',
+        reducingShare: 'full',
+        ppk: { mode: 'none' },
+      });
+      expect(result.scaleThresholdCrossedMonth).not.toBeNull();
+      expect(result.scaleThresholdCrossedMonth).toBeGreaterThan(1);
+      expect(result.scaleThresholdCrossedMonth).toBeLessThanOrEqual(12);
+      // Po przekroczeniu progu kolejne miesiące mają wyższy podatek (32% od nadwyżki).
+      const crossMonth = result.scaleThresholdCrossedMonth!;
+      if (crossMonth < 12) {
+        expect(result.months[crossMonth]!.tax).toBeGreaterThan(result.months[0]!.tax);
+      }
+    }
+  );
+
+  it(
+    'regression: flags the month the cumulative ZUS pension/disability base crosses the 30-krotność limit ' +
+      `(${ZUS_ANNUAL_BASE_LIMIT} zł) — a gross well above the monthly-equivalent of the limit crosses it before month 12`,
+    () => {
+      const monthlyGross = ZUS_ANNUAL_BASE_LIMIT / 6; // crosses the annual limit by month 6
+      const result = computeAnnualSalarySchedule('employment', Array(12).fill(monthlyGross), {
+        kup: 'standard',
+        specialRelief: 'none',
+        reducingShare: 'full',
+        ppk: { mode: 'none' },
+      });
+      expect(result.zusLimitCrossedMonth).not.toBeNull();
+      expect(result.zusLimitCrossedMonth).toBeLessThanOrEqual(6);
+    }
+  );
+
+  it(
+    'regression: flags the month the young-relief 85 528 zł limit is exhausted, after which tax reappears',
+    () => {
+      // Ulga liczy się od dochodu po ZUS+KUP, nie od brutto: 10 000 zł brutto/mies
+      // → ok. 8 379 zł podlegającego uldze miesięcznie → 12 × 8 379 ≈ 100 548 zł/rok,
+      // co przekracza limit 85 528 zł w trakcie roku (8000 zł brutto/mies dawało tylko
+      // ok. 79 838 zł/rok po odliczeniach — za mało, żeby próg został przekroczony).
+      const monthlyGross = 10000;
+      const result = computeAnnualSalarySchedule('employment', Array(12).fill(monthlyGross), {
+        kup: 'standard',
+        specialRelief: 'under26',
+        reducingShare: 'full',
+        ppk: { mode: 'none' },
+      });
+      expect(result.reliefLimitCrossedMonth).not.toBeNull();
+      const crossMonth = result.reliefLimitCrossedMonth!;
+      expect(result.months[0]!.tax).toBe(0);
+      if (crossMonth < 12) {
+        expect(result.months[11]!.tax).toBeGreaterThan(0);
+      }
+    }
+  );
+
+  it(
+    'regression: B2B ryczałt health insurance tier rises across the year as cumulative revenue crosses 60 000 zł',
+    () => {
+      const result = computeAnnualSalarySchedule('b2b', Array(12).fill(8000), {
+        monthlyCosts: 0,
+        taxForm: 'ryczalt',
+        ryczaltRate: 0.12,
+        ipBoxSharePercent: 0,
+        zusVariant: 'ulga_na_start',
+        sicknessVoluntary: false,
+      });
+      const firstMonthHealth = (result.months[0] as { healthInsurance: number }).healthInsurance;
+      const lastMonthHealth = (result.months[11] as { healthInsurance: number }).healthInsurance;
+      expect(lastMonthHealth).toBeGreaterThan(firstMonthHealth);
+    }
+  );
+
+  it('totalNet equals the sum of each month\'s net pay', () => {
+    const result = computeAnnualSalarySchedule('mandate', Array(12).fill(4000), {
+      kup: 'standard',
+      specialRelief: 'none',
+      reducingShare: 'full',
+      isStudentUnder26: false,
+      sicknessVoluntary: true,
+    });
+    const manualSum = Math.round(result.months.reduce((s, m) => s + m.net, 0) * 100) / 100;
+    expect(result.totalNet).toBeCloseTo(manualSum, 2);
+  });
+});
