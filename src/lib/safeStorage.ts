@@ -13,11 +13,18 @@ export function safeGetItem(key: string): string | null {
   }
 }
 
-export function safeSetItem(key: string, value: string): void {
+/**
+ * Zwraca, czy zapis się udał — dla większości wywołań (preferencje) nikogo
+ * to nie obchodzi, ale przy zapisywaniu scenariusza (persistScenarios) cichy
+ * fail przy pełnym/zablokowanym storage wyglądał w UI jak sukces, mimo że
+ * scenariusz znikał po odświeżeniu strony bez żadnego ostrzeżenia.
+ */
+export function safeSetItem(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
+    return true;
   } catch {
-    // Storage niedostępny — funkcja działa dalej, tylko bez zapamiętania wyboru.
+    return false;
   }
 }
 

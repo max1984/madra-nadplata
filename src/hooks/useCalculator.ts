@@ -237,8 +237,8 @@ export function loadScenarios(): SavedScenario[] {
   return parseScenariosJSON(raw);
 }
 
-export function persistScenarios(list: SavedScenario[]): void {
-  safeSetItem(SCENARIOS_KEY, JSON.stringify(list));
+export function persistScenarios(list: SavedScenario[]): boolean {
+  return safeSetItem(SCENARIOS_KEY, JSON.stringify(list));
 }
 
 /** Do przycisku "Eksportuj scenariusze" — czytelny, wcięty JSON do pliku. */
@@ -697,6 +697,7 @@ export function useCalculator() {
 
   const [calcError, setCalcError] = useState<TranslationKey | null>(null);
   const [scenarios, setScenarios] = useState<SavedScenario[]>(() => loadScenarios());
+  const [scenarioSaveError, setScenarioSaveError] = useState(false);
 
   const isStale = calcState !== null && lastCalculatedInputs !== null && !inputsEqual(inputs, lastCalculatedInputs);
 
@@ -725,10 +726,14 @@ export function useCalculator() {
   // Wczytanie scenariusza liczy od razu na podstawie jego danych, a nie
   // stanu `inputs` z poprzedniego renderu — setInputsState + calculate()
   // w tym samym wywołaniu widziałoby jeszcze stare dane sprzed aktualizacji.
+  // localStorage.setItem może rzucić (storage pełny/zablokowany) — bez tego
+  // scenariusz znikał z listy w React state (a więc "wyglądał" na zapisany)
+  // ale nie przetrwał odświeżenia strony, bez żadnego ostrzeżenia dla
+  // użytkownika. scenarioSaveError daje UI sygnał do pokazania komunikatu.
   const saveCurrentAsScenario = useCallback((name: string) => {
     setScenarios((prev) => {
       const next = addScenario(prev, name, inputs);
-      persistScenarios(next);
+      setScenarioSaveError(!persistScenarios(next));
       return next;
     });
   }, [inputs]);
@@ -946,6 +951,7 @@ export function useCalculator() {
     isStale,
     resetToDefaults,
     scenarios,
+    scenarioSaveError,
     saveCurrentAsScenario,
     loadScenario,
     deleteScenario,

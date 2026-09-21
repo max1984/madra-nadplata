@@ -60,7 +60,7 @@ export type TranslationKey =
   | 'error_total_monthly' | 'error_overpay_amount' | 'error_shorten_amount'
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
-  | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_saved_title'
+  | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_save_storage_error' | 'scenario_saved_title'
   | 'scenario_sort_label' | 'scenario_sort_newest' | 'scenario_sort_oldest' | 'scenario_sort_name'
   | 'scenario_load' | 'scenario_delete' | 'scenario_diff_label' | 'scenario_rename_hint'
   | 'scenario_delete_confirm' | 'scenario_delete_cancel'
@@ -240,6 +240,7 @@ const pl: Translations = {
   share_summary_text: 'Kredyt {amount} zł, {rate}% na {months} mies.\nZ nadpłatą: spłacę w {withMonths} rat (o {savedTime} szybciej) i zaoszczędzę {saved} odsetek.\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
   scenario_name_placeholder: 'Nazwa scenariusza (np. "Wariant z nadpłatą 500 zł")',
   scenario_save: '💾 Zapisz scenariusz',
+  scenario_save_storage_error: 'Nie udało się zapisać scenariusza na tym urządzeniu (pamięć przeglądarki jest pełna lub zablokowana) — po odświeżeniu strony może zniknąć.',
   scenario_saved_title: 'Zapisane scenariusze',
   scenario_sort_label: 'Sortuj scenariusze',
   scenario_sort_newest: 'Najnowsze',
@@ -502,6 +503,7 @@ const en: Translations = {
   share_summary_text: 'Loan {amount} PLN, {rate}% for {months} mo.\nWith the overpay plan: I’ll pay it off in {withMonths} payments ({savedTime} sooner) and save {saved} in interest.\nCalculated with Mądra Nadpłata: {url}',
   scenario_name_placeholder: 'Scenario name (e.g. "500 PLN overpay variant")',
   scenario_save: '💾 Save scenario',
+  scenario_save_storage_error: 'Could not save this scenario on this device (browser storage is full or blocked) — it may disappear after a page refresh.',
   scenario_saved_title: 'Saved scenarios',
   scenario_sort_label: 'Sort scenarios',
   scenario_sort_newest: 'Newest',

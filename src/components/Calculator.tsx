@@ -167,6 +167,7 @@ interface Props {
   isStale: boolean;
   calcError: TranslationKey | null;
   scenarios: SavedScenario[];
+  scenarioSaveError: boolean;
   onSaveScenario: (name: string) => void;
   onLoadScenario: (id: string) => void;
   onDeleteScenario: (id: string) => void;
@@ -177,7 +178,7 @@ interface Props {
 
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
-  scenarios, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
+  scenarios, scenarioSaveError, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
   onImportScenarios,
 }: Props) {
   const { t, fmt, fmtC, fmtSignedC, lang } = useLang();
@@ -922,6 +923,11 @@ export default function Calculator({
                 >
                   {t('scenario_save')}
                 </button>
+                {scenarioSaveError && (
+                  <div className="scenario-save-error" role="alert" style={{ color: 'var(--danger)', fontSize: '.85rem', marginTop: '6px' }}>
+                    {t('scenario_save_storage_error')}
+                  </div>
+                )}
               </div>
               <div className="scenario-import-export-row">
                 <input

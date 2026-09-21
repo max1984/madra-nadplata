@@ -439,11 +439,19 @@ describe('addScenario / removeScenario / loadScenarios / persistScenarios', () =
 
   it('round-trips scenarios through persistScenarios / loadScenarios', () => {
     const list = addScenario([], 'Wariant', { ...DEFAULT_INPUTS, loanAmount: 777000 });
-    persistScenarios(list);
+    expect(persistScenarios(list)).toBe(true);
     const loaded = loadScenarios();
     expect(loaded).toHaveLength(1);
     expect(loaded[0]!.name).toBe('Wariant');
     expect(loaded[0]!.inputs.loanAmount).toBe(777000);
+  });
+
+  it('regression: persistScenarios returns false instead of silently reporting success when the underlying storage write fails (full/blocked localStorage) — saveCurrentAsScenario in the hook uses this to warn the user their scenario will not survive a page refresh', () => {
+    vi.spyOn(fake, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    const list = addScenario([], 'Wariant', DEFAULT_INPUTS);
+    expect(persistScenarios(list)).toBe(false);
   });
 
   it('returns an empty list when nothing has been saved yet', () => {

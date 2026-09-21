@@ -48,6 +48,17 @@ describe('safeStorage', () => {
     expect(() => safeSetItem('k', 'v')).not.toThrow();
   });
 
+  it('regression: returns false instead of true when setItem throws — callers like persistScenarios use this to warn the user that a save silently did not survive a full/blocked storage instead of reporting success', () => {
+    vi.spyOn(fake, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    expect(safeSetItem('k', 'v')).toBe(false);
+  });
+
+  it('returns true when the write actually succeeds', () => {
+    expect(safeSetItem('k', 'v')).toBe(true);
+  });
+
   it('does not throw when localStorage.removeItem is blocked', () => {
     vi.spyOn(fake, 'removeItem').mockImplementation(() => {
       throw new Error('SecurityError: storage blocked');
