@@ -52,6 +52,19 @@ describe('overpayPresets', () => {
   it('regression: never suggests less than 50 zł, even for a tiny standard payment where 10%/25% would round to 0', () => {
     for (const v of overpayPresets(100)) expect(v).toBeGreaterThanOrEqual(50);
   });
+
+  it('regression: returns three distinct amounts even at a very low standard payment — a duplicate broke React keys in the preset chips', () => {
+    const presets = overpayPresets(60);
+    expect(new Set(presets).size).toBe(3);
+    expect(presets).toEqual([...presets].sort((a, b) => a - b));
+    for (const v of presets) expect(v % 50).toBe(0);
+  });
+
+  it('still returns three distinct amounts at the extreme case of a zero standard payment', () => {
+    const presets = overpayPresets(0);
+    expect(new Set(presets).size).toBe(3);
+    expect(presets).toEqual([50, 100, 150]);
+  });
 });
 
 describe('formatCalcAnnouncement', () => {

@@ -170,7 +170,15 @@ export function buildScenarioComparisonCSV(
 
 export function overpayPresets(stdPayment: number): number[] {
   const round50 = (n: number) => Math.max(50, Math.round(n / 50) * 50);
-  return [0.1, 0.25, 0.5].map((fraction) => round50(stdPayment * fraction));
+  // Przy niskiej racie standardowej round50 potrafi zwrócić to samo minimum
+  // (50 zł) dla wszystkich trzech ułamków — wymuszamy rosnące, unikalne
+  // kwoty (krok min. 50 zł), żeby nie kolidowały klucze React w UI.
+  const result: number[] = [];
+  for (const fraction of [0.1, 0.25, 0.5]) {
+    const prev = result[result.length - 1] ?? 0;
+    result.push(Math.max(round50(stdPayment * fraction), prev + 50));
+  }
+  return result;
 }
 
 interface Props {
@@ -735,11 +743,11 @@ export default function Calculator({
                   />
                 </div>
                 <div className="preset-chips">
-                  {overpayChipPresets.map((amount) => {
+                  {overpayChipPresets.map((amount, i) => {
                     const total = Math.min(sliderMax, sliderMin + amount);
                     return (
                       <button
-                        type="button" key={amount}
+                        type="button" key={i}
                         className={`preset-chip${inputs.totalMonthlySlider === total ? ' active' : ''}`}
                         onClick={() => setInputs({ totalMonthlySlider: total })}
                       >
@@ -777,9 +785,9 @@ export default function Calculator({
                   />
                 </div>
                 <div className="preset-chips">
-                  {overpayChipPresets.map((amount) => (
+                  {overpayChipPresets.map((amount, i) => (
                     <button
-                      type="button" key={amount}
+                      type="button" key={i}
                       className={`preset-chip${inputs.overpayAmountSlider === amount ? ' active' : ''}`}
                       onClick={() => setInputs({ overpayAmountSlider: amount })}
                     >
@@ -813,9 +821,9 @@ export default function Calculator({
                   />
                 </div>
                 <div className="preset-chips">
-                  {overpayChipPresets.map((amount) => (
+                  {overpayChipPresets.map((amount, i) => (
                     <button
-                      type="button" key={amount}
+                      type="button" key={i}
                       className={`preset-chip${inputs.shortenAmountSlider === amount ? ' active' : ''}`}
                       onClick={() => setInputs({ shortenAmountSlider: amount })}
                     >
