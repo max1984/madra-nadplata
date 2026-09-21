@@ -17,7 +17,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_rate_type_fixed' | 'cw_rate_type_variable'
   | 'cw_calculate_btn' | 'cw_reset_btn'
   | 'cw_result_recognized_income' | 'cw_result_household_cost' | 'cw_result_other_commitments'
-  | 'cw_result_disposable_income' | 'cw_result_dsti_threshold' | 'cw_result_max_installment'
+  | 'cw_result_disposable_income' | 'cw_result_dsti_threshold' | 'cw_result_max_installment' | 'cw_result_dsti_limit'
   | 'cw_result_buffer' | 'cw_result_max_loan_amount' | 'cw_advanced_toggle' | 'cw_check_mortgage_link'
   | 'cw_copy_summary' | 'cw_share_summary_text' | 'cw_print'
   | 'cw_scenario_name_placeholder' | 'cw_scenario_save' | 'cw_scenario_save_storage_error'
@@ -61,6 +61,7 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_result_disposable_income: 'Dostępne na ratę',
   cw_result_dsti_threshold: 'Zastosowany próg DSTI',
   cw_result_max_installment: 'Maksymalna rata',
+  cw_result_dsti_limit: 'Limit wg wskaźnika DSTI',
   cw_result_buffer: 'Zastosowany bufor ostrożnościowy',
   cw_result_max_loan_amount: 'Maksymalna kwota kredytu',
   cw_advanced_toggle: 'Opcje zaawansowane',
@@ -128,6 +129,7 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_result_disposable_income: 'Available for installment',
   cw_result_dsti_threshold: 'DSTI threshold applied',
   cw_result_max_installment: 'Maximum installment',
+  cw_result_dsti_limit: 'DSTI ratio limit',
   cw_result_buffer: 'Precautionary buffer applied',
   cw_result_max_loan_amount: 'Maximum loan amount',
   cw_advanced_toggle: 'Advanced options',

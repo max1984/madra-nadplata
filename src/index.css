@@ -800,6 +800,22 @@ footer a:hover { color: var(--accent); }
   letter-spacing: .8px; color: var(--text3); margin-bottom: 14px;
 }
 
+/* WYNIK: PASEK ROZBICIA (brutto/przychód -> koszty/składki/podatek/netto) */
+.breakdown-bar {
+  display: flex; width: 100%; height: 10px; border-radius: 999px;
+  overflow: hidden; margin-top: 14px; background: var(--bg3);
+}
+.breakdown-bar > div { height: 100%; min-width: 2px; transition: width .3s ease; }
+
+/* WYNIK: PASEK PORÓWNANIA (np. rata vs. limity) */
+.comparison-bars { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.comparison-bar-row { display: flex; flex-direction: column; gap: 3px; }
+.comparison-bar-label {
+  display: flex; justify-content: space-between; font-size: .78rem; color: var(--text2);
+}
+.comparison-bar-track { height: 8px; border-radius: 999px; background: var(--bg3); overflow: hidden; }
+.comparison-bar-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
+
 /* INVESTMENT COMPARISON */
 .invest-rows { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
 .invest-row {

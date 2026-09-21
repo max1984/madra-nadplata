@@ -3,6 +3,7 @@ import { Chart } from 'chart.js';
 import { useLang } from '../../contexts/LangContext';
 import { CHART } from '../../lib/chartTheme';
 import AnimatedNumber from '../AnimatedNumber';
+import { barSegments } from '../../lib/resultBars';
 import type { TranslationKey } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
 import {
@@ -916,6 +917,39 @@ export default function SalaryCalculator({
   );
 }
 
+const BREAKDOWN_SEGMENT_COLOR: Record<string, string> = {
+  costs: 'var(--text3)',
+  social: 'var(--accent)',
+  health: 'var(--warn)',
+  tax: 'var(--danger)',
+  net: 'var(--accent2)',
+};
+
+const BREAKDOWN_SEGMENT_LABEL_KEY: Record<string, TranslationKey> = {
+  costs: 'salary_b2b_costs_label',
+  social: 'salary_result_social',
+  health: 'salary_result_health',
+  tax: 'salary_result_tax',
+  net: 'salary_result_net',
+};
+
+/**
+ * Rozbicie brutto (lub przychodu dla B2B) na segmenty widoczne na pasku —
+ * `net` dodane na końcu obiektu, żeby to ono (nie inna, przypadkowa część)
+ * dostało resztę zaokrąglenia w barSegments i zawsze domykało 100%.
+ */
+function resultBreakdown(result: Extract<SalaryState, { mode: 'single' }>['result']) {
+  const base = 'monthlyRevenue' in result ? result.monthlyRevenue : result.grossMonthly;
+  const parts: Record<string, number> = {};
+  if ('monthlyCosts' in result) parts.costs = result.monthlyCosts;
+  if ('employeeSocialTotal' in result) parts.social = result.employeeSocialTotal;
+  if ('socialContributions' in result) parts.social = result.socialContributions;
+  if ('healthInsurance' in result) parts.health = result.healthInsurance;
+  parts.tax = result.tax;
+  parts.net = result.net;
+  return barSegments(base, parts);
+}
+
 function SingleResultCard({
   result,
   fmtC,
@@ -925,10 +959,22 @@ function SingleResultCard({
   fmtC: (n: number, dec?: number) => string;
   t: (key: TranslationKey) => string;
 }) {
+  const segments = resultBreakdown(result);
   return (
     <div className="result-card highlight-green">
       <div className="result-card-label">{t('salary_result_net')}</div>
       <div style={{ fontSize: '1.8rem', fontWeight: 700 }}><AnimatedNumber value={result.net} format={fmtC} /></div>
+      {segments.length > 0 && (
+        <div
+          className="breakdown-bar"
+          role="img"
+          aria-label={segments.map((s) => `${t(BREAKDOWN_SEGMENT_LABEL_KEY[s.key]!)}: ${fmtC(s.amount)}`).join(', ')}
+        >
+          {segments.map((s) => (
+            <div key={s.key} style={{ width: `${s.pct}%`, background: BREAKDOWN_SEGMENT_COLOR[s.key] }} />
+          ))}
+        </div>
+      )}
       <div style={{ marginTop: 12, display: 'grid', gap: 4, fontSize: '.9rem' }}>
         <div>{t('salary_result_tax')}: {fmtC(result.tax)}</div>
         {'employeeSocialTotal' in result && <div>{t('salary_result_social')}: {fmtC(result.employeeSocialTotal)}</div>}

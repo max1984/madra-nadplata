@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
 import AnimatedNumber from '../AnimatedNumber';
+import { comparisonBars } from '../../lib/resultBars';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
 import { MAX_LOAN_YEARS } from '../../lib/creditworthiness';
@@ -87,6 +88,54 @@ function numberField(
  */
 export function buildMortgageLinkHref(maxLoanAmount: number): string {
   return `/?amount=${Math.round(maxLoanAmount)}#calculator`;
+}
+
+const CW_COMPARISON_COLOR: Record<string, string> = {
+  maxInstallment: 'var(--accent2)',
+  dstiLimit: 'var(--accent)',
+  disposableIncome: 'var(--text3)',
+};
+
+const CW_COMPARISON_LABEL_KEY: Record<string, TranslationKey> = {
+  maxInstallment: 'cw_result_max_installment',
+  dstiLimit: 'cw_result_dsti_limit',
+  disposableIncome: 'cw_result_disposable_income',
+};
+
+/** Pasek porównania trzech wielkości decydujących o wyniku — pomaga zobaczyć, który limit jest wiążący. */
+function CreditworthinessComparisonBars({
+  result,
+  fmtC,
+  t,
+}: {
+  result: CreditworthinessResult;
+  fmtC: (n: number) => string;
+  t: (key: TranslationKey) => string;
+}) {
+  const bars = comparisonBars({
+    maxInstallment: result.maxInstallment,
+    dstiLimit: result.maxInstallmentByDsti,
+    disposableIncome: result.disposableIncome,
+  });
+  return (
+    <div
+      className="comparison-bars"
+      role="img"
+      aria-label={bars.map((b) => `${t(CW_COMPARISON_LABEL_KEY[b.key]!)}: ${fmtC(b.amount)}`).join(', ')}
+    >
+      {bars.map((b) => (
+        <div className="comparison-bar-row" key={b.key}>
+          <div className="comparison-bar-label">
+            <span>{t(CW_COMPARISON_LABEL_KEY[b.key]!)}</span>
+            <strong>{fmtC(b.amount)}</strong>
+          </div>
+          <div className="comparison-bar-track">
+            <div className="comparison-bar-fill" style={{ width: `${b.pct}%`, background: CW_COMPARISON_COLOR[b.key] }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function CreditworthinessCalculator({
@@ -517,6 +566,7 @@ export default function CreditworthinessCalculator({
             <div className="result-card highlight-green">
               <div className="result-card-label">{t('cw_result_max_loan_amount')}</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 700 }}><AnimatedNumber value={calcState.maxLoanAmount} format={fmtC} /></div>
+              <CreditworthinessComparisonBars result={calcState} fmtC={fmtC} t={t} />
               <div style={{ marginTop: 12, display: 'grid', gap: 4, fontSize: '.9rem' }}>
                 <div>{t('cw_result_recognized_income')}: {fmtC(calcState.recognizedIncome)}</div>
                 <div>{t('cw_result_household_cost')}: {fmtC(calcState.householdCost)}</div>
