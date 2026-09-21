@@ -249,6 +249,26 @@ export default function SalaryCalculator({
             ))}
           </div>
 
+          {/*
+            Przełącznik trybu rocznego renderuje się TUTAJ, tuż pod wyborem
+            typu umowy — wcześniej był schowany na końcu "Opcji zaawansowanych"
+            (po KUP/uldze/PIT-2/PPK/premii/prawach autorskich/wspólnym
+            rozliczeniu), podczas gdy jego efekt (siatka 12 pól miesięcznych
+            zamiast jednego pola kwoty) pojawiał się od razu tutaj, na górze.
+            Ten rozjazd — przełącznik na dole, efekt na górze — sprawiał, że
+            tryb roczny (i połączone z nim funkcje: wspólne rozliczenie,
+            limit ZUS) był łatwy do przeoczenia, mimo że liczył się poprawnie.
+          */}
+          <label className="checkbox-row" htmlFor="annual-mode">
+            <input
+              id="annual-mode"
+              type="checkbox"
+              checked={inputs.annualMode}
+              onChange={(e) => setInputs({ annualMode: e.target.checked })}
+            />
+            <span>{t('salary_annual_mode_toggle')}</span>
+          </label>
+
           <div key={`${inputs.contractType}-${inputs.annualMode}`}>
             {!inputs.annualMode ? (
               <div className="form-group">
@@ -275,7 +295,6 @@ export default function SalaryCalculator({
               </div>
             ) : (
               <div className="form-group">
-                <label>{t('salary_annual_mode_toggle')}</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
                   {MONTH_KEYS.map((mk, i) => (
                     <div key={i} className="input-with-suffix">
@@ -682,16 +701,6 @@ export default function SalaryCalculator({
                 {!canJointTax && inputs.jointTaxation.enabled && (
                   <div className="hint">{t('salary_joint_not_eligible')}</div>
                 )}
-
-                <label className="checkbox-row" htmlFor="annual-mode">
-                  <input
-                    id="annual-mode"
-                    type="checkbox"
-                    checked={inputs.annualMode}
-                    onChange={(e) => setInputs({ annualMode: e.target.checked })}
-                  />
-                  <span>{t('salary_annual_mode_toggle')}</span>
-                </label>
               </div>
             )}
           </div>
