@@ -202,6 +202,18 @@ export interface SavedScenario {
 
 const SCENARIOS_KEY = 'calc_scenarios_v1';
 const MAX_SCENARIOS = 10;
+export const MAX_SCENARIO_NAME_LENGTH = 60;
+
+/**
+ * Nazwa scenariusza to wolny tekst — pole w UI nie miało limitu długości, więc
+ * wklejenie bardzo długiego tekstu (np. całego akapitu) rozpychało wiersz na
+ * liście i eksport CSV porównania scenariuszy. Przycina do
+ * MAX_SCENARIO_NAME_LENGTH po trim, tak samo dla nowych zapisów, zmiany
+ * nazwy i duplikatów.
+ */
+function clampScenarioName(name: string): string {
+  return name.trim().slice(0, MAX_SCENARIO_NAME_LENGTH);
+}
 
 /**
  * addScenario/duplicateScenario/mergeImportedScenarios obcinają listę do
@@ -388,7 +400,7 @@ export function buildScenarioComparisonRows(scenarios: SavedScenario[]): Scenari
 export function addScenario(list: SavedScenario[], name: string, inputs: CalcInputs): SavedScenario[] {
   const scenario: SavedScenario = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: name.trim(),
+    name: clampScenarioName(name),
     savedAt: Date.now(),
     inputs,
   };
@@ -406,7 +418,7 @@ export function removeScenario(list: SavedScenario[], id: string): SavedScenario
  * zatwierdzenie pustego pola edycji Enterem albo utratę fokusu.
  */
 export function renameScenario(list: SavedScenario[], id: string, newName: string): SavedScenario[] {
-  const trimmed = newName.trim();
+  const trimmed = clampScenarioName(newName);
   if (!trimmed) return list;
   return list.map((s) => (s.id === id ? { ...s, name: trimmed } : s));
 }
@@ -424,7 +436,7 @@ export function duplicateScenario(list: SavedScenario[], id: string, newName: st
   if (!original) return list;
   const copy: SavedScenario = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: newName.trim() || original.name,
+    name: clampScenarioName(newName) || original.name,
     savedAt: Date.now(),
     inputs: original.inputs,
   };

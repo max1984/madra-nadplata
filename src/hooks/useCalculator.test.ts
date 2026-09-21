@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, filterScenariosByName, willDropOldestScenario, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, type CalcState, type CalcInputs } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, filterScenariosByName, willDropOldestScenario, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, MAX_SCENARIO_NAME_LENGTH, type CalcState, type CalcInputs } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -454,6 +454,13 @@ describe('addScenario / removeScenario / loadScenarios / persistScenarios', () =
     expect(list[0]!.id).toBeTruthy();
   });
 
+  it('regression: clamps a very long scenario name to MAX_SCENARIO_NAME_LENGTH instead of storing it unbounded — the save field had no length limit, so pasting a long block of text used to stretch the scenario row, the comparison table and the CSV export', () => {
+    const long = 'x'.repeat(MAX_SCENARIO_NAME_LENGTH + 40);
+    const list = addScenario([], long, DEFAULT_INPUTS);
+    expect(list[0]!.name).toHaveLength(MAX_SCENARIO_NAME_LENGTH);
+    expect(list[0]!.name).toBe(long.slice(0, MAX_SCENARIO_NAME_LENGTH));
+  });
+
   it('assigns distinct ids to scenarios added back to back', () => {
     let list = addScenario([], 'A', DEFAULT_INPUTS);
     list = addScenario(list, 'B', DEFAULT_INPUTS);
@@ -554,6 +561,13 @@ describe('renameScenario', () => {
     const list = addScenario([], 'A', DEFAULT_INPUTS);
     const next = renameScenario(list, 'nonexistent', 'X');
     expect(next).toEqual(list);
+  });
+
+  it('regression: clamps a very long new name to MAX_SCENARIO_NAME_LENGTH, matching addScenario', () => {
+    const list = addScenario([], 'A', DEFAULT_INPUTS);
+    const long = 'y'.repeat(MAX_SCENARIO_NAME_LENGTH + 10);
+    const next = renameScenario(list, list[0]!.id, long);
+    expect(next[0]!.name).toHaveLength(MAX_SCENARIO_NAME_LENGTH);
   });
 });
 
@@ -745,6 +759,13 @@ describe('duplicateScenario', () => {
     expect(next[1]!.id).not.toBe(originalId);
     expect(next[1]!.inputs.loanAmount).toBe(250000);
     expect(next[0]!.name).toBe('Oryginał');
+  });
+
+  it('regression: clamps a very long new name to MAX_SCENARIO_NAME_LENGTH, matching addScenario/renameScenario', () => {
+    const list = addScenario([], 'Oryginał', DEFAULT_INPUTS);
+    const long = 'z'.repeat(MAX_SCENARIO_NAME_LENGTH + 15);
+    const next = duplicateScenario(list, list[0]!.id, long);
+    expect(next[1]!.name).toHaveLength(MAX_SCENARIO_NAME_LENGTH);
   });
 
   it('falls back to the original name when the given new name is blank', () => {

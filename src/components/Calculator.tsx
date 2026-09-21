@@ -7,7 +7,7 @@ import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, filterScenariosByName, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, filterScenariosByName, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, MAX_SCENARIO_NAME_LENGTH, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -943,6 +943,7 @@ export default function Calculator({
                   className="scenario-name-input"
                   placeholder={t('scenario_name_placeholder')}
                   value={scenarioName}
+                  maxLength={MAX_SCENARIO_NAME_LENGTH}
                   onChange={(e) => setScenarioName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSaveScenario(); }}
                 />
@@ -1032,6 +1033,7 @@ export default function Calculator({
                             className="scenario-name-edit-input"
                             value={editingScenarioName}
                             autoFocus
+                            maxLength={MAX_SCENARIO_NAME_LENGTH}
                             onChange={(e) => setEditingScenarioName(e.target.value)}
                             onBlur={commitScenarioRename}
                             onKeyDown={(e) => {
