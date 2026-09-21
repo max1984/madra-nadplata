@@ -161,6 +161,28 @@ export function formatSalarySummaryText(
  * specific_work) — B2B ma zamiast tego `monthlyRevenue` (przychód, nie
  * brutto w sensie umowy o pracę). `tax`/`net` są wspólne dla wszystkich 4.
  */
+/**
+ * Jak formatCalcAnnouncement w Calculator.tsx — krótkie podsumowanie wyniku
+ * dla regionu aria-live. Błąd walidacji (.calc-error, role="alert") już był
+ * ogłaszany czytnikom ekranu, ale udany wynik obliczeń nie miał żadnego
+ * odpowiednika w kalkulatorze wynagrodzeń ani zdolności kredytowej — tylko
+ * kalkulator kredytu miał tę funkcję.
+ */
+export function formatSalaryAnnouncement(
+  state: SalaryState,
+  t: (key: TranslationKey) => string,
+  fmtC: (n: number) => string,
+): string {
+  if (state.mode === 'single') {
+    return t('salary_announcement_single')
+      .replace('{net}', fmtC(state.result.net))
+      .replace('{tax}', fmtC(state.result.tax));
+  }
+  return t('salary_announcement_annual')
+    .replace('{totalNet}', fmtC(state.result.totalNet))
+    .replace('{totalTax}', fmtC(state.result.totalTax));
+}
+
 export function formatAnnualScheduleCsv(
   state: Extract<SalaryState, { mode: 'annual' }>,
   t: (key: TranslationKey) => string,
@@ -188,6 +210,10 @@ export default function SalaryCalculator({
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
+  const announcement = useMemo(
+    () => calcState ? formatSalaryAnnouncement(calcState, t, fmtC) : '',
+    [calcState, t, fmtC],
+  );
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
 
@@ -882,6 +908,7 @@ export default function SalaryCalculator({
             <button type="button" className="calc-btn" onClick={onCalculate}>{t('salary_calculate_btn')}</button>
             <button type="button" className="toolbar-btn" onClick={onResetToDefaults}>{t('salary_reset_btn')}</button>
           </div>
+          <div role="status" aria-live="polite" className="sr-only">{announcement}</div>
 
           <div className="scenario-panel">
             <div className="scenario-save-row">

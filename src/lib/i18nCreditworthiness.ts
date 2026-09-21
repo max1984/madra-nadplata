@@ -19,7 +19,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_result_recognized_income' | 'cw_result_household_cost' | 'cw_result_other_commitments'
   | 'cw_result_disposable_income' | 'cw_result_dsti_threshold' | 'cw_result_max_installment' | 'cw_result_dsti_limit'
   | 'cw_result_buffer' | 'cw_result_max_loan_amount' | 'cw_advanced_toggle' | 'cw_check_mortgage_link'
-  | 'cw_copy_summary' | 'cw_share_summary_text' | 'cw_print'
+  | 'cw_copy_summary' | 'cw_share_summary_text' | 'cw_print' | 'cw_announcement'
   | 'cw_scenario_name_placeholder' | 'cw_scenario_save' | 'cw_scenario_save_storage_error'
   | 'cw_scenario_saved_title' | 'cw_scenario_load' | 'cw_scenario_delete'
   | 'cw_scenario_duplicate' | 'cw_scenario_copy_suffix'
@@ -71,6 +71,7 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_copy_summary: '📋 Kopiuj wynik',
   cw_print: '🖨️ Drukuj / Zapisz PDF',
   cw_share_summary_text: 'Zdolność kredytowa: maksymalnie {maxLoan} (dochód uznany {income}, rata maks. {installment}, próg DSTI {dsti}%).\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
+  cw_announcement: 'Wyliczono zdolność kredytową: maksymalna kwota kredytu {maxLoan}, maksymalna rata {installment}.',
   cw_scenario_name_placeholder: 'Nazwa scenariusza (np. "Rodzina, 2 osoby")',
   cw_scenario_save: '💾 Zapisz scenariusz',
   cw_scenario_save_storage_error: 'Nie udało się zapisać scenariusza na tym urządzeniu (pamięć przeglądarki jest pełna lub zablokowana) — po odświeżeniu strony może zniknąć.',
@@ -142,6 +143,7 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_copy_summary: '📋 Copy result',
   cw_print: '🖨️ Print / Save PDF',
   cw_share_summary_text: 'Credit capacity: up to {maxLoan} (recognized income {income}, max installment {installment}, DSTI threshold {dsti}%).\nCalculated with Mądra Nadpłata: {url}',
+  cw_announcement: 'Credit capacity calculated: maximum loan amount {maxLoan}, maximum installment {installment}.',
   cw_scenario_name_placeholder: 'Scenario name (e.g. "Family, 2 people")',
   cw_scenario_save: '💾 Save scenario',
   cw_scenario_save_storage_error: 'Could not save this scenario on this device (browser storage is full or blocked) — it may disappear after a page refresh.',

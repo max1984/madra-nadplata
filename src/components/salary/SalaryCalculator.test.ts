@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fillAnnualValuesFromAmount, formatSalarySummaryText, formatAnnualScheduleCsv } from './SalaryCalculator';
+import { fillAnnualValuesFromAmount, formatSalarySummaryText, formatAnnualScheduleCsv, formatSalaryAnnouncement } from './SalaryCalculator';
 import type { SalaryState } from '../../hooks/useSalaryCalculator';
 
 const fmtC = (n: number) => `${n.toFixed(0)} zł`;
@@ -10,6 +10,8 @@ const templates: Record<string, string> = {
   salary_result_gross: 'Brutto',
   salary_result_tax: 'Podatek',
   salary_result_net: 'Na rękę',
+  salary_announcement_single: 'Wyliczono: na rękę {net}, podatek {tax}.',
+  salary_announcement_annual: 'Wyliczono rocznie: na rękę {totalNet}, podatek {totalTax}.',
 };
 const t = (key: string) => templates[key] ?? key;
 
@@ -107,5 +109,31 @@ describe('formatAnnualScheduleCsv', () => {
     const lines = csv.replace(/^﻿/, '').split('\n');
     expect(lines[0]).toBe('Miesiąc,Brutto,Podatek,Na rękę');
     expect(lines[1]).toBe('1,10000.00,800.00,7500.00');
+  });
+});
+
+describe('formatSalaryAnnouncement', () => {
+  it(
+    'regression: builds a short aria-live announcement for screen reader users after a successful calculation, ' +
+      'single mode — the mortgage calculator had this (formatCalcAnnouncement) but salary had no equivalent',
+    () => {
+      const state = {
+        mode: 'single',
+        contractType: 'employment',
+        result: { net: 5000, tax: 800 },
+        jointTaxation: null,
+      } as unknown as SalaryState;
+      expect(formatSalaryAnnouncement(state, t, fmtC)).toBe('Wyliczono: na rękę 5000 zł, podatek 800 zł.');
+    }
+  );
+
+  it('uses the annual-totals template for annual mode, not the single-month one', () => {
+    const state = {
+      mode: 'annual',
+      contractType: 'employment',
+      result: { totalNet: 60000, totalTax: 9600 },
+      jointTaxation: null,
+    } as unknown as SalaryState;
+    expect(formatSalaryAnnouncement(state, t, fmtC)).toBe('Wyliczono rocznie: na rękę 60000 zł, podatek 9600 zł.');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildMortgageLinkHref, formatCreditworthinessSummaryText } from './CreditworthinessCalculator';
+import { buildMortgageLinkHref, formatCreditworthinessSummaryText, formatCreditworthinessAnnouncement } from './CreditworthinessCalculator';
 import { t as translate } from '../../lib/i18n';
 import { fmt, fmtC } from '../../lib/format';
 import type { CreditworthinessResult } from '../../lib/creditworthiness';
@@ -51,4 +51,33 @@ describe('formatCreditworthinessSummaryText', () => {
     expect(text).not.toContain('0.5%');
     expect(text).not.toContain('0,5%');
   });
+});
+
+describe('formatCreditworthinessAnnouncement', () => {
+  const t = (key: Parameters<typeof translate>[1]) => translate('pl', key);
+  const fmtCPl = (n: number, dec?: number) => fmtC(n, 'pl', dec);
+
+  const cs: CreditworthinessResult = {
+    recognizedIncome: 8000,
+    householdCost: 1800,
+    otherCommitments: 0,
+    disposableIncome: 6200,
+    dstiThreshold: 0.5,
+    maxInstallmentByDsti: 4000,
+    maxInstallment: 4000,
+    bufferPercent: 2.5,
+    effectiveAnnualRatePercent: 9.5,
+    maxLoanAmount: 457_800,
+  };
+
+  it(
+    'regression: builds a short aria-live announcement for screen reader users after a successful calculation — ' +
+      'the mortgage calculator had this (formatCalcAnnouncement) but the creditworthiness calculator had no ' +
+      'equivalent, so a screen reader user got no feedback that a result had appeared',
+    () => {
+      const text = formatCreditworthinessAnnouncement(cs, t, fmtCPl);
+      expect(text).toContain(fmtCPl(457_800));
+      expect(text).toContain(fmtCPl(4000));
+    }
+  );
 });

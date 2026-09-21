@@ -12,6 +12,7 @@ export type SalaryTranslationKey =
   | 'salary_gross_label' | 'salary_calculate_btn' | 'salary_reset_btn' | 'salary_footer_disclaimer'
   | 'salary_print' | 'salary_share_summary_text_single' | 'salary_share_summary_text_annual'
   | 'salary_csv_col_month' | 'salary_csv_filename'
+  | 'salary_announcement_single' | 'salary_announcement_annual'
   | 'salary_advanced_toggle' | 'salary_annual_mode_toggle'
   | 'salary_month_1' | 'salary_month_2' | 'salary_month_3' | 'salary_month_4'
   | 'salary_month_5' | 'salary_month_6' | 'salary_month_7' | 'salary_month_8'
@@ -70,6 +71,8 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_share_summary_text_annual: 'Wynagrodzenie roczne na rękę: {totalNet} (podatek łącznie {totalTax}).\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
   salary_csv_col_month: 'Miesiąc',
   salary_csv_filename: 'rozliczenie-roczne',
+  salary_announcement_single: 'Wyliczono wynagrodzenie: na rękę {net}, podatek {tax}.',
+  salary_announcement_annual: 'Wyliczono rozliczenie roczne: łącznie na rękę {totalNet}, podatek {totalTax}.',
   salary_footer_disclaimer: 'Strona edukacyjna – nie stanowi porady podatkowej. Wyniki kalkulatora mają charakter poglądowy.<br />Przed podjęciem decyzji skonsultuj się z księgowym lub doradcą podatkowym.',
   salary_advanced_toggle: 'Opcje zaawansowane',
   salary_annual_mode_toggle: 'Rozliczenie roczne ze zmiennym wynagrodzeniem',
@@ -192,6 +195,8 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_share_summary_text_annual: 'Annual net salary: {totalNet} (total tax {totalTax}).\nCalculated with Mądra Nadpłata: {url}',
   salary_csv_col_month: 'Month',
   salary_csv_filename: 'annual-settlement',
+  salary_announcement_single: 'Salary calculated: net pay {net}, tax {tax}.',
+  salary_announcement_annual: 'Annual settlement calculated: total net pay {totalNet}, tax {totalTax}.',
   salary_footer_disclaimer: 'Educational website — does not constitute tax advice. Calculator results are for illustrative purposes only.<br />Before making a decision, consult an accountant or tax advisor.',
   salary_advanced_toggle: 'Advanced options',
   salary_annual_mode_toggle: 'Annual reconciliation with varying monthly pay',

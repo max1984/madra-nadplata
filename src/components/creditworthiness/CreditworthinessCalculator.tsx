@@ -38,6 +38,23 @@ export function formatCreditworthinessSummaryText(
     .replace('{url}', url);
 }
 
+/**
+ * Jak formatCalcAnnouncement w Calculator.tsx — krótkie podsumowanie wyniku
+ * dla regionu aria-live. Błąd walidacji (.calc-error, role="alert") już był
+ * ogłaszany czytnikom ekranu, ale udany wynik obliczeń nie miał żadnego
+ * odpowiednika tu ani w kalkulatorze wynagrodzeń — tylko kalkulator kredytu
+ * miał tę funkcję.
+ */
+export function formatCreditworthinessAnnouncement(
+  cs: CreditworthinessResult,
+  t: (key: TranslationKey) => string,
+  fmtC: (n: number) => string,
+): string {
+  return t('cw_announcement')
+    .replace('{maxLoan}', fmtC(cs.maxLoanAmount))
+    .replace('{installment}', fmtC(cs.maxInstallment));
+}
+
 interface Props {
   inputs: CreditworthinessInputs;
   setInputs: (patch: Partial<CreditworthinessInputs>) => void;
@@ -152,6 +169,10 @@ export default function CreditworthinessCalculator({
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
+  const announcement = useMemo(
+    () => calcState ? formatCreditworthinessAnnouncement(calcState, t, fmtC) : '',
+    [calcState, t, fmtC],
+  );
 
   // Ctrl/Cmd+Enter przelicza formularz z dowolnego miejsca na stronie — jak
   // w Calculator.tsx (kalkulator nadpłaty). Ref na onCalculate, żeby listener
@@ -457,6 +478,7 @@ export default function CreditworthinessCalculator({
             <button type="button" className="calc-btn" onClick={onCalculate}>{t('cw_calculate_btn')}</button>
             <button type="button" className="toolbar-btn" onClick={onResetToDefaults}>{t('cw_reset_btn')}</button>
           </div>
+          <div role="status" aria-live="polite" className="sr-only">{announcement}</div>
 
           <div className="scenario-panel">
             <div className="scenario-save-row">
