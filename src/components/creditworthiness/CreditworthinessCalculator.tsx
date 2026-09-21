@@ -306,6 +306,9 @@ export default function CreditworthinessCalculator({
                   {t('cw_check_mortgage_link')}
                 </a>
               )}
+              <button type="button" className="toolbar-btn" onClick={() => window.print()}>
+                {t('cw_print')}
+              </button>
             </div>
           </div>
         )}
