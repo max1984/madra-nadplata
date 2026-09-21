@@ -746,10 +746,14 @@ export function useCalculator() {
     applyCalculation(inp);
   }, [scenarios, applyCalculation]);
 
+  // persistScenarios zwraca sukces zapisu (patrz saveCurrentAsScenario) —
+  // delete/rename/duplicate/import miały ten sam problem co pierwotny zapis:
+  // przy pełnym/zablokowanym storage React state (a więc UI) pokazywał
+  // zmianę jako trwałą, mimo że znikała po odświeżeniu strony bez ostrzeżenia.
   const deleteScenario = useCallback((id: string) => {
     setScenarios((prev) => {
       const next = removeScenario(prev, id);
-      persistScenarios(next);
+      setScenarioSaveError(!persistScenarios(next));
       return next;
     });
   }, []);
@@ -757,7 +761,7 @@ export function useCalculator() {
   const renameScenarioById = useCallback((id: string, newName: string) => {
     setScenarios((prev) => {
       const next = renameScenario(prev, id, newName);
-      persistScenarios(next);
+      setScenarioSaveError(!persistScenarios(next));
       return next;
     });
   }, []);
@@ -765,7 +769,7 @@ export function useCalculator() {
   const duplicateScenarioById = useCallback((id: string, newName: string) => {
     setScenarios((prev) => {
       const next = duplicateScenario(prev, id, newName);
-      persistScenarios(next);
+      setScenarioSaveError(!persistScenarios(next));
       return next;
     });
   }, []);
@@ -776,7 +780,7 @@ export function useCalculator() {
     if (imported.length === 0) return 0;
     setScenarios((prev) => {
       const next = mergeImportedScenarios(prev, imported);
-      persistScenarios(next);
+      setScenarioSaveError(!persistScenarios(next));
       return next;
     });
     return imported.length;

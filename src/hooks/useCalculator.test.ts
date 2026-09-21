@@ -454,6 +454,21 @@ describe('addScenario / removeScenario / loadScenarios / persistScenarios', () =
     expect(persistScenarios(list)).toBe(false);
   });
 
+  it('regression: persistScenarios also reports the storage failure for the delete/rename/duplicate/import results, not just a fresh save — deleteScenario/renameScenario/duplicateScenario/importScenarios in the hook each feed their own resulting list into persistScenarios and only just started checking its return value (previously ignored, so a failed write for those four actions looked identical to a successful one until the next page refresh)', () => {
+    let list = addScenario([], 'Wariant', DEFAULT_INPUTS);
+    list = addScenario(list, 'Do usunięcia', DEFAULT_INPUTS);
+    const targetId = list[1]!.id;
+
+    vi.spyOn(fake, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+
+    expect(persistScenarios(removeScenario(list, targetId))).toBe(false);
+    expect(persistScenarios(renameScenario(list, targetId, 'Nowa nazwa'))).toBe(false);
+    expect(persistScenarios(duplicateScenario(list, targetId, 'Kopia'))).toBe(false);
+    expect(persistScenarios(mergeImportedScenarios(list, [list[0]!]))).toBe(false);
+  });
+
   it('returns an empty list when nothing has been saved yet', () => {
     expect(loadScenarios()).toEqual([]);
   });
