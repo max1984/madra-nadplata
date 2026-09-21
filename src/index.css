@@ -918,10 +918,14 @@ select:focus-visible, [tabindex]:focus-visible {
 /* DRUK / ZAPIS PDF — "raport do druku" z FAZY 3 planu monetyzacji.
    Zamiast osobnego generatora PDF: przeglądarkowy window.print() + arkusz
    drukowy, który chowa marketing i zostawia tylko wynik + harmonogram —
-   to właśnie ma się nadawać do zabrania do banku. */
+   to właśnie ma się nadawać do zabrania do banku. #support, #bank-offers
+   i .partner-card brakowało tu pierwotnie — to marketing/afiliacja,
+   renderowane poza .calc-form (który już jest ukryty), więc bez tego
+   wydruk "do banku" pokazywał oferty partnerskie i wsparcie zamiast
+   samego wyniku i harmonogramu. */
 @media print {
-  nav, .hero, #how-it-works, #example, #faq, .tools-divider,
-  .ad-slot, .consent-banner, .calc-form, footer,
+  nav, .hero, #how-it-works, #example, #support, #faq, .tools-divider,
+  .ad-slot, .consent-banner, .calc-form, .partner-card, #bank-offers, footer,
   .toolbar-btn, .toolbar-divider, input[type="range"] {
     display: none !important;
   }
