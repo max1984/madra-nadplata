@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
 import { BANK_OFFERS, bankOffersEnabled } from '../config/bankOffers';
 import { activeSortedOffers, offerInterestDiff } from '../lib/bankOffers';
-import { fmtMonthYear } from '../lib/format';
+import { fmtMonthYear, parseISODateLocal } from '../lib/format';
 import type { CalcState } from '../hooks/useCalculator';
 
 /**
@@ -69,7 +69,7 @@ export default function BankOffers({ calcState }: { calcState: CalcState | null 
                     <tr key={offer.id}>
                       <td>{offer.bank}</td>
                       <td>{fmt(offer.rate, 2)}%</td>
-                      <td>{fmtMonthYear(new Date(offer.validUntil), lang)}</td>
+                      <td>{fmtMonthYear(parseISODateLocal(offer.validUntil), lang)}</td>
                       {diff !== null && (
                         <td style={{ color: diff <= 0 ? 'var(--accent2)' : 'var(--danger)', fontWeight: 600 }}>
                           {fmtSignedC(diff, 0)}

@@ -46,6 +46,19 @@ export function fmtMonthYear(date: Date, lang: Lang = 'pl'): string {
 }
 
 /**
+ * `new Date('YYYY-MM-DD')` parsuje datę jako północ UTC, nie lokalny czas —
+ * dla odbiorcy w strefie czasowej na zachód od UTC (np. Ameryki) północ UTC
+ * to wciąż poprzedni dzień lokalnie, więc wyświetlony miesiąc/rok potrafi się
+ * cofnąć o jeden dzień względem tego, co faktycznie wpisano w danych (np.
+ * BankOffer.validUntil). Ta funkcja buduje Date z lokalnych roku/miesiąca/dnia,
+ * tak samo jak już robi to payoffDate() w mortgage.ts.
+ */
+export function parseISODateLocal(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y!, (m ?? 1) - 1, d ?? 1);
+}
+
+/**
  * ";" jako separator kolumn + przecinek dziesiętny to jedyny sposób, żeby
  * Excel z polskimi ustawieniami regionalnymi poprawnie rozbił plik na kolumny
  * i rozpoznał liczby (inaczej "1234.56" wczytuje się jako tekst). Wersja

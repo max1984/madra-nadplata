@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fmt, fmtC, parseLocaleNumber, fmtMonthYear, fmtSignedC, csvDec } from './format';
+import { fmt, fmtC, parseLocaleNumber, fmtMonthYear, fmtSignedC, csvDec, parseISODateLocal } from './format';
 
 describe('fmt', () => {
   it('clamps negative and non-finite numbers to 0', () => {
@@ -68,6 +68,28 @@ describe('fmtMonthYear', () => {
     const result = fmtMonthYear(new Date(2044, 11, 1), 'en');
     expect(result).toContain('December');
     expect(result).toContain('2044');
+  });
+});
+
+describe('parseISODateLocal', () => {
+  it('builds a Date from the local year/month/day, matching the ISO string with no shift', () => {
+    const d = parseISODateLocal('2026-03-01');
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getMonth()).toBe(2);
+    expect(d.getDate()).toBe(1);
+  });
+
+  it('regression: does not roll back a day for callers in timezones west of UTC — new Date("YYYY-MM-DD") parses as UTC midnight, which local-timezone getters (and thus fmtMonthYear) can read as the previous day; this constructs the Date from local components instead, exactly like mortgage.ts payoffDate() already does', () => {
+    const utcParsed = new Date('2026-03-01');
+    const localParsed = parseISODateLocal('2026-03-01');
+    expect(localParsed.getDate()).toBe(1);
+    expect(localParsed.getMonth()).toBe(2);
+    // The UTC-parsed variant only reads back as March 1st for callers whose
+    // local offset is >= 0 (at or east of UTC, e.g. Poland). Local-safe
+    // parsing must hold everywhere, which is exactly what distinguishes it.
+    if (utcParsed.getTimezoneOffset() > 0) {
+      expect(utcParsed.getDate()).not.toBe(1);
+    }
   });
 });
 
