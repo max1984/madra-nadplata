@@ -1,6 +1,9 @@
+import { SALARY_TRANSLATIONS, type SalaryTranslationKey } from './i18nSalary';
+
 export type Lang = 'pl' | 'en';
 
 export type TranslationKey =
+  | SalaryTranslationKey
   | 'nav_knowledge' | 'nav_how' | 'nav_example' | 'nav_faq'
   | 'nav_tools' | 'nav_calc' | 'nav_schedule' | 'tools_divider'
   | 'nav_lang_group' | 'nav_menu'
@@ -381,6 +384,7 @@ const pl: Translations = {
   sup_holidays_3: 'Alternatywa: „wakacje kredytowe umowne” — indywidualna decyzja banku. Warto zapytać o zawieszenie lub wydłużenie spłaty bezpośrednio w swoim banku.',
   sup_note: 'Stan na wrzesień 2026 r. Progi dochodowe i szczegółowe warunki bywają aktualizowane — przed złożeniem wniosku sprawdź bieżące zasady u swojego kredytodawcy lub w Banku Gospodarstwa Krajowego (BGK), operatorze funduszu.',
   close: 'Zamknij',
+  ...SALARY_TRANSLATIONS.pl,
 };
 
 const en: Translations = {
@@ -648,6 +652,7 @@ const en: Translations = {
   sup_holidays_3: 'Alternative: bank-granted "contractual" payment holidays — an individual decision by your bank. It’s worth asking your bank directly about suspending or extending your repayment.',
   sup_note: 'Accurate as of September 2026. Income thresholds and detailed conditions are updated periodically — check the current rules with your lender or Bank Gospodarstwa Krajowego (BGK), the fund’s operator, before applying.',
   close: 'Close',
+  ...SALARY_TRANSLATIONS.en,
 };
 
 export const LANGS: Record<Lang, Translations> = { pl, en };
