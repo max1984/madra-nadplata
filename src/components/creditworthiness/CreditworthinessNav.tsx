@@ -13,7 +13,7 @@ export default function CreditworthinessNav() {
         <span className="nav-logo-mark" aria-hidden="true">🏦</span>
         <span>{t('cw_page_title')}</span>
       </div>
-      <div className="nav-links">
+      <div className="nav-links nav-links-compact">
         <a href="/">{t('cw_nav_back')}</a>
         <a href="/wynagrodzenia.html">{t('nav_salary_calc')}</a>
         <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>

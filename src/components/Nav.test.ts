@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { shouldCloseMobileNav } from './Nav';
+import { shouldCloseMobileNav, shouldCloseOnOutsidePointer } from './Nav';
 
 describe('shouldCloseMobileNav', () => {
   it('keeps the mobile menu state untouched at and below the 700px breakpoint', () => {
@@ -16,6 +16,19 @@ describe('shouldCloseMobileNav', () => {
     () => {
       expect(shouldCloseMobileNav(701)).toBe(true);
       expect(shouldCloseMobileNav(1280)).toBe(true);
+    },
+  );
+});
+
+describe('shouldCloseOnOutsidePointer', () => {
+  it(
+    'regression: the mobile panel renders as a sibling of <nav>, not a descendant — ' +
+      'closing on outside pointerdown must check both refs, not just the nav bar',
+    () => {
+      expect(shouldCloseOnOutsidePointer(false, false)).toBe(true);
+      expect(shouldCloseOnOutsidePointer(true, false)).toBe(false);
+      expect(shouldCloseOnOutsidePointer(false, true)).toBe(false);
+      expect(shouldCloseOnOutsidePointer(true, true)).toBe(false);
     },
   );
 });

@@ -16,17 +16,28 @@ export function shouldCloseMobileNav(viewportWidth: number): boolean {
   return viewportWidth > MOBILE_NAV_BREAKPOINT_PX;
 }
 
+// Panel mobilny renderuje się jako rodzeństwo <nav>, nie jego potomek (patrz
+// index.css .nav-overlay/.nav-links.mobile-open) — kliknięcie poza obiema
+// częściami zamyka menu.
+export function shouldCloseOnOutsidePointer(navContains: boolean, panelContains: boolean): boolean {
+  return !navContains && !panelContains;
+}
+
 export default function Nav() {
   const { lang, setLang, t } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Rozwinięte menu mobilne zamyka się też kliknięciem poza nim i Escape —
   // inaczej jedyny sposób zamknięcia to ponowne dotknięcie hamburgera.
   useEffect(() => {
     if (!menuOpen) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) setMenuOpen(false);
+      const target = e.target as Node;
+      const insideNav = !!navRef.current?.contains(target);
+      const insidePanel = !!panelRef.current?.contains(target);
+      if (shouldCloseOnOutsidePointer(insideNav, insidePanel)) setMenuOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setMenuOpen(false);
@@ -76,44 +87,58 @@ export default function Nav() {
   );
 
   return (
-    <nav ref={navRef}>
-      <div className="nav-logo">
-        <span className="nav-logo-mark" aria-hidden="true">💰</span>
-        <span>Mądra Nadpłata</span>
-      </div>
-
-      <div className="nav-mobile-right">
-        <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>
-          <button className={`lang-btn${lang === 'pl' ? ' active' : ''}`} aria-pressed={lang === 'pl'} onClick={() => setLang('pl')}>PL</button>
-          <button className={`lang-btn${lang === 'en' ? ' active' : ''}`} aria-pressed={lang === 'en'} onClick={() => setLang('en')}>EN</button>
+    <>
+      <nav ref={navRef}>
+        <div className="nav-logo">
+          <span className="nav-logo-mark" aria-hidden="true">💰</span>
+          <span>Mądra Nadpłata</span>
         </div>
-        <button
-          className={`hamburger${menuOpen ? ' open' : ''}`}
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label={t('nav_menu')}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-nav-links"
-        >
-          <span /><span /><span />
-        </button>
-      </div>
 
-      <div className="nav-links">{links}</div>
+        <div className="nav-mobile-right">
+          <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>
+            <button className={`lang-btn${lang === 'pl' ? ' active' : ''}`} aria-pressed={lang === 'pl'} onClick={() => setLang('pl')}>PL</button>
+            <button className={`lang-btn${lang === 'en' ? ' active' : ''}`} aria-pressed={lang === 'en'} onClick={() => setLang('en')}>EN</button>
+          </div>
+          <button
+            className={`hamburger${menuOpen ? ' open' : ''}`}
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={t('nav_menu')}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav-links"
+          >
+            <span /><span /><span />
+          </button>
+        </div>
+
+        <div className="nav-links">{links}</div>
+      </nav>
 
       <AnimatePresence>
         {menuOpen && (
-          <motion.div
-            id="mobile-nav-links"
-            className="nav-links mobile-open"
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-          >
-            {links}
-          </motion.div>
+          <>
+            <motion.div
+              className="nav-overlay"
+              aria-hidden="true"
+              onClick={() => setMenuOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            />
+            <motion.div
+              id="mobile-nav-links"
+              ref={panelRef}
+              className="nav-links mobile-open"
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              {links}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 }

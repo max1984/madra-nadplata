@@ -155,17 +155,31 @@ nav::after {
 .hamburger.open span:nth-child(2) { opacity: 0; }
 .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+.nav-overlay { display: none; }
 @media(max-width:700px){
   .hamburger { display: flex; }
   .nav-links { display: none; }
+  /* SalaryNav/CreditworthinessNav nie mają hamburgera — tylko 2 linki +
+     przełącznik języka, więc mieszczą się w pasku zamiast znikać całkiem. */
+  .nav-links.nav-links-compact {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .nav-links.nav-links-compact a { font-size: .8rem; padding: 6px 8px; white-space: nowrap; }
+  .nav-links.nav-links-compact .nav-sep,
+  .nav-links.nav-links-compact .nav-sec-label { display: none; }
+  .nav-overlay {
+    display: block; position: fixed; inset: 64px 0 0 0;
+    background: rgba(15,23,42,.35); z-index: 100;
+  }
   .nav-links.mobile-open {
     display: flex; flex-direction: column; align-items: flex-start;
     position: fixed; top: 64px; left: 0; right: 0;
-    background: #fff;
+    background: var(--card);
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-md);
     padding: 20px clamp(16px,4vw,48px) 28px;
-    gap: 14px; z-index: 99;
+    gap: 14px; z-index: 101;
+    max-height: calc(100vh - 64px); overflow-y: auto;
   }
   .nav-links.mobile-open .nav-sep { display: none; }
   .nav-links.mobile-open .lang-toggle { display: none; }

@@ -16,7 +16,7 @@ export default function SalaryNav() {
         <span className="nav-logo-mark" aria-hidden="true">💼</span>
         <span>{t('salary_page_title')}</span>
       </div>
-      <div className="nav-links">
+      <div className="nav-links nav-links-compact">
         <a href="/">{t('salary_nav_back')}</a>
         <a href="/zdolnosc-kredytowa.html">{t('nav_creditworthiness_calc')}</a>
         <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>
