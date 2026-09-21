@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
 import {
-  MAX_CW_SCENARIOS, MAX_CW_SCENARIO_NAME_LENGTH, sortCwScenarios, filterCwScenariosByName,
+  MAX_CW_SCENARIOS, MAX_CW_SCENARIO_NAME_LENGTH, sortCwScenarios, filterCwScenariosByName, cwScenariosToJSON,
   type SavedCreditworthinessScenario, type CwScenarioSortKey,
 } from '../../hooks/useCreditworthinessCalculator';
 
@@ -48,6 +48,7 @@ interface Props {
   onSaveScenario?: (name: string) => void;
   onLoadScenario?: (id: string) => void;
   onDeleteScenario?: (id: string) => void;
+  onImportScenarios?: (json: string) => number;
 }
 
 const CONTRACT_TABS: { key: CreditworthinessContractType; label: TranslationKey }[] = [
@@ -89,6 +90,7 @@ export default function CreditworthinessCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
   scenarios = [], scenarioSaveError = false, scenarioLimitReached = false,
   onSaveScenario = () => {}, onLoadScenario = () => {}, onDeleteScenario = () => {},
+  onImportScenarios = () => 0,
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -97,6 +99,8 @@ export default function CreditworthinessCalculator({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [scenarioSort, setScenarioSort] = useState<CwScenarioSortKey>('date-desc');
   const [scenarioFilter, setScenarioFilter] = useState('');
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const sortedScenarios = useMemo(
     () => filterCwScenariosByName(sortCwScenarios(scenarios, scenarioSort), scenarioFilter),
     [scenarios, scenarioSort, scenarioFilter],
@@ -115,6 +119,34 @@ export default function CreditworthinessCalculator({
     } else {
       setConfirmDeleteId(id);
     }
+  };
+
+  const handleExportScenarios = () => {
+    const blob = new Blob([cwScenariosToJSON(scenarios)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `scenariusze-zdolnosci-kredytowej-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    const showImportMessage = (key: TranslationKey, count?: number) => {
+      const msg = count !== undefined ? t(key).replace('{n}', String(count)) : t(key);
+      setImportMessage(msg);
+      setTimeout(() => setImportMessage(null), 4000);
+    };
+    reader.onload = () => {
+      const count = onImportScenarios(String(reader.result ?? ''));
+      showImportMessage(count > 0 ? 'cw_scenario_import_success' : 'cw_scenario_import_empty', count > 0 ? count : undefined);
+    };
+    reader.onerror = () => showImportMessage('cw_scenario_import_error');
+    reader.readAsText(file);
   };
 
   const handleCopySummary = () => {
@@ -351,6 +383,24 @@ export default function CreditworthinessCalculator({
                   {t('cw_scenario_limit_reached')}
                 </div>
               )}
+            </div>
+            <div className="scenario-import-export-row">
+              <input
+                type="file"
+                accept="application/json"
+                ref={importInputRef}
+                onChange={handleImportFileChange}
+                style={{ display: 'none' }}
+              />
+              <button type="button" className="scenario-row-btn" onClick={() => importInputRef.current?.click()}>
+                {t('cw_scenario_import')}
+              </button>
+              {scenarios.length > 0 && (
+                <button type="button" className="scenario-row-btn" onClick={handleExportScenarios}>
+                  {t('cw_scenario_export')}
+                </button>
+              )}
+              {importMessage && <span className="scenario-import-message">{importMessage}</span>}
             </div>
             {scenarios.length > 0 && (
               <div className="scenario-list">

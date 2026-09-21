@@ -13,6 +13,8 @@ import {
   loadCreditworthinessScenarios,
   persistCreditworthinessScenarios,
   parseCwScenariosJSON,
+  cwScenariosToJSON,
+  mergeImportedCwScenarios,
   willDropOldestCwScenario,
   sortCwScenarios,
   filterCwScenariosByName,
@@ -351,6 +353,30 @@ describe('parseCwScenariosJSON', () => {
 
   it('drops entries with a missing/wrong-typed field instead of throwing', () => {
     expect(parseCwScenariosJSON(JSON.stringify([{ id: '1' }, 'garbage', null]))).toEqual([]);
+  });
+});
+
+describe('cwScenariosToJSON / mergeImportedCwScenarios', () => {
+  it('round-trips a valid list through JSON', () => {
+    const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(parseCwScenariosJSON(cwScenariosToJSON(list))).toEqual(list);
+  });
+
+  it('mergeImportedCwScenarios assigns fresh ids to imported entries, avoiding collisions', () => {
+    const existing = addCreditworthinessScenario([], 'Istniejący', DEFAULT_CREDITWORTHINESS_INPUTS);
+    const imported = [{ id: existing[0]!.id, name: 'Zaimportowany', savedAt: Date.now(), inputs: DEFAULT_CREDITWORTHINESS_INPUTS }];
+    const merged = mergeImportedCwScenarios(existing, imported);
+    expect(merged).toHaveLength(2);
+    expect(merged[1]!.id).not.toBe(existing[0]!.id);
+  });
+
+  it('mergeImportedCwScenarios caps the result at MAX_CW_SCENARIOS, keeping the newest', () => {
+    let existing = addCreditworthinessScenario([], 'S0', DEFAULT_CREDITWORTHINESS_INPUTS);
+    for (let i = 1; i < MAX_CW_SCENARIOS; i++) existing = addCreditworthinessScenario(existing, `S${i}`, DEFAULT_CREDITWORTHINESS_INPUTS);
+    const imported = [{ id: 'x', name: 'Nowy import', savedAt: Date.now(), inputs: DEFAULT_CREDITWORTHINESS_INPUTS }];
+    const merged = mergeImportedCwScenarios(existing, imported);
+    expect(merged).toHaveLength(MAX_CW_SCENARIOS);
+    expect(merged[merged.length - 1]!.name).toBe('Nowy import');
   });
 });
 

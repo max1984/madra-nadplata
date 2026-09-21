@@ -292,6 +292,28 @@ export function willDropOldestCwScenario(currentCount: number, addingCount: numb
   return currentCount + addingCount > MAX_CW_SCENARIOS;
 }
 
+/** Do przycisku "Eksportuj scenariusze" — jak salaryScenariosToJSON w useSalaryCalculator.ts. */
+export function cwScenariosToJSON(list: SavedCreditworthinessScenario[]): string {
+  return JSON.stringify(list, null, 2);
+}
+
+/**
+ * Jak mergeImportedSalaryScenarios w useSalaryCalculator.ts — nowe id dla
+ * każdego zaimportowanego wpisu (unika kolizji z tym, co już jest zapisane
+ * w tej samej przeglądarce), obcięte do MAX_CW_SCENARIOS (zachowuje najnowsze).
+ */
+export function mergeImportedCwScenarios(
+  existing: SavedCreditworthinessScenario[],
+  imported: SavedCreditworthinessScenario[]
+): SavedCreditworthinessScenario[] {
+  const reIded = imported.map((s) => ({
+    ...s,
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+  }));
+  const next = [...existing, ...reIded];
+  return next.length > MAX_CW_SCENARIOS ? next.slice(next.length - MAX_CW_SCENARIOS) : next;
+}
+
 // ------------------------------------------------------------- hook ---
 
 export function useCreditworthinessCalculator() {
@@ -389,6 +411,19 @@ export function useCreditworthinessCalculator() {
     });
   }, []);
 
+  /** Zwraca liczbę faktycznie zaimportowanych scenariuszy — do komunikatu w UI, jak w useSalaryCalculator.ts. */
+  const importScenarios = useCallback((json: string): number => {
+    const imported = parseCwScenariosJSON(json);
+    if (imported.length === 0) return 0;
+    setScenarios((prev) => {
+      const next = mergeImportedCwScenarios(prev, imported);
+      setScenarioSaveError(!persistCreditworthinessScenarios(next));
+      setScenarioLimitReached(willDropOldestCwScenario(prev.length, imported.length));
+      return next;
+    });
+    return imported.length;
+  }, []);
+
   return {
     inputs,
     setInputs,
@@ -403,5 +438,6 @@ export function useCreditworthinessCalculator() {
     saveCurrentAsScenario,
     loadScenario,
     deleteScenario,
+    importScenarios,
   };
 }

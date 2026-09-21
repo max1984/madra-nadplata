@@ -23,6 +23,8 @@ export type CreditworthinessTranslationKey =
   | 'cw_scenario_name_placeholder' | 'cw_scenario_save' | 'cw_scenario_save_storage_error'
   | 'cw_scenario_saved_title' | 'cw_scenario_load' | 'cw_scenario_delete'
   | 'cw_scenario_delete_confirm' | 'cw_scenario_delete_cancel' | 'cw_scenario_limit_reached'
+  | 'cw_scenario_import' | 'cw_scenario_export' | 'cw_scenario_import_success'
+  | 'cw_scenario_import_empty' | 'cw_scenario_import_error'
   | 'cw_scenario_filter_placeholder' | 'cw_scenario_filter_no_match' | 'cw_scenario_sort_label'
   | 'cw_scenario_sort_newest' | 'cw_scenario_sort_oldest' | 'cw_scenario_sort_name'
   | 'error_cw_income' | 'error_cw_household_size' | 'error_cw_years' | 'error_cw_nominal_rate'
@@ -74,6 +76,11 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_delete_confirm: 'Na pewno?',
   cw_scenario_delete_cancel: 'Anuluj',
   cw_scenario_limit_reached: 'Limit 10 zapisanych scenariuszy osiągnięty — najstarszy został usunięty, żeby zrobić miejsce na nowy.',
+  cw_scenario_import: '⬆️ Importuj',
+  cw_scenario_export: '⬇️ Eksportuj',
+  cw_scenario_import_success: 'Zaimportowano {n} scenariuszy',
+  cw_scenario_import_empty: 'Nie znaleziono poprawnych scenariuszy w pliku',
+  cw_scenario_import_error: 'Nie udało się odczytać pliku',
   cw_scenario_filter_placeholder: 'Szukaj scenariusza…',
   cw_scenario_filter_no_match: 'Brak scenariuszy pasujących do wyszukiwania',
   cw_scenario_sort_label: 'Sortuj scenariusze',
@@ -134,6 +141,11 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_delete_confirm: 'Sure?',
   cw_scenario_delete_cancel: 'Cancel',
   cw_scenario_limit_reached: 'Reached the 10 saved-scenario limit — the oldest one was removed to make room for this one.',
+  cw_scenario_import: '⬆️ Import',
+  cw_scenario_export: '⬇️ Export',
+  cw_scenario_import_success: 'Imported {n} scenarios',
+  cw_scenario_import_empty: 'No valid scenarios found in the file',
+  cw_scenario_import_error: 'Could not read the file',
   cw_scenario_filter_placeholder: 'Search scenarios…',
   cw_scenario_filter_no_match: 'No scenarios match your search',
   cw_scenario_sort_label: 'Sort scenarios',
