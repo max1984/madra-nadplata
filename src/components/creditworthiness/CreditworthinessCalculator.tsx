@@ -3,6 +3,7 @@ import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
+import { MAX_CW_SCENARIO_NAME_LENGTH, type SavedCreditworthinessScenario } from '../../hooks/useCreditworthinessCalculator';
 
 /**
  * Jak formatResultsSummaryText w Calculator.tsx — czysty tekst wyniku do
@@ -32,6 +33,12 @@ interface Props {
   onCalculate: () => void;
   onResetToDefaults: () => void;
   isStale: boolean;
+  /** Zapisywanie scenariuszy — opcjonalne z bezpiecznymi domyślnymi, jak w SalaryCalculator.tsx. */
+  scenarios?: SavedCreditworthinessScenario[];
+  scenarioSaveError?: boolean;
+  onSaveScenario?: (name: string) => void;
+  onLoadScenario?: (id: string) => void;
+  onDeleteScenario?: (id: string) => void;
 }
 
 const CONTRACT_TABS: { key: CreditworthinessContractType; label: TranslationKey }[] = [
@@ -71,10 +78,29 @@ export function buildMortgageLinkHref(maxLoanAmount: number): string {
 
 export default function CreditworthinessCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
+  scenarios = [], scenarioSaveError = false,
+  onSaveScenario = () => {}, onLoadScenario = () => {}, onDeleteScenario = () => {},
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [scenarioName, setScenarioName] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleSaveScenario = () => {
+    if (!scenarioName.trim()) return;
+    onSaveScenario(scenarioName.trim());
+    setScenarioName('');
+  };
+
+  const handleDeleteClick = (id: string) => {
+    if (confirmDeleteId === id) {
+      onDeleteScenario(id);
+      setConfirmDeleteId(null);
+    } else {
+      setConfirmDeleteId(id);
+    }
+  };
 
   const handleCopySummary = () => {
     if (!calcState) return;
@@ -278,6 +304,70 @@ export default function CreditworthinessCalculator({
           <div className="form-group" style={{ display: 'flex', gap: 12, marginTop: 12 }}>
             <button type="button" className="calc-btn" onClick={onCalculate}>{t('cw_calculate_btn')}</button>
             <button type="button" className="toolbar-btn" onClick={onResetToDefaults}>{t('cw_reset_btn')}</button>
+          </div>
+
+          <div className="scenario-panel">
+            <div className="scenario-save-row">
+              <input
+                type="text"
+                className="scenario-name-input"
+                placeholder={t('cw_scenario_name_placeholder')}
+                value={scenarioName}
+                maxLength={MAX_CW_SCENARIO_NAME_LENGTH}
+                onChange={(e) => setScenarioName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveScenario(); }}
+              />
+              <button
+                type="button"
+                className="copy-link-btn"
+                onClick={handleSaveScenario}
+                disabled={!scenarioName.trim()}
+                style={!scenarioName.trim() ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+              >
+                {t('cw_scenario_save')}
+              </button>
+              {scenarioSaveError && (
+                <div className="scenario-save-error" role="alert" style={{ color: 'var(--danger)', fontSize: '.85rem', marginTop: '6px' }}>
+                  {t('cw_scenario_save_storage_error')}
+                </div>
+              )}
+            </div>
+            {scenarios.length > 0 && (
+              <div className="scenario-list">
+                <div className="scenario-list-header">
+                  <div className="scenario-list-title">{t('cw_scenario_saved_title')}</div>
+                </div>
+                {scenarios.map((s) => {
+                  const isConfirmingDelete = confirmDeleteId === s.id;
+                  return (
+                    <div className="scenario-row" key={s.id}>
+                      <span className="scenario-row-name">{s.name}</span>
+                      <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
+                        {t('cw_scenario_load')}
+                      </button>
+                      {isConfirmingDelete ? (
+                        <>
+                          <button
+                            type="button"
+                            className="scenario-row-btn scenario-row-btn-delete"
+                            onClick={() => handleDeleteClick(s.id)}
+                          >
+                            {t('cw_scenario_delete_confirm')}
+                          </button>
+                          <button type="button" className="scenario-row-btn" onClick={() => setConfirmDeleteId(null)}>
+                            {t('cw_scenario_delete_cancel')}
+                          </button>
+                        </>
+                      ) : (
+                        <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => handleDeleteClick(s.id)}>
+                          {t('cw_scenario_delete')}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

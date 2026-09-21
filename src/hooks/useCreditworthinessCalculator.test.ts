@@ -8,6 +8,13 @@ import {
   loadStoredCreditworthinessInputs,
   clearStoredCreditworthinessInputs,
   DEFAULT_CREDITWORTHINESS_INPUTS,
+  addCreditworthinessScenario,
+  removeCreditworthinessScenario,
+  loadCreditworthinessScenarios,
+  persistCreditworthinessScenarios,
+  parseCwScenariosJSON,
+  MAX_CW_SCENARIOS,
+  MAX_CW_SCENARIO_NAME_LENGTH,
 } from './useCreditworthinessCalculator';
 import type { CreditworthinessInputs } from '../lib/creditworthiness';
 
@@ -209,4 +216,108 @@ describe('saveCreditworthinessInputs / loadStoredCreditworthinessInputs / clearS
     fake.setItem('creditworthiness_inputs_v1', '"just a string"');
     expect(loadStoredCreditworthinessInputs()).toBeNull();
   });
+});
+
+describe('addCreditworthinessScenario / removeCreditworthinessScenario', () => {
+  it('adds a scenario with a trimmed, length-clamped name and its own id/timestamp', () => {
+    const list = addCreditworthinessScenario([], '  Rodzina, 2 osoby  ', DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.name).toBe('Rodzina, 2 osoby');
+    expect(list[0]!.inputs).toEqual(DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(list[0]!.id).toBeTruthy();
+    expect(list[0]!.savedAt).toBeGreaterThan(0);
+  });
+
+  it('clamps a very long scenario name to MAX_CW_SCENARIO_NAME_LENGTH', () => {
+    const long = 'x'.repeat(MAX_CW_SCENARIO_NAME_LENGTH + 20);
+    const list = addCreditworthinessScenario([], long, DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(list[0]!.name).toHaveLength(MAX_CW_SCENARIO_NAME_LENGTH);
+  });
+
+  it('drops the oldest scenario once the list exceeds MAX_CW_SCENARIOS', () => {
+    let list: ReturnType<typeof addCreditworthinessScenario> = [];
+    for (let i = 0; i < MAX_CW_SCENARIOS; i++) {
+      list = addCreditworthinessScenario(list, `Wariant ${i}`, DEFAULT_CREDITWORTHINESS_INPUTS);
+    }
+    expect(list).toHaveLength(MAX_CW_SCENARIOS);
+    list = addCreditworthinessScenario(list, 'Nowy', DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(list).toHaveLength(MAX_CW_SCENARIOS);
+    expect(list[0]!.name).toBe('Wariant 1');
+    expect(list[list.length - 1]!.name).toBe('Nowy');
+  });
+
+  it('removeCreditworthinessScenario filters out the matching id and leaves others untouched', () => {
+    const list = addCreditworthinessScenario(
+      addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS), 'B', DEFAULT_CREDITWORTHINESS_INPUTS
+    );
+    const targetId = list[0]!.id;
+    const next = removeCreditworthinessScenario(list, targetId);
+    expect(next).toHaveLength(1);
+    expect(next[0]!.name).toBe('B');
+  });
+
+  it('removeCreditworthinessScenario is a no-op for an unknown id', () => {
+    const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(removeCreditworthinessScenario(list, 'nonexistent')).toEqual(list);
+  });
+});
+
+describe('parseCwScenariosJSON', () => {
+  it('parses a valid array of scenarios', () => {
+    const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(parseCwScenariosJSON(JSON.stringify(list))).toEqual(list);
+  });
+
+  it('returns an empty array for malformed JSON or a non-array top level', () => {
+    expect(parseCwScenariosJSON('not json')).toEqual([]);
+    expect(parseCwScenariosJSON(JSON.stringify({ not: 'an array' }))).toEqual([]);
+  });
+
+  it(
+    'regression: drops a scenario whose name is empty or whitespace-only instead of importing an unlabeled ' +
+      'row — matches parseScenariosJSON in useCalculator.ts / parseSalaryScenariosJSON in useSalaryCalculator.ts',
+    () => {
+      const valid = { id: '1', name: 'OK', savedAt: Date.now(), inputs: DEFAULT_CREDITWORTHINESS_INPUTS };
+      const blank = { id: '2', name: '   ', savedAt: Date.now(), inputs: DEFAULT_CREDITWORTHINESS_INPUTS };
+      expect(parseCwScenariosJSON(JSON.stringify([valid, blank]))).toEqual([valid]);
+    }
+  );
+
+  it('drops entries with a missing/wrong-typed field instead of throwing', () => {
+    expect(parseCwScenariosJSON(JSON.stringify([{ id: '1' }, 'garbage', null]))).toEqual([]);
+  });
+});
+
+describe('loadCreditworthinessScenarios / persistCreditworthinessScenarios', () => {
+  let fake: FakeStorage;
+
+  beforeEach(() => {
+    fake = new FakeStorage();
+    vi.stubGlobal('localStorage', fake);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('round-trips a scenario list through persist/load', () => {
+    const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
+    persistCreditworthinessScenarios(list);
+    expect(loadCreditworthinessScenarios()).toEqual(list);
+  });
+
+  it('returns an empty list when nothing has been saved yet', () => {
+    expect(loadCreditworthinessScenarios()).toEqual([]);
+  });
+
+  it(
+    'regression: persistCreditworthinessScenarios reports storage failure instead of silently succeeding — ' +
+      'lets the hook set scenarioSaveError, same pattern as persistScenarios in useCalculator.ts',
+    () => {
+      vi.spyOn(fake, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+      expect(persistCreditworthinessScenarios([])).toBe(false);
+    }
+  );
 });

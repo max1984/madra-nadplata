@@ -187,6 +187,78 @@ export function resolveInitialCreditworthinessInputs(
   return validateCreditworthinessInputs(merged) === null ? merged : DEFAULT_CREDITWORTHINESS_INPUTS;
 }
 
+// ---------------------------------------------------------- scenariusze ---
+
+export interface SavedCreditworthinessScenario {
+  id: string;
+  name: string;
+  savedAt: number;
+  inputs: CreditworthinessInputs;
+}
+
+const CW_SCENARIOS_KEY = 'creditworthiness_scenarios_v1';
+export const MAX_CW_SCENARIOS = 10;
+export const MAX_CW_SCENARIO_NAME_LENGTH = 60;
+
+/** Jak clampScenarioName w useCalculator.ts — patrz tam po uzasadnienie limitu. */
+function clampCwScenarioName(name: string): string {
+  return name.trim().slice(0, MAX_CW_SCENARIO_NAME_LENGTH);
+}
+
+/**
+ * Jak parseScenariosJSON w useCalculator.ts — jeden uszkodzony wpis (ręczna
+ * edycja localStorage) nie wywala całej listy, a pusta/białoznakowa nazwa
+ * jest odrzucana tak samo jak tam.
+ */
+export function parseCwScenariosJSON(raw: string): SavedCreditworthinessScenario[] {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((s): s is SavedCreditworthinessScenario =>
+      typeof s === 'object' && s !== null &&
+      typeof (s as SavedCreditworthinessScenario).id === 'string' &&
+      typeof (s as SavedCreditworthinessScenario).name === 'string' &&
+      (s as SavedCreditworthinessScenario).name.trim().length > 0 &&
+      typeof (s as SavedCreditworthinessScenario).savedAt === 'number' &&
+      typeof (s as SavedCreditworthinessScenario).inputs === 'object' && (s as SavedCreditworthinessScenario).inputs !== null,
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function loadCreditworthinessScenarios(): SavedCreditworthinessScenario[] {
+  const raw = safeGetItem(CW_SCENARIOS_KEY);
+  if (!raw) return [];
+  return parseCwScenariosJSON(raw);
+}
+
+export function persistCreditworthinessScenarios(list: SavedCreditworthinessScenario[]): boolean {
+  return safeSetItem(CW_SCENARIOS_KEY, JSON.stringify(list));
+}
+
+/**
+ * Dodaje nowy scenariusz na koniec listy, obcinając najstarsze wpisy powyżej
+ * MAX_CW_SCENARIOS (jak addScenario w useCalculator.ts). Zapisuje CAŁY stan
+ * CreditworthinessInputs.
+ */
+export function addCreditworthinessScenario(
+  list: SavedCreditworthinessScenario[], name: string, inputs: CreditworthinessInputs
+): SavedCreditworthinessScenario[] {
+  const scenario: SavedCreditworthinessScenario = {
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    name: clampCwScenarioName(name),
+    savedAt: Date.now(),
+    inputs,
+  };
+  const next = [...list, scenario];
+  return next.length > MAX_CW_SCENARIOS ? next.slice(next.length - MAX_CW_SCENARIOS) : next;
+}
+
+export function removeCreditworthinessScenario(list: SavedCreditworthinessScenario[], id: string): SavedCreditworthinessScenario[] {
+  return list.filter((s) => s.id !== id);
+}
+
 // ------------------------------------------------------------- hook ---
 
 export function useCreditworthinessCalculator() {
@@ -213,6 +285,8 @@ export function useCreditworthinessCalculator() {
   });
 
   const [calcError, setCalcError] = useState<TranslationKey | null>(null);
+  const [scenarios, setScenarios] = useState<SavedCreditworthinessScenario[]>(() => loadCreditworthinessScenarios());
+  const [scenarioSaveError, setScenarioSaveError] = useState(false);
 
   const isStale =
     calcState !== null && lastCalculatedInputs !== null && JSON.stringify(inputs) !== JSON.stringify(lastCalculatedInputs);
@@ -248,6 +322,37 @@ export function useCreditworthinessCalculator() {
     window.history.replaceState(null, '', window.location.pathname);
   }, []);
 
+  // Zapisuje CAŁY bieżący stan `inputs`. localStorage.setItem może rzucić
+  // (storage pełny/zablokowany); scenarioSaveError daje UI sygnał do
+  // pokazania ostrzeżenia, tak samo jak w pozostałych dwóch kalkulatorach.
+  const saveCurrentAsScenario = useCallback((name: string) => {
+    setScenarios((prev) => {
+      const next = addCreditworthinessScenario(prev, name, inputs);
+      setScenarioSaveError(!persistCreditworthinessScenarios(next));
+      return next;
+    });
+  }, [inputs]);
+
+  // resolveInitialCreditworthinessInputs waliduje scenario.inputs przed
+  // wpisaniem do formularza — parseCwScenariosJSON sprawdza tylko kształt
+  // obiektu, nie wartości pól (jak loadScenario w useCalculator.ts/
+  // useSalaryCalculator.ts).
+  const loadScenario = useCallback((id: string) => {
+    const scenario = scenarios.find((s) => s.id === id);
+    if (!scenario) return;
+    const inp = resolveInitialCreditworthinessInputs(scenario.inputs);
+    setInputsState(inp);
+    applyCalculation(inp);
+  }, [scenarios, applyCalculation]);
+
+  const deleteScenario = useCallback((id: string) => {
+    setScenarios((prev) => {
+      const next = removeCreditworthinessScenario(prev, id);
+      setScenarioSaveError(!persistCreditworthinessScenarios(next));
+      return next;
+    });
+  }, []);
+
   return {
     inputs,
     setInputs,
@@ -256,5 +361,10 @@ export function useCreditworthinessCalculator() {
     calculate,
     isStale,
     resetToDefaults,
+    scenarios,
+    scenarioSaveError,
+    saveCurrentAsScenario,
+    loadScenario,
+    deleteScenario,
   };
 }
