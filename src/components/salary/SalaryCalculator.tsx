@@ -155,6 +155,7 @@ export default function SalaryCalculator({
   const { t, fmt, fmtC, lang } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
 
@@ -242,6 +243,17 @@ export default function SalaryCalculator({
     copyToClipboard(text, () => {
       setCopiedSummary(true);
       setTimeout(() => setCopiedSummary(false), 2000);
+    });
+  };
+
+  // window.location.href już zawiera bieżące inputy jako query params —
+  // computeSalaryState/useSalaryCalculator woła replaceState po każdym
+  // przeliczeniu (buildSalaryUrlParams), więc "kopiuj link" nie musi
+  // budować URL-a samo, jak w Calculator.tsx.
+  const handleCopyLink = () => {
+    copyToClipboard(window.location.href, () => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
     });
   };
 
@@ -1021,6 +1033,9 @@ export default function SalaryCalculator({
             )}
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <button type="button" className="toolbar-btn" onClick={handleCopyLink}>
+                {copiedLink ? t('copy_link_copied') : t('copy_link')}
+              </button>
               <button type="button" className="toolbar-btn" onClick={handleCopySummary}>
                 {copiedSummary ? t('copy_summary_copied') : t('copy_summary')}
               </button>

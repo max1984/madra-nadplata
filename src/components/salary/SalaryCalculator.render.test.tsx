@@ -54,3 +54,14 @@ describe('SalaryCalculator print button (render)', () => {
     expect(screen.getByRole('button', { name: /drukuj/i })).toBeInTheDocument();
   });
 });
+
+describe('SalaryCalculator copy link/summary buttons (render)', () => {
+  it('regression: "Kopiuj link" and "Kopiuj podsumowanie" buttons appear once a result exists — the salary calculator previously had neither, unlike the mortgage and creditworthiness calculators', async () => {
+    const user = userEvent.setup();
+    renderSalaryCalculator();
+    await user.click(screen.getByRole('button', { name: /oblicz/i }));
+
+    expect(screen.getByRole('button', { name: /kopiuj link/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /kopiuj podsumowanie/i })).toBeInTheDocument();
+  });
+});

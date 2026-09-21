@@ -147,6 +147,7 @@ export default function CreditworthinessCalculator({
   const { t, fmt, fmtC } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [scenarioName, setScenarioName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
@@ -221,6 +222,17 @@ export default function CreditworthinessCalculator({
     copyToClipboard(text, () => {
       setCopiedSummary(true);
       setTimeout(() => setCopiedSummary(false), 2000);
+    });
+  };
+
+  // window.location.href już zawiera bieżące inputy jako query params —
+  // computeCalcState/useCreditworthinessCalculator woła replaceState po
+  // każdym przeliczeniu (buildCreditworthinessUrlParams), więc "kopiuj
+  // link" nie musi budować URL-a samo, jak w Calculator.tsx.
+  const handleCopyLink = () => {
+    copyToClipboard(window.location.href, () => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
     });
   };
 
@@ -578,6 +590,9 @@ export default function CreditworthinessCalculator({
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <button type="button" className="toolbar-btn" onClick={handleCopyLink}>
+                {copiedLink ? t('copy_link_copied') : t('copy_link')}
+              </button>
               <button type="button" className="toolbar-btn" onClick={handleCopySummary}>
                 {copiedSummary ? t('copy_summary_copied') : t('cw_copy_summary')}
               </button>
