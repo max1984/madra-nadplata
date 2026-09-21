@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -183,6 +183,14 @@ describe('formatChartYTick', () => {
       expect(formatChartYTick(1234567, fmtEn)).toBe(`${fmtEn(1234.567)}k`);
     },
   );
+});
+
+describe('formatScenarioCount', () => {
+  it('formats as "count/10", matching MAX_SCENARIOS in useCalculator.ts', () => {
+    expect(formatScenarioCount(0)).toBe('0/10');
+    expect(formatScenarioCount(3)).toBe('3/10');
+    expect(formatScenarioCount(10)).toBe('10/10');
+  });
 });
 
 describe('buildScenarioComparisonCSV', () => {

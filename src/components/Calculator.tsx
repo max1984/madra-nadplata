@@ -7,7 +7,7 @@ import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, filterScenariosByName, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, MAX_SCENARIO_NAME_LENGTH, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, filterScenariosByName, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, MAX_SCENARIO_NAME_LENGTH, MAX_SCENARIOS, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -202,6 +202,16 @@ interface Props {
  */
 export function formatChartYTick(v: number, fmt: (n: number, dec?: number) => string): string {
   return fmt(v / 1000) + 'k';
+}
+
+/**
+ * "X/10" obok tytułu listy zapisanych scenariuszy — ostrzeżenie
+ * scenarioLimitReached (patrz useCalculator.ts) informuje dopiero PO tym,
+ * jak limit wypchnął najstarszy wpis; ten licznik pokazuje zbliżający się
+ * limit z wyprzedzeniem, zanim cokolwiek zostanie utracone.
+ */
+export function formatScenarioCount(count: number): string {
+  return `${count}/${MAX_SCENARIOS}`;
 }
 
 export default function Calculator({
@@ -1012,7 +1022,10 @@ export default function Calculator({
               {scenarios.length > 0 && (
                 <div className="scenario-list">
                   <div className="scenario-list-header">
-                    <div className="scenario-list-title">{t('scenario_saved_title')}</div>
+                    <div className="scenario-list-title">
+                      {t('scenario_saved_title')}
+                      <span className="scenario-count"> ({formatScenarioCount(scenarios.length)})</span>
+                    </div>
                     {scenarios.length > 1 && (
                       <input
                         type="text"

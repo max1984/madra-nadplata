@@ -201,7 +201,7 @@ export interface SavedScenario {
 }
 
 const SCENARIOS_KEY = 'calc_scenarios_v1';
-const MAX_SCENARIOS = 10;
+export const MAX_SCENARIOS = 10;
 export const MAX_SCENARIO_NAME_LENGTH = 60;
 
 /**
