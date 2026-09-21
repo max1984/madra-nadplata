@@ -11,6 +11,7 @@ import {
   addCreditworthinessScenario,
   removeCreditworthinessScenario,
   renameCreditworthinessScenario,
+  duplicateCreditworthinessScenario,
   loadCreditworthinessScenarios,
   persistCreditworthinessScenarios,
   parseCwScenariosJSON,
@@ -308,6 +309,42 @@ describe('renameCreditworthinessScenario', () => {
     expect(next[1]!.name).toBe('B');
   });
 });
+
+describe(
+  'duplicateCreditworthinessScenario',
+  () => {
+    it('regression: duplicating a scenario was previously impossible — mortgage and salary calculators already had this feature, creditworthiness did not', () => {
+      const list = addCreditworthinessScenario([], 'Oryginał', DEFAULT_CREDITWORTHINESS_INPUTS);
+      const next = duplicateCreditworthinessScenario(list, list[0]!.id, 'Oryginał (kopia)');
+      expect(next).toHaveLength(2);
+      expect(next[1]!.name).toBe('Oryginał (kopia)');
+      expect(next[1]!.id).not.toBe(list[0]!.id);
+      expect(next[1]!.inputs).toEqual(list[0]!.inputs);
+      expect(next[0]!.name).toBe('Oryginał');
+    });
+
+    it('falls back to the original name when the given new name is blank, deduplicated against the original itself', () => {
+      const list = addCreditworthinessScenario([], 'Oryginał', DEFAULT_CREDITWORTHINESS_INPUTS);
+      const next = duplicateCreditworthinessScenario(list, list[0]!.id, '   ');
+      expect(next[1]!.name).toBe('Oryginał (2)');
+    });
+
+    it('is a no-op for an unknown id', () => {
+      const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
+      expect(duplicateCreditworthinessScenario(list, 'nonexistent', 'X')).toEqual(list);
+    });
+
+    it('caps the result at MAX_CW_SCENARIOS, dropping the oldest', () => {
+      let list: ReturnType<typeof addCreditworthinessScenario> = [];
+      for (let i = 0; i < MAX_CW_SCENARIOS; i++) {
+        list = addCreditworthinessScenario(list, `S${i}`, DEFAULT_CREDITWORTHINESS_INPUTS);
+      }
+      const next = duplicateCreditworthinessScenario(list, list[0]!.id, 'Kopia');
+      expect(next).toHaveLength(MAX_CW_SCENARIOS);
+      expect(next.some((s) => s.name === 'Kopia')).toBe(true);
+    });
+  }
+);
 
 describe('willDropOldestCwScenario', () => {
   it('returns false while the list still has room for the new entries', () => {

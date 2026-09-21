@@ -53,6 +53,7 @@ interface Props {
   onLoadScenario?: (id: string) => void;
   onDeleteScenario?: (id: string) => void;
   onRenameScenario?: (id: string, newName: string) => void;
+  onDuplicateScenario?: (id: string, newName: string) => void;
   onImportScenarios?: (json: string) => number;
 }
 
@@ -143,7 +144,7 @@ export default function CreditworthinessCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
   scenarios = [], scenarioSaveError = false, scenarioLimitReached = false,
   onSaveScenario = () => {}, onLoadScenario = () => {}, onDeleteScenario = () => {},
-  onRenameScenario = () => {}, onImportScenarios = () => 0,
+  onRenameScenario = () => {}, onDuplicateScenario = () => {}, onImportScenarios = () => 0,
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -551,6 +552,13 @@ export default function CreditworthinessCalculator({
                       )}
                       <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
                         {t('cw_scenario_load')}
+                      </button>
+                      <button
+                        type="button"
+                        className="scenario-row-btn"
+                        onClick={() => onDuplicateScenario(s.id, `${s.name} ${t('cw_scenario_copy_suffix')}`)}
+                      >
+                        {t('cw_scenario_duplicate')}
                       </button>
                       {isConfirmingDelete ? (
                         <>

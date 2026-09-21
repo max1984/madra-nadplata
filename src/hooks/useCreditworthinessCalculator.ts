@@ -281,6 +281,25 @@ export function renameCreditworthinessScenario(
 }
 
 /**
+ * Jak duplicateSalaryScenario w useSalaryCalculator.ts — brakowało tu tej
+ * funkcji mimo że mortgage i salary mają duplikowanie scenariuszy od dawna.
+ */
+export function duplicateCreditworthinessScenario(
+  list: SavedCreditworthinessScenario[], id: string, newName: string
+): SavedCreditworthinessScenario[] {
+  const original = list.find((s) => s.id === id);
+  if (!original) return list;
+  const copy: SavedCreditworthinessScenario = {
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    name: uniqueScenarioName(list.map((s) => s.name), clampCwScenarioName(newName) || original.name),
+    savedAt: Date.now(),
+    inputs: original.inputs,
+  };
+  const next = [...list, copy];
+  return next.length > MAX_CW_SCENARIOS ? next.slice(next.length - MAX_CW_SCENARIOS) : next;
+}
+
+/**
  * addCreditworthinessScenario obcina listę do MAX_CW_SCENARIOS, cicho
  * wypychając najstarszy wpis — jak willDropOldestSalaryScenario w
  * useSalaryCalculator.ts, pozwala UI sprawdzić z wyprzedzeniem, czy zapis
@@ -447,6 +466,15 @@ export function useCreditworthinessCalculator() {
     });
   }, []);
 
+  const duplicateScenarioById = useCallback((id: string, newName: string) => {
+    setScenarios((prev) => {
+      const next = duplicateCreditworthinessScenario(prev, id, newName);
+      setScenarioSaveError(!persistCreditworthinessScenarios(next));
+      setScenarioLimitReached(willDropOldestCwScenario(prev.length, 1));
+      return next;
+    });
+  }, []);
+
   /** Zwraca liczbę faktycznie zaimportowanych scenariuszy — do komunikatu w UI, jak w useSalaryCalculator.ts. */
   const importScenarios = useCallback((json: string): number => {
     const imported = parseCwScenariosJSON(json);
@@ -475,6 +503,7 @@ export function useCreditworthinessCalculator() {
     loadScenario,
     deleteScenario,
     renameScenarioById,
+    duplicateScenarioById,
     importScenarios,
   };
 }

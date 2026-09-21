@@ -22,6 +22,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_copy_summary' | 'cw_share_summary_text' | 'cw_print'
   | 'cw_scenario_name_placeholder' | 'cw_scenario_save' | 'cw_scenario_save_storage_error'
   | 'cw_scenario_saved_title' | 'cw_scenario_load' | 'cw_scenario_delete'
+  | 'cw_scenario_duplicate' | 'cw_scenario_copy_suffix'
   | 'cw_scenario_delete_confirm' | 'cw_scenario_delete_cancel' | 'cw_scenario_limit_reached' | 'cw_scenario_rename_hint'
   | 'cw_scenario_import' | 'cw_scenario_export' | 'cw_scenario_import_success'
   | 'cw_scenario_import_empty' | 'cw_scenario_import_error'
@@ -74,6 +75,8 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_save_storage_error: 'Nie udało się zapisać scenariusza na tym urządzeniu (pamięć przeglądarki jest pełna lub zablokowana) — po odświeżeniu strony może zniknąć.',
   cw_scenario_saved_title: 'Zapisane scenariusze',
   cw_scenario_load: 'Wczytaj',
+  cw_scenario_duplicate: '📄 Duplikuj',
+  cw_scenario_copy_suffix: '(kopia)',
   cw_scenario_delete: 'Usuń',
   cw_scenario_delete_confirm: 'Na pewno?',
   cw_scenario_delete_cancel: 'Anuluj',
@@ -142,6 +145,8 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_save_storage_error: 'Could not save this scenario on this device (browser storage is full or blocked) — it may disappear after a page refresh.',
   cw_scenario_saved_title: 'Saved scenarios',
   cw_scenario_load: 'Load',
+  cw_scenario_duplicate: '📄 Duplicate',
+  cw_scenario_copy_suffix: '(copy)',
   cw_scenario_delete: 'Delete',
   cw_scenario_delete_confirm: 'Sure?',
   cw_scenario_delete_cancel: 'Cancel',
