@@ -505,11 +505,19 @@ export function flatOverpayWithStart(months: number, amount: number, startMonth:
  * tutaj uproszczone do jednej dodatkowej wpłaty raz w roku, bo polskie
  * kredyty rozliczane są miesięcznie i sama zmiana częstotliwości płatności
  * nie ma tu odpowiednika — liczy się tylko dodatkowa kwota rocznie.
+ *
+ * startMonth pomija roczne raty przed opóźnionym startem nadpłaty —
+ * inaczej "13. rata" w miesiącu 12 wstrzykiwałaby nadpłatę, nawet gdy
+ * użytkownik ustawił start dopiero np. od miesiąca 20, łamiąc gwarancję
+ * "zero nadpłat przed startem" z naturalOverpaysWithStart/flatOverpayWithStart.
  */
-export function applyExtraAnnualPayment(overpay: number[], months: number, extraAmount: number): number[] {
+export function applyExtraAnnualPayment(
+  overpay: number[], months: number, extraAmount: number, startMonth = 0
+): number[] {
   if (extraAmount <= 0) return overpay;
   const result = [...overpay];
   for (let i = 11; i < months; i += 12) {
+    if (i < startMonth) continue;
     result[i] = (result[i] ?? 0) + extraAmount;
   }
   return result;
@@ -551,7 +559,7 @@ export function computeCalcState(inp: CalcInputs): CalcState {
   // 'goal' nadpłata jest rozwiązywana pod konkretny cel w miesiącach, a
   // przy 'custom' użytkownik sam w pełni kontroluje harmonogram.
   if (inp.extraAnnualPayment && strategy !== 'custom' && strategy !== 'goal' && strategy !== 'refinance') {
-    customOverpay = applyExtraAnnualPayment(customOverpay, months, stdPayment);
+    customOverpay = applyExtraAnnualPayment(customOverpay, months, stdPayment, startMonth);
   }
 
   const base = buildBaseSchedule(P, customRates, months, r);
@@ -776,7 +784,7 @@ export function useCalculator() {
       let newRequiredOverpay = prev.requiredOverpay;
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
         newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, newRate, prev.overpayStartMonth);
-        if (prev.extraAnnualPayment) newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment);
+        if (prev.extraAnnualPayment) newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment, prev.overpayStartMonth);
       } else if (prev.strategy === 'goal' && prev.goalMonths !== undefined) {
         // Bez przeliczenia tutaj "wymagana nadpłata" i sam harmonogram cicho
         // rozjeżdżały się po edycji stopy w trakcie — nowe raty przechodziły
@@ -824,7 +832,7 @@ export function useCalculator() {
         newOverpay = Array<number>(prev.months).fill(prev.defaultOverpay);
       }
       if (prev.extraAnnualPayment && prev.strategy !== 'custom' && prev.strategy !== 'goal') {
-        newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment);
+        newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment, prev.overpayStartMonth);
       }
       const rows = buildSchedule(prev.P, prev.customRates, prev.months, prev.prepayFee, newOverpay, prev.r, resolveFixedStd(prev), resolvePerRowFixed(prev));
       return { ...prev, customOverpay: newOverpay, rows };
@@ -869,7 +877,7 @@ export function useCalculator() {
       let newRequiredOverpay = prev.requiredOverpay;
       if (prev.strategy === 'reduce_payment' || prev.strategy === 'fixed_total') {
         newOverpay = naturalOverpaysWithStart(prev.P, newRates, prev.months, prev.totalMonthly, prev.r, prev.overpayStartMonth);
-        if (prev.extraAnnualPayment) newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment);
+        if (prev.extraAnnualPayment) newOverpay = applyExtraAnnualPayment(newOverpay, prev.months, prev.origStdPayment, prev.overpayStartMonth);
       } else if (prev.strategy === 'goal' && prev.goalMonths !== undefined) {
         // Ten sam powód co w onRateChange — bez przeliczenia "Przywróć
         // oprocentowanie" wracało do stawki bazowej, ale requiredOverpay

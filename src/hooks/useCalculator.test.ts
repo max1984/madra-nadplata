@@ -258,6 +258,20 @@ describe('applyExtraAnnualPayment', () => {
     const result = applyExtraAnnualPayment(base, 10, 1800);
     expect(result).toEqual(Array(10).fill(200));
   });
+
+  it('regression: skips annual bumps that fall before a delayed overpayStartMonth', () => {
+    const base = Array<number>(30).fill(0);
+    const result = applyExtraAnnualPayment(base, 30, 1800, 20);
+    expect(result[11]).toBe(0); // miesiąc 12 — przed startem, bez nadpłaty
+    expect(result[23]).toBe(1800); // miesiąc 24 — po starcie
+  });
+
+  it('bumps every eligible month when startMonth is 0 (default, backward compatible)', () => {
+    const base = Array<number>(24).fill(0);
+    const result = applyExtraAnnualPayment(base, 24, 1800);
+    expect(result[11]).toBe(1800);
+    expect(result[23]).toBe(1800);
+  });
 });
 
 describe('computeCalcState — extraAnnualPayment integration', () => {
@@ -278,6 +292,21 @@ describe('computeCalcState — extraAnnualPayment integration', () => {
     const customWithout = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'custom', extraAnnualPayment: false });
     const customWith = computeCalcState({ ...DEFAULT_INPUTS, strategy: 'custom', extraAnnualPayment: true });
     expect(customWith.customOverpay).toEqual(customWithout.customOverpay);
+  });
+
+  it('regression: the "13th payment" does not fire before a delayed overpayStartMonth', () => {
+    const state = computeCalcState({
+      ...DEFAULT_INPUTS,
+      strategy: 'fixed_overpay',
+      overpayAmountSlider: 500,
+      overpayStartMonth: 20,
+      extraAnnualPayment: true,
+    });
+    // Miesiąc 12 (indeks 11) jest przed startem nadpłaty (miesiąc 20) —
+    // ani nadpłata "naturalna", ani "13. rata" nie powinny tam nic dodać.
+    expect(state.customOverpay[11]).toBe(0);
+    // Miesiąc 24 (indeks 23) jest po starcie — 13. rata powinna zadziałać.
+    expect(state.customOverpay[23]).toBeGreaterThan(state.defaultOverpay);
   });
 });
 
