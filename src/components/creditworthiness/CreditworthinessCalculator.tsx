@@ -1,7 +1,28 @@
 import { useState } from 'react';
 import { useLang } from '../../contexts/LangContext';
+import { copyToClipboard } from '../../lib/clipboard';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
+
+/**
+ * Jak formatResultsSummaryText w Calculator.tsx — czysty tekst wyniku do
+ * wklejenia w wiadomość, bez zrzutu ekranu. Wydzielone z komponentu, żeby
+ * dało się przetestować formatowanie/zaokrąglenia bez renderowania React.
+ */
+export function formatCreditworthinessSummaryText(
+  cs: CreditworthinessResult,
+  t: (key: TranslationKey) => string,
+  fmt: (n: number, dec?: number) => string,
+  fmtC: (n: number, dec?: number) => string,
+  url: string,
+): string {
+  return t('cw_share_summary_text')
+    .replace('{maxLoan}', fmtC(cs.maxLoanAmount))
+    .replace('{income}', fmtC(cs.recognizedIncome))
+    .replace('{installment}', fmtC(cs.maxInstallment))
+    .replace('{dsti}', fmt(cs.dstiThreshold * 100, 0))
+    .replace('{url}', url);
+}
 
 interface Props {
   inputs: CreditworthinessInputs;
@@ -53,6 +74,16 @@ export default function CreditworthinessCalculator({
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [copiedSummary, setCopiedSummary] = useState(false);
+
+  const handleCopySummary = () => {
+    if (!calcState) return;
+    const text = formatCreditworthinessSummaryText(calcState, t, fmt, fmtC, window.location.href);
+    copyToClipboard(text, () => {
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2000);
+    });
+  };
 
   return (
     <section id="creditworthiness-calculator">
@@ -266,15 +297,16 @@ export default function CreditworthinessCalculator({
                 <div>{t('cw_result_buffer')}: +{fmt(calcState.bufferPercent, 1)} p.p.</div>
               </div>
             </div>
-            {calcState.maxLoanAmount > 0 && (
-              <a
-                className="toolbar-btn"
-                style={{ display: 'inline-block', marginTop: 12 }}
-                href={buildMortgageLinkHref(calcState.maxLoanAmount)}
-              >
-                {t('cw_check_mortgage_link')}
-              </a>
-            )}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <button type="button" className="toolbar-btn" onClick={handleCopySummary}>
+                {copiedSummary ? t('copy_summary_copied') : t('cw_copy_summary')}
+              </button>
+              {calcState.maxLoanAmount > 0 && (
+                <a className="toolbar-btn" href={buildMortgageLinkHref(calcState.maxLoanAmount)}>
+                  {t('cw_check_mortgage_link')}
+                </a>
+              )}
+            </div>
           </div>
         )}
       </div>

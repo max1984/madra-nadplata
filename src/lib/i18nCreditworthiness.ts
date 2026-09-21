@@ -19,6 +19,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_result_recognized_income' | 'cw_result_household_cost' | 'cw_result_other_commitments'
   | 'cw_result_disposable_income' | 'cw_result_dsti_threshold' | 'cw_result_max_installment'
   | 'cw_result_buffer' | 'cw_result_max_loan_amount' | 'cw_advanced_toggle' | 'cw_check_mortgage_link'
+  | 'cw_copy_summary' | 'cw_share_summary_text'
   | 'error_cw_income' | 'error_cw_household_size' | 'error_cw_years' | 'error_cw_nominal_rate'
   | 'error_cw_income_recognition' | 'error_cw_out_of_range_field';
 
@@ -56,6 +57,8 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_result_max_loan_amount: 'Maksymalna kwota kredytu',
   cw_advanced_toggle: 'Opcje zaawansowane',
   cw_check_mortgage_link: 'Sprawdź ratę dla tej kwoty w kalkulatorze kredytu →',
+  cw_copy_summary: '📋 Kopiuj wynik',
+  cw_share_summary_text: 'Zdolność kredytowa: maksymalnie {maxLoan} (dochód uznany {income}, rata maks. {installment}, próg DSTI {dsti}%).\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
   error_cw_income: 'Podaj poprawną kwotę dochodu netto',
   error_cw_household_size: 'Liczba osób w gospodarstwie musi wynosić co najmniej 1',
   error_cw_years: 'Okres kredytowania musi być między 1 a 40 lat',
@@ -98,6 +101,8 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_result_max_loan_amount: 'Maximum loan amount',
   cw_advanced_toggle: 'Advanced options',
   cw_check_mortgage_link: 'Check the monthly payment for this amount in the mortgage calculator →',
+  cw_copy_summary: '📋 Copy result',
+  cw_share_summary_text: 'Credit capacity: up to {maxLoan} (recognized income {income}, max installment {installment}, DSTI threshold {dsti}%).\nCalculated with Mądra Nadpłata: {url}',
   error_cw_income: 'Enter a valid net income amount',
   error_cw_household_size: 'Household size must be at least 1',
   error_cw_years: 'Loan term must be between 1 and 40 years',
