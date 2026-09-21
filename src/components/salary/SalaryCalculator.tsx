@@ -636,40 +636,48 @@ export default function SalaryCalculator({
                   </>
                 )}
 
-                {canJointTax && (
-                  <>
-                    <label className="checkbox-row" htmlFor="joint-tax">
+                {/*
+                  Checkbox renderuje się ZAWSZE (nie tylko gdy canJointTax) —
+                  inaczej włączenie wspólnego rozliczenia na umowie o pracę,
+                  a potem przełączenie na B2B liniowy/ryczałt, chowało ten
+                  checkbox razem z jedynym sposobem jego odznaczenia:
+                  jointTaxation.enabled zostawało "true" w stanie (i tak
+                  bez efektu na wynik, patrz guard w computeSalaryState),
+                  ale użytkownik nie miał jak tego cofnąć bez powrotu do
+                  kwalifikującego się typu umowy. Pole dochodu małżonka i
+                  faktyczne zastosowanie w obliczeniach nadal wymagają
+                  canJointTax.
+                */}
+                <label className="checkbox-row" htmlFor="joint-tax">
+                  <input
+                    id="joint-tax"
+                    type="checkbox"
+                    checked={inputs.jointTaxation.enabled}
+                    onChange={(e) => setInputs({ jointTaxation: { ...inputs.jointTaxation, enabled: e.target.checked } })}
+                  />
+                  <span>{t('salary_joint_taxation_toggle')}</span>
+                </label>
+                {canJointTax && inputs.jointTaxation.enabled && (
+                  <div className="form-group">
+                    <label htmlFor="spouse-income">{t('salary_joint_spouse_income_label')}</label>
+                    <div className="input-with-suffix">
                       <input
-                        id="joint-tax"
-                        type="checkbox"
-                        checked={inputs.jointTaxation.enabled}
-                        onChange={(e) => setInputs({ jointTaxation: { ...inputs.jointTaxation, enabled: e.target.checked } })}
+                        id="spouse-income"
+                        type="number"
+                        defaultValue={inputs.jointTaxation.spouseAnnualTaxableIncome}
+                        min={0}
+                        step={1000}
+                        onBlur={(e) => {
+                          const raw = parseFloat(e.target.value);
+                          const v = Number.isFinite(raw) && raw >= 0 ? raw : inputs.jointTaxation.spouseAnnualTaxableIncome;
+                          e.target.value = String(v);
+                          setInputs({ jointTaxation: { ...inputs.jointTaxation, spouseAnnualTaxableIncome: v } });
+                        }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                       />
-                      <span>{t('salary_joint_taxation_toggle')}</span>
-                    </label>
-                    {inputs.jointTaxation.enabled && (
-                      <div className="form-group">
-                        <label htmlFor="spouse-income">{t('salary_joint_spouse_income_label')}</label>
-                        <div className="input-with-suffix">
-                          <input
-                            id="spouse-income"
-                            type="number"
-                            defaultValue={inputs.jointTaxation.spouseAnnualTaxableIncome}
-                            min={0}
-                            step={1000}
-                            onBlur={(e) => {
-                              const raw = parseFloat(e.target.value);
-                              const v = Number.isFinite(raw) && raw >= 0 ? raw : inputs.jointTaxation.spouseAnnualTaxableIncome;
-                              e.target.value = String(v);
-                              setInputs({ jointTaxation: { ...inputs.jointTaxation, spouseAnnualTaxableIncome: v } });
-                            }}
-                            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                          />
-                          <span className="input-suffix">{t('currency')}</span>
-                        </div>
-                      </div>
-                    )}
-                  </>
+                      <span className="input-suffix">{t('currency')}</span>
+                    </div>
+                  </div>
                 )}
                 {!canJointTax && inputs.jointTaxation.enabled && (
                   <div className="hint">{t('salary_joint_not_eligible')}</div>
