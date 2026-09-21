@@ -67,7 +67,7 @@ export type TranslationKey =
   | 'scenario_compare_col_name' | 'scenario_compare_col_amount' | 'scenario_compare_col_rate'
   | 'scenario_compare_col_strategy' | 'scenario_compare_col_months' | 'scenario_compare_col_interest'
   | 'scenario_active_badge' | 'scenario_active_hint'
-  | 'scenario_copy_link' | 'scenario_copy_link_copied'
+  | 'scenario_copy_link' | 'scenario_copy_link_copied' | 'scenario_copy_summary'
   | 'scenario_duplicate' | 'scenario_copy_suffix'
   | 'csv_export' | 'sch_print'
   | 'overpay_start_label' | 'overpay_start_hint'
@@ -257,6 +257,7 @@ const pl: Translations = {
   scenario_active_hint: 'Dane w formularzu dokładnie odpowiadają temu scenariuszowi',
   scenario_copy_link: '🔗 Link',
   scenario_copy_link_copied: '✓ Skopiowano',
+  scenario_copy_summary: '📋 Podsumowanie',
   scenario_diff_label: 'Różnica względem aktualnego wyniku (odsetki / raty)',
   scenario_rename_hint: 'Kliknij, aby zmienić nazwę',
   scenario_duplicate: '📄 Duplikuj',
@@ -511,6 +512,7 @@ const en: Translations = {
   scenario_active_hint: 'The form fields exactly match this scenario',
   scenario_copy_link: '🔗 Link',
   scenario_copy_link_copied: '✓ Copied',
+  scenario_copy_summary: '📋 Summary',
   scenario_diff_label: 'Difference vs. current result (interest / payments)',
   scenario_rename_hint: 'Click to rename',
   scenario_duplicate: '📄 Duplicate',
