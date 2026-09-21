@@ -231,6 +231,19 @@ describe('calcSpecificWorkContract', () => {
 });
 
 describe('calcB2BContract', () => {
+  it(
+    'regression: supports the full set of 10 real ryczałt ewidencjonowany rates (2%/3%/5,5%/8,5%/10%/12%/12,5%/14%/15%/17%) ' +
+      '— the dropdown previously offered only 5 of these, missing rates that apply to e.g. trade/retail (3%), ' +
+      'construction/production (5,5%), some rental/services (10%) and high-revenue IT (12,5%)',
+    () => {
+      const rates = [0.02, 0.03, 0.055, 0.085, 0.10, 0.12, 0.125, 0.14, 0.15, 0.17] as const;
+      for (const ryczaltRate of rates) {
+        const r = calcB2BContract({ ...b2bDefaults, taxForm: 'ryczalt', ryczaltRate });
+        expect(r.tax).toBe(Math.round(10000 * ryczaltRate));
+      }
+    }
+  );
+
   it('skala: costs reduce taxable income, tax uses 12%/32% scale', () => {
     const r = calcB2BContract({ ...b2bDefaults, taxForm: 'skala', monthlyCosts: 2000, zusVariant: 'ulga_na_start' });
     expect(r.income).toBeCloseTo(10000 - 2000, 2);

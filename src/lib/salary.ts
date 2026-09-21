@@ -72,7 +72,10 @@ export type PpkOption =
   | { mode: 'standard' }
   | { mode: 'custom'; employeeRate: number; employerRate: number };
 
-export type RyczaltRate = 0.085 | 0.12 | 0.14 | 0.15 | 0.17;
+// Pełny zestaw stawek ryczałtu ewidencjonowanego 2026 (ustawa o zryczałtowanym
+// podatku dochodowym, art. 12) — zweryfikowane WebSearch 2026-09-22 (wcześniej
+// brakowało 2%/3%/5,5%/10%/12,5%, dropdown miał tylko 5 z 10 realnych stawek).
+export type RyczaltRate = 0.02 | 0.03 | 0.055 | 0.085 | 0.10 | 0.12 | 0.125 | 0.14 | 0.15 | 0.17;
 export type B2BTaxForm = 'skala' | 'liniowy' | 'ryczalt' | 'ipbox';
 export type B2BZusVariant = 'ulga_na_start' | 'preferencyjny' | 'maly_zus_plus' | 'pelny';
 
