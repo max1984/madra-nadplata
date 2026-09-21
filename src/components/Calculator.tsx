@@ -116,6 +116,21 @@ export function scenarioSummaryText(
   return formatResultsSummaryText(computeCalcState(inputs), t, fmt, fmtC, url);
 }
 
+export type ImportFileResult = { ok: true; count: number } | { ok: false };
+
+/**
+ * Komunikat po próbie importu pliku scenariuszy — osobna, czysta funkcja,
+ * żeby dało się przetestować wszystkie trzy gałęzie (sukces / brak
+ * poprawnych scenariuszy / błąd odczytu pliku) bez symulowania prawdziwego
+ * FileReadera. Gałąź `ok: false` istnieje, bo bez niej nieudany odczyt pliku
+ * (błąd dysku/uprawnień, plik usunięty między wyborem a odczytem) kończył
+ * się całkowitą ciszą — ani onload, ani żaden komunikat dla użytkownika.
+ */
+export function resolveImportMessage(result: ImportFileResult, t: (key: TranslationKey) => string): string {
+  if (!result.ok) return t('scenario_import_error');
+  return result.count > 0 ? t('scenario_import_success').replace('{n}', String(result.count)) : t('scenario_import_empty');
+}
+
 /**
  * Buduje treść pliku CSV porównującego wszystkie zapisane scenariusze —
  * osobna, czysta funkcja (zamiast kodu wprost w handlerze), żeby dało się
@@ -463,11 +478,17 @@ export default function Calculator({
     e.target.value = ''; // pozwala wybrać ten sam plik ponownie i dostać onChange
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      const count = onImportScenarios(String(reader.result ?? ''));
-      setImportMessage(count > 0 ? t('scenario_import_success').replace('{n}', String(count)) : t('scenario_import_empty'));
+    const showImportMessage = (result: ImportFileResult) => {
+      setImportMessage(resolveImportMessage(result, t));
       setTimeout(() => setImportMessage(null), 4000);
     };
+    reader.onload = () => {
+      showImportMessage({ ok: true, count: onImportScenarios(String(reader.result ?? '')) });
+    };
+    // Bez tego nieudany odczyt pliku (błąd dysku/uprawnień, plik usunięty
+    // między wyborem a odczytem) kończył się całkowitą ciszą — brak
+    // onload, brak onerror, żadnego komunikatu dla użytkownika.
+    reader.onerror = () => showImportMessage({ ok: false });
     reader.readAsText(file);
   };
 

@@ -65,7 +65,7 @@ export type TranslationKey =
   | 'scenario_filter_placeholder' | 'scenario_filter_no_match'
   | 'scenario_load' | 'scenario_delete' | 'scenario_diff_label' | 'scenario_rename_hint'
   | 'scenario_delete_confirm' | 'scenario_delete_cancel'
-  | 'scenario_export' | 'scenario_import' | 'scenario_import_success' | 'scenario_import_empty'
+  | 'scenario_export' | 'scenario_import' | 'scenario_import_success' | 'scenario_import_empty' | 'scenario_import_error'
   | 'scenario_export_csv'
   | 'scenario_compare_col_name' | 'scenario_compare_col_amount' | 'scenario_compare_col_rate'
   | 'scenario_compare_col_strategy' | 'scenario_compare_col_months' | 'scenario_compare_col_interest'
@@ -258,6 +258,7 @@ const pl: Translations = {
   scenario_import: '⬆️ Importuj',
   scenario_import_success: 'Zaimportowano {n} scenariuszy',
   scenario_import_empty: 'Nie znaleziono poprawnych scenariuszy w pliku',
+  scenario_import_error: 'Nie udało się odczytać pliku',
   scenario_export_csv: '📊 Eksportuj porównanie (CSV)',
   scenario_compare_col_name: 'Nazwa',
   scenario_compare_col_amount: 'Kwota kredytu',
@@ -524,6 +525,7 @@ const en: Translations = {
   scenario_import: '⬆️ Import',
   scenario_import_success: 'Imported {n} scenarios',
   scenario_import_empty: 'No valid scenarios found in the file',
+  scenario_import_error: 'Could not read the file',
   scenario_export_csv: '📊 Export comparison (CSV)',
   scenario_compare_col_name: 'Name',
   scenario_compare_col_amount: 'Loan amount',

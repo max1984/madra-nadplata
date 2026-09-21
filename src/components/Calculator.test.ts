@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -144,6 +144,22 @@ describe('scenarioSummaryText', () => {
   it('returns null for a scenario with an out-of-range loan amount, same as any other invalid form input', () => {
     const invalid = { ...DEFAULT_INPUTS, loanAmount: -5 };
     expect(scenarioSummaryText(invalid, t, fmtPl, fmtCPl, url)).toBeNull();
+  });
+});
+
+describe('resolveImportMessage', () => {
+  const t = (key: Parameters<typeof translate>[1]) => translate('pl', key);
+
+  it('reports the imported count on success', () => {
+    expect(resolveImportMessage({ ok: true, count: 3 }, t)).toBe(translate('pl', 'scenario_import_success').replace('{n}', '3'));
+  });
+
+  it('reports "no valid scenarios" when the file parsed but held nothing usable', () => {
+    expect(resolveImportMessage({ ok: true, count: 0 }, t)).toBe(translate('pl', 'scenario_import_empty'));
+  });
+
+  it('regression: reports a read error instead of leaving the user with no feedback at all — handleImportFileChange only wired reader.onload, so a failed FileReader read (disk/permission error, file removed between picking it and reading it) used to fire neither onload nor any message', () => {
+    expect(resolveImportMessage({ ok: false }, t)).toBe(translate('pl', 'scenario_import_error'));
   });
 });
 
