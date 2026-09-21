@@ -460,11 +460,11 @@ export function validateInputs(inp: CalcInputs): TranslationKey | null {
     if (!isFinite(inp.refiMonth) || inp.refiMonth < 0 || inp.refiMonth >= inp.loanMonths) {
       return 'error_refi_month';
     }
-    if (
-      !isFinite(inp.refiOriginationFee) || inp.refiOriginationFee < 0 || inp.refiOriginationFee > 10 ||
-      !isFinite(inp.refiFlat) || inp.refiFlat < 0 || inp.refiFlat > 10_000_000
-    ) {
-      return 'error_refi_fee';
+    if (!isFinite(inp.refiOriginationFee) || inp.refiOriginationFee < 0 || inp.refiOriginationFee > 10) {
+      return 'error_refi_origination_fee';
+    }
+    if (!isFinite(inp.refiFlat) || inp.refiFlat < 0 || inp.refiFlat > 10_000_000) {
+      return 'error_refi_flat_fee';
     }
   }
   return null;

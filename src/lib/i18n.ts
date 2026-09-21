@@ -54,7 +54,8 @@ export type TranslationKey =
   | 'chart_year' | 'currency' | 'years' | 'years1' | 'months_short'
   | 'hero_note'
   | 'error_loan_amount' | 'error_months' | 'error_rate' | 'error_prepay_fee'
-  | 'error_refi_rate' | 'error_refi_months' | 'error_refi_month' | 'error_refi_fee'
+  | 'error_refi_rate' | 'error_refi_months' | 'error_refi_month'
+  | 'error_refi_origination_fee' | 'error_refi_flat_fee'
   | 'error_overpay_start'
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
@@ -224,7 +225,8 @@ const pl: Translations = {
   error_refi_rate: 'Oprocentowanie nowego kredytu musi wynosić od 0,01% do 25%.',
   error_refi_months: 'Okres nowego kredytu musi wynosić od 12 do 360 miesięcy.',
   error_refi_month: 'Miesiąc refinansowania musi mieścić się w okresie kredytu.',
-  error_refi_fee: 'Prowizja za udzielenie nowego kredytu musi wynosić od 0% do 10%, a opłata stała nie może być ujemna.',
+  error_refi_origination_fee: 'Prowizja za udzielenie nowego kredytu musi wynosić od 0% do 10%.',
+  error_refi_flat_fee: 'Opłata stała za refinansowanie musi mieścić się od 0 do 10 000 000 zł.',
   error_overpay_start: 'Opóźnienie startu nadpłaty musi mieścić się w okresie kredytu.',
   copy_link: 'Kopiuj link',
   copy_link_copied: '✓ Skopiowano!',
@@ -481,7 +483,8 @@ const en: Translations = {
   error_refi_rate: 'New loan interest rate must be between 0.01% and 25%.',
   error_refi_months: 'New loan period must be between 12 and 360 months.',
   error_refi_month: 'The refinancing month must fall within the loan term.',
-  error_refi_fee: 'The new loan origination fee must be between 0% and 10%, and the flat fee cannot be negative.',
+  error_refi_origination_fee: 'The new loan origination fee must be between 0% and 10%.',
+  error_refi_flat_fee: 'The flat refinancing fee must be between 0 and 10,000,000 PLN.',
   error_overpay_start: 'The overpay start delay must fall within the loan term.',
   copy_link: 'Copy link',
   copy_link_copied: '✓ Copied!',

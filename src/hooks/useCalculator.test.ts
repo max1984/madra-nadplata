@@ -113,14 +113,22 @@ describe('validateInputs', () => {
   });
 
   it('rejects an out-of-range origination fee or a negative flat fee — same class of bug as ?fee on prepayFee', () => {
-    expect(validateInputs({ ...validRefi, refiOriginationFee: 50 })).toBe('error_refi_fee');
-    expect(validateInputs({ ...validRefi, refiOriginationFee: -1 })).toBe('error_refi_fee');
-    expect(validateInputs({ ...validRefi, refiFlat: -100 })).toBe('error_refi_fee');
+    expect(validateInputs({ ...validRefi, refiOriginationFee: 50 })).toBe('error_refi_origination_fee');
+    expect(validateInputs({ ...validRefi, refiOriginationFee: -1 })).toBe('error_refi_origination_fee');
+    expect(validateInputs({ ...validRefi, refiFlat: -100 })).toBe('error_refi_flat_fee');
   });
 
   it('regression: rejects a flat refi fee above the input\'s own 10,000,000 max — validateInputs had no upper bound here even though every sibling refi field (rate, months, origination fee) does, so a crafted ?refiFlat= link could push a nonsensical fee straight into the results', () => {
-    expect(validateInputs({ ...validRefi, refiFlat: 10_000_001 })).toBe('error_refi_fee');
+    expect(validateInputs({ ...validRefi, refiFlat: 10_000_001 })).toBe('error_refi_flat_fee');
     expect(validateInputs({ ...validRefi, refiFlat: 10_000_000 })).toBeNull();
+  });
+
+  it('regression: origination fee and flat fee errors use distinct translation keys — a shared "error_refi_fee" key left users unable to tell which of the two fields to fix', () => {
+    const originationErr = validateInputs({ ...validRefi, refiOriginationFee: 50 });
+    const flatErr = validateInputs({ ...validRefi, refiFlat: -1 });
+    expect(originationErr).not.toBe(flatErr);
+    expect(originationErr).toBe('error_refi_origination_fee');
+    expect(flatErr).toBe('error_refi_flat_fee');
   });
 
   it('rejects an overpay start month outside the loan term — a shared link could set ?start=999999999 unchecked, which computeCalcState would turn into a huge Array allocation', () => {
