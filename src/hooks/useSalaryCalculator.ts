@@ -96,7 +96,7 @@ export type SalaryState =
  * (jedyna forma opodatkowania tam to skala), B2B tylko na formie 'skala'
  * (liniowy/ryczałt/IP Box wyłączone z mocy prawa, patrz JSDoc `computeJointTaxation`).
  */
-function qualifiesForJointTaxation(inputs: SalaryInputs): boolean {
+export function qualifiesForJointTaxation(inputs: SalaryInputs): boolean {
   return inputs.contractType !== 'b2b' || inputs.b2b.taxForm === 'skala';
 }
 
@@ -341,12 +341,21 @@ export function parseUrlSalaryInputs(search: string = window.location.search): P
   const relief = sp.get('relief');
   const pit2 = sp.get('pit2');
 
+  // Każda gałąź zbiera tylko te pola, których param faktycznie był w URL —
+  // i dokleja patch.employment/mandate/... TYLKO jeśli coś realnie znaleziono.
+  // Inaczej (jak w pierwszej wersji) patch.employment było zawsze ustawiane
+  // na kopię samych domyślnych wartości nawet dla całkowicie pustego URL, co
+  // czyniło zwrócony obiekt zawsze "niepusty" (Object.keys(patch).length > 0)
+  // — useSalaryCalculator() brało to za sygnał "jest patch" i liczyło wynik
+  // od razu przy wejściu na stronę, bez kliknięcia "Oblicz" i bez żadnego
+  // udostępnionego linku/zapisanych danych w tle (ten sam kontrakt co
+  // parseUrlInputs w useCalculator.ts, gdzie każde pole jest ustawiane tylko
+  // warunkowo przez helper `set`).
   if (activeType === 'employment') {
     const ppk = sp.get('ppk');
     const bonus = parseNum(sp, 'bonus');
     const copyright = parseNum(sp, 'copyright');
-    patch.employment = {
-      ...DEFAULT_SALARY_INPUTS.employment,
+    const partial: Partial<EmploymentInputs> = {
       ...(gross !== undefined ? { grossMonthly: gross } : {}),
       ...(isKupOption(kup) ? { kup } : {}),
       ...(isSpecialRelief(relief) ? { specialRelief: relief } : {}),
@@ -355,9 +364,9 @@ export function parseUrlSalaryInputs(search: string = window.location.search): P
       ...(bonus !== undefined ? { bonusMonthly: bonus } : {}),
       ...(copyright !== undefined ? { copyrightSharePercent: copyright } : {}),
     };
+    if (Object.keys(partial).length > 0) patch.employment = { ...DEFAULT_SALARY_INPUTS.employment, ...partial };
   } else if (activeType === 'mandate') {
-    patch.mandate = {
-      ...DEFAULT_SALARY_INPUTS.mandate,
+    const partial: Partial<MandateInputs> = {
       ...(gross !== undefined ? { grossMonthly: gross } : {}),
       ...(isMandateKupOption(kup) ? { kup } : {}),
       ...(isSpecialRelief(relief) ? { specialRelief: relief } : {}),
@@ -365,13 +374,14 @@ export function parseUrlSalaryInputs(search: string = window.location.search): P
       ...(sp.get('student') === '1' ? { isStudentUnder26: true } : sp.get('student') === '0' ? { isStudentUnder26: false } : {}),
       ...(sp.get('sickness') === '1' ? { sicknessVoluntary: true } : sp.get('sickness') === '0' ? { sicknessVoluntary: false } : {}),
     };
+    if (Object.keys(partial).length > 0) patch.mandate = { ...DEFAULT_SALARY_INPUTS.mandate, ...partial };
   } else if (activeType === 'specific_work') {
-    patch.specificWork = {
-      ...DEFAULT_SALARY_INPUTS.specificWork,
+    const partial: Partial<SpecificWorkInputs> = {
       ...(gross !== undefined ? { grossMonthly: gross } : {}),
       ...(isMandateKupOption(kup) ? { kup } : {}),
       ...(isReducingShare(pit2) ? { reducingShare: pit2 } : {}),
     };
+    if (Object.keys(partial).length > 0) patch.specificWork = { ...DEFAULT_SALARY_INPUTS.specificWork, ...partial };
   } else {
     const revenue = parseNum(sp, 'revenue');
     const costs = parseNum(sp, 'costs');
@@ -380,8 +390,7 @@ export function parseUrlSalaryInputs(search: string = window.location.search): P
     const ipboxShare = parseNum(sp, 'ipboxShare');
     const zus = sp.get('zus');
     const malyZusBase = parseNum(sp, 'malyZusBase');
-    patch.b2b = {
-      ...DEFAULT_SALARY_INPUTS.b2b,
+    const partial: Partial<B2BInputs> = {
       ...(revenue !== undefined ? { monthlyRevenue: revenue } : {}),
       ...(costs !== undefined ? { monthlyCosts: costs } : {}),
       ...(isB2BTaxForm(form) ? { taxForm: form } : {}),
@@ -391,6 +400,7 @@ export function parseUrlSalaryInputs(search: string = window.location.search): P
       ...(sp.get('sickness') === '1' ? { sicknessVoluntary: true } : sp.get('sickness') === '0' ? { sicknessVoluntary: false } : {}),
       ...(malyZusBase !== undefined ? { malyZusPlusBase: malyZusBase } : {}),
     };
+    if (Object.keys(partial).length > 0) patch.b2b = { ...DEFAULT_SALARY_INPUTS.b2b, ...partial };
   }
 
   return patch;

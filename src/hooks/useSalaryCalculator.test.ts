@@ -209,10 +209,20 @@ describe('buildSalaryUrlParams / parseUrlSalaryInputs — round trip', () => {
     expect(patch.b2b).toMatchObject({ monthlyRevenue: 15000, monthlyCosts: 2000, taxForm: 'skala', zusVariant: 'maly_zus_plus', malyZusPlusBase: 3000 });
   });
 
-  it('ignores garbage/non-finite query values, falling back to the default rather than NaN', () => {
-    const patch = parseUrlSalaryInputs('?type=employment&gross=abc&kup=nonsense');
-    expect(patch.employment?.grossMonthly).toBe(DEFAULT_SALARY_INPUTS.employment.grossMonthly);
-    expect(patch.employment?.kup).toBe(DEFAULT_SALARY_INPUTS.employment.kup);
+  it(
+    'regression: leaves employment entirely unset when every field param is garbage — an empty ' +
+      'sub-object patch (previously always a copy of the defaults) used to make the URL patch look ' +
+      '"non-empty" to useSalaryCalculator(), which then computed and displayed a result on first load ' +
+      'even for a URL/localStorage-less visit with nothing to calculate',
+    () => {
+      const patch = parseUrlSalaryInputs('?type=employment&gross=abc&kup=nonsense');
+      expect(patch.employment).toBeUndefined();
+      expect(patch.contractType).toBe('employment');
+    }
+  );
+
+  it('a completely empty search string produces a fully empty patch object', () => {
+    expect(parseUrlSalaryInputs('')).toEqual({});
   });
 });
 
