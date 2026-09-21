@@ -14,6 +14,7 @@ import {
   ZUS_ANNUAL_BASE_LIMIT,
   RYCZALT_TIER_1_LIMIT,
   ANNUAL_COPYRIGHT_KUP_LIMIT,
+  RYCZALT_RATES,
   type EmploymentInputs,
   type MandateInputs,
   type B2BInputs,
@@ -236,8 +237,8 @@ describe('calcB2BContract', () => {
       '— the dropdown previously offered only 5 of these, missing rates that apply to e.g. trade/retail (3%), ' +
       'construction/production (5,5%), some rental/services (10%) and high-revenue IT (12,5%)',
     () => {
-      const rates = [0.02, 0.03, 0.055, 0.085, 0.10, 0.12, 0.125, 0.14, 0.15, 0.17] as const;
-      for (const ryczaltRate of rates) {
+      expect(RYCZALT_RATES).toEqual([0.02, 0.03, 0.055, 0.085, 0.10, 0.12, 0.125, 0.14, 0.15, 0.17]);
+      for (const ryczaltRate of RYCZALT_RATES) {
         const r = calcB2BContract({ ...b2bDefaults, taxForm: 'ryczalt', ryczaltRate });
         expect(r.tax).toBe(Math.round(10000 * ryczaltRate));
       }

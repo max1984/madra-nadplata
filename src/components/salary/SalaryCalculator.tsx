@@ -9,6 +9,7 @@ import { canUseNativeShare } from '../../lib/share';
 import { isCalculateShortcut } from '../../lib/keyboardShortcuts';
 import type { TranslationKey } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
+import { RYCZALT_RATES } from '../../lib/salary';
 import {
   qualifiesForJointTaxation,
   sortSalaryScenarios,
@@ -484,16 +485,11 @@ export default function SalaryCalculator({
                   value={inputs.b2b.ryczaltRate}
                   onChange={(e) => setInputs({ b2b: { ...inputs.b2b, ryczaltRate: Number(e.target.value) as SalaryInputs['b2b']['ryczaltRate'] } })}
                 >
-                  <option value={0.02}>2%</option>
-                  <option value={0.03}>3%</option>
-                  <option value={0.055}>5,5%</option>
-                  <option value={0.085}>8,5%</option>
-                  <option value={0.10}>10%</option>
-                  <option value={0.12}>12%</option>
-                  <option value={0.125}>12,5%</option>
-                  <option value={0.14}>14%</option>
-                  <option value={0.15}>15%</option>
-                  <option value={0.17}>17%</option>
+                  {RYCZALT_RATES.map((rate) => {
+                    const pct = rate * 100;
+                    const dec = Number.isInteger(pct) ? 0 : 1;
+                    return <option key={rate} value={rate}>{fmt(pct, dec)}%</option>;
+                  })}
                 </select>
               </div>
             )}
