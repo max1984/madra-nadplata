@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +13,15 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(): State {
     return { hasError: true };
+  }
+
+  // getDerivedStateFromError nie ma dostępu do samego błędu ani component
+  // stacka — bez tego jedyny ślad po awarii to biały ekran zastąpiony
+  // fallbackiem, bez żadnej możliwości zdiagnozowania, co się właściwie
+  // wysypało (ani lokalnie w konsoli, ani w razie podpięcia zewnętrznego
+  // raportowania błędów w przyszłości).
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('ErrorBoundary caught an error', error, errorInfo);
   }
 
   render() {
