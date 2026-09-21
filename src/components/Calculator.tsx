@@ -116,6 +116,7 @@ export function buildScenarioComparisonCSV(
   const headers = [
     t('scenario_compare_col_name'), t('scenario_compare_col_amount'), t('scenario_compare_col_rate'),
     t('scenario_compare_col_strategy'), t('scenario_compare_col_months'), t('scenario_compare_col_interest'),
+    t('scenario_compare_col_saved_interest'), t('scenario_compare_col_saved_months'),
   ];
   const csvRows = rows.map((r) => [
     csvField(r.name),
@@ -124,6 +125,8 @@ export function buildScenarioComparisonCSV(
     t(strategyLabelKey(r.strategy)),
     String(r.months),
     csvDec(r.totalInterest, lang),
+    csvDec(r.interestSaved, lang),
+    String(r.monthsSaved),
   ].join(sep));
   return '﻿' + [headers.join(sep), ...csvRows].join('\n');
 }

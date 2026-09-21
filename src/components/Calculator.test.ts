@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV } from './Calculator';
 import { t as translate } from '../lib/i18n';
-import { fmt, fmtC } from '../lib/format';
+import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
 import type { ScenarioComparisonRow } from '../hooks/useCalculator';
 
@@ -129,7 +129,7 @@ describe('buildScenarioComparisonCSV', () => {
   function makeRow(overrides: Partial<ScenarioComparisonRow> = {}): ScenarioComparisonRow {
     return {
       name: 'Wariant', loanAmount: 300000, interestRate: 6, strategy: 'fixed_total',
-      months: 212, totalInterest: 186999, savedAt: 1,
+      months: 212, totalInterest: 186999, interestSaved: 42000, monthsSaved: 88, savedAt: 1,
       ...overrides,
     };
   }
@@ -173,5 +173,15 @@ describe('buildScenarioComparisonCSV', () => {
     const dataLine = csv.slice(1).split('\n')[1]!;
     expect(dataLine).not.toContain('fixed_overpay');
     expect(dataLine).toContain(t('strategy_fixed_overpay'));
+  });
+
+  it('includes the interest-saved and months-saved columns, in the header and as the last two data fields', () => {
+    const csv = buildScenarioComparisonCSV([makeRow({ interestSaved: 42000, monthsSaved: 88 })], t, 'pl');
+    const [headerLine, dataLine] = csv.slice(1).split('\n');
+    expect(headerLine).toContain(t('scenario_compare_col_saved_interest'));
+    expect(headerLine).toContain(t('scenario_compare_col_saved_months'));
+    const fields = dataLine!.split(';');
+    expect(fields[fields.length - 1]).toBe('88');
+    expect(fields[fields.length - 2]).toBe(csvDec(42000, 'pl'));
   });
 });

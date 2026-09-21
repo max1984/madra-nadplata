@@ -66,6 +66,7 @@ export type TranslationKey =
   | 'scenario_export_csv'
   | 'scenario_compare_col_name' | 'scenario_compare_col_amount' | 'scenario_compare_col_rate'
   | 'scenario_compare_col_strategy' | 'scenario_compare_col_months' | 'scenario_compare_col_interest'
+  | 'scenario_compare_col_saved_interest' | 'scenario_compare_col_saved_months'
   | 'scenario_active_badge' | 'scenario_active_hint'
   | 'scenario_copy_link' | 'scenario_copy_link_copied' | 'scenario_copy_summary'
   | 'scenario_duplicate' | 'scenario_copy_suffix'
@@ -253,6 +254,8 @@ const pl: Translations = {
   scenario_compare_col_strategy: 'Strategia',
   scenario_compare_col_months: 'Liczba rat',
   scenario_compare_col_interest: 'Łączne odsetki',
+  scenario_compare_col_saved_interest: 'Oszczędność na odsetkach',
+  scenario_compare_col_saved_months: 'Skrócenie (miesiące)',
   scenario_active_badge: 'Aktywny',
   scenario_active_hint: 'Dane w formularzu dokładnie odpowiadają temu scenariuszowi',
   scenario_copy_link: '🔗 Link',
@@ -508,6 +511,8 @@ const en: Translations = {
   scenario_compare_col_strategy: 'Strategy',
   scenario_compare_col_months: 'Payments',
   scenario_compare_col_interest: 'Total interest',
+  scenario_compare_col_saved_interest: 'Interest saved',
+  scenario_compare_col_saved_months: 'Shortened by (months)',
   scenario_active_badge: 'Active',
   scenario_active_hint: 'The form fields exactly match this scenario',
   scenario_copy_link: '🔗 Link',

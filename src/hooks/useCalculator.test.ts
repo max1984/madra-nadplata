@@ -504,6 +504,15 @@ describe('buildScenarioComparisonRows', () => {
     expect(rows[0]!.name).toBe('Mały overpay');
     expect(rows[1]!.months).toBeLessThan(rows[0]!.months);
     expect(rows[1]!.totalInterest).toBeLessThan(rows[0]!.totalInterest);
+    expect(rows[1]!.interestSaved).toBeGreaterThan(rows[0]!.interestSaved);
+    expect(rows[1]!.monthsSaved).toBeGreaterThan(rows[0]!.monthsSaved);
+  });
+
+  it('interestSaved and monthsSaved compare the scenario against its own no-overpayment baseline, not against other scenarios', () => {
+    const [noOverpay] = addScenario([], 'Bez nadpłaty', { ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 0 });
+    const [row] = buildScenarioComparisonRows([noOverpay!]);
+    expect(row!.interestSaved).toBe(0);
+    expect(row!.monthsSaved).toBe(0);
   });
 
   it('carries over the name, loan amount, rate, strategy and savedAt from the scenario unchanged', () => {

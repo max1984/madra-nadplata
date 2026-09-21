@@ -305,6 +305,8 @@ export interface ScenarioComparisonRow {
   strategy: Strategy;
   months: number;
   totalInterest: number;
+  interestSaved: number;
+  monthsSaved: number;
   savedAt: number;
 }
 
@@ -312,6 +314,11 @@ export interface ScenarioComparisonRow {
  * Przelicza każdy zapisany scenariusz od zera (computeCalcState na jego
  * własnych inputs) — nie polega na tym, co akurat jest w kalkulatorze na
  * ekranie, więc porównanie działa niezależnie od bieżącego wyniku.
+ *
+ * interestSaved/monthsSaved porównują scenariusz z jego własnym baseInterest/
+ * baseMonths (harmonogram tego samego kredytu bez żadnej nadpłaty) — nie z
+ * innymi scenariuszami na liście — więc mają sens nawet przy porównywaniu
+ * kredytów o różnej kwocie czy oprocentowaniu.
  */
 export function buildScenarioComparisonRows(scenarios: SavedScenario[]): ScenarioComparisonRow[] {
   return scenarios.map((s) => {
@@ -324,6 +331,8 @@ export function buildScenarioComparisonRows(scenarios: SavedScenario[]): Scenari
       strategy: s.inputs.strategy,
       months: state.rows.length,
       totalInterest,
+      interestSaved: Math.max(0, state.baseInterest - totalInterest),
+      monthsSaved: Math.max(0, state.baseMonths - state.rows.length),
       savedAt: s.savedAt,
     };
   });
