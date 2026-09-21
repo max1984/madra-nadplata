@@ -260,6 +260,29 @@ describe('resolveInitialSalaryInputs', () => {
       expect(result).toEqual(DEFAULT_SALARY_INPUTS);
     }
   );
+
+  it(
+    'regression: backfills defaults for fields added after a scenario was first saved — a scenario ' +
+      'stored before copyrightSharePercent/bonusMonthly (employment) and jointTaxation existed carries ' +
+      'JSON shaped like the old SalaryInputs, missing those keys entirely (not just undefined); loadScenario ' +
+      'feeds scenario.inputs through this function, so it must not throw or produce NaN-bearing fields',
+    () => {
+      const oldShapeEmployment = { grossMonthly: 9000, kup: 'standard', specialRelief: 'none', reducingShare: 'full', ppk: { mode: 'none' } };
+      const oldShapePatch = {
+        contractType: 'employment',
+        employment: oldShapeEmployment,
+        // no `jointTaxation` key at all — simulates JSON from before that field existed
+      } as unknown as Partial<typeof DEFAULT_SALARY_INPUTS>;
+
+      const result = resolveInitialSalaryInputs(oldShapePatch);
+
+      expect(result.employment.grossMonthly).toBe(9000);
+      expect(result.employment.copyrightSharePercent).toBe(DEFAULT_SALARY_INPUTS.employment.copyrightSharePercent);
+      expect(result.employment.bonusMonthly).toBe(DEFAULT_SALARY_INPUTS.employment.bonusMonthly);
+      expect(result.jointTaxation).toEqual(DEFAULT_SALARY_INPUTS.jointTaxation);
+      expect(() => computeSalaryState(result)).not.toThrow();
+    }
+  );
 });
 
 describe('saveSalaryInputs / loadStoredSalaryInputs / clearStoredSalaryInputs', () => {
