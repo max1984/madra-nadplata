@@ -98,6 +98,19 @@ function primaryAmount(inputs: SalaryInputs): number {
   }
 }
 
+/**
+ * Włączenie trybu rocznego wcześniej zostawiało annualMonthlyValues bez
+ * zmian (domyślne 6000 zł/mies. albo to, co zostało z poprzedniej sesji) —
+ * kwota, którą użytkownik dopiero co wpisał w polu jednomiesięcznym, znikała
+ * z widoku, zastąpiona nieoczekiwaną, niepowiązaną wartością w siatce 12
+ * miesięcy. Teraz przełączenie kopiuje bieżącą kwotę na wszystkie miesiące —
+ * użytkownik edytuje od tego punktu startowego, zamiast zaczynać od zera.
+ */
+export function fillAnnualValuesFromAmount(amount: number): number[] {
+  const v = Number.isFinite(amount) && amount >= 0 ? amount : 0;
+  return Array(12).fill(v);
+}
+
 function setPrimaryAmount(inputs: SalaryInputs, v: number): Partial<SalaryInputs> {
   switch (inputs.contractType) {
     case 'employment': return { employment: { ...inputs.employment, grossMonthly: v } };
@@ -287,7 +300,14 @@ export default function SalaryCalculator({
               id="annual-mode"
               type="checkbox"
               checked={inputs.annualMode}
-              onChange={(e) => setInputs({ annualMode: e.target.checked })}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setInputs(
+                  checked
+                    ? { annualMode: true, annualMonthlyValues: fillAnnualValuesFromAmount(primaryAmount(inputs)) }
+                    : { annualMode: false }
+                );
+              }}
             />
             <span>{t('salary_annual_mode_toggle')}</span>
           </label>
