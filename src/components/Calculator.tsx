@@ -7,7 +7,7 @@ import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
-import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
+import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
 import type { TranslationKey, Lang } from '../lib/i18n';
 import PartnerOffers from './PartnerOffers';
 
@@ -97,6 +97,26 @@ export function formatResultsSummaryText(
 }
 
 /**
+ * Jak formatResultsSummaryText, ale dla zapisanego scenariusza — inputs mógł
+ * pochodzić z importu JSON, który sprawdza tylko kształt obiektu, nie
+ * wartości pól (patrz buildScenarioComparisonRows). computeCalcState na
+ * inputs z np. loanMonths=NaN robi Array(NaN), co rzuca RangeError — bez tej
+ * bramki "Kopiuj podsumowanie" dla uszkodzonego scenariusza crashowało kartę
+ * zamiast po prostu nic nie zrobić, tak jak porównanie scenariuszy i eksport
+ * CSV już to obsługują.
+ */
+export function scenarioSummaryText(
+  inputs: CalcInputs,
+  t: (key: TranslationKey) => string,
+  fmt: (n: number, dec?: number) => string,
+  fmtC: (n: number, dec?: number) => string,
+  url: string,
+): string | null {
+  if (validateInputs(inputs) !== null) return null;
+  return formatResultsSummaryText(computeCalcState(inputs), t, fmt, fmtC, url);
+}
+
+/**
  * Buduje treść pliku CSV porównującego wszystkie zapisane scenariusze —
  * osobna, czysta funkcja (zamiast kodu wprost w handlerze), żeby dało się
  * ją przetestować bez klikania w prawdziwym pliku pobranym z przeglądarki.
@@ -171,6 +191,7 @@ export default function Calculator({
   const importInputRef = useRef<HTMLInputElement>(null);
   const [copiedScenarioId, setCopiedScenarioId] = useState<string | null>(null);
   const [copiedScenarioSummaryId, setCopiedScenarioSummaryId] = useState<string | null>(null);
+  const [invalidScenarioSummaryId, setInvalidScenarioSummaryId] = useState<string | null>(null);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const announcement = useMemo(
     () => calcState ? formatCalcAnnouncement(calcState, t, fmtC) : '',
@@ -451,9 +472,13 @@ export default function Calculator({
   };
 
   const handleCopyScenarioSummary = (s: SavedScenario) => {
-    const state = computeCalcState(s.inputs);
     const url = `${window.location.origin}${window.location.pathname}?${buildUrlParams(s.inputs)}`;
-    const text = formatResultsSummaryText(state, t, fmt, fmtC, url);
+    const text = scenarioSummaryText(s.inputs, t, fmt, fmtC, url);
+    if (text === null) {
+      setInvalidScenarioSummaryId(s.id);
+      setTimeout(() => setInvalidScenarioSummaryId(null), 2000);
+      return;
+    }
     copyToClipboard(text, () => {
       setCopiedScenarioSummaryId(s.id);
       setTimeout(() => setCopiedScenarioSummaryId(null), 2000);
@@ -994,7 +1019,9 @@ export default function Calculator({
                           {copiedScenarioId === s.id ? t('scenario_copy_link_copied') : t('scenario_copy_link')}
                         </button>
                         <button type="button" className="scenario-row-btn" onClick={() => handleCopyScenarioSummary(s)}>
-                          {copiedScenarioSummaryId === s.id ? t('copy_summary_copied') : t('scenario_copy_summary')}
+                          {invalidScenarioSummaryId === s.id
+                            ? t('scenario_summary_invalid')
+                            : copiedScenarioSummaryId === s.id ? t('copy_summary_copied') : t('scenario_copy_summary')}
                         </button>
                         {isConfirmingDelete ? (
                           <>

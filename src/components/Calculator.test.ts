@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
-import type { ScenarioComparisonRow } from '../hooks/useCalculator';
+import { DEFAULT_INPUTS, type ScenarioComparisonRow } from '../hooks/useCalculator';
 
 function makeRow(cumInterest: number): ScheduleRow {
   return {
@@ -120,6 +120,30 @@ describe('formatResultsSummaryText', () => {
   it('does not throw and has no leftover {placeholder} tokens for a normal calculation', () => {
     const text = formatResultsSummaryText(cs, t, fmtPl, fmtCPl, url);
     expect(text).not.toMatch(/\{[a-zA-Z]+\}/);
+  });
+});
+
+describe('scenarioSummaryText', () => {
+  const t = (key: Parameters<typeof translate>[1]) => translate('pl', key);
+  const fmtPl = (n: number, dec?: number) => fmt(n, dec, 'pl');
+  const fmtCPl = (n: number, dec?: number) => fmtC(n, 'pl', dec);
+  const url = 'https://nadplata.org/?amount=300000';
+
+  it('returns the same text as formatResultsSummaryText for valid inputs', () => {
+    const text = scenarioSummaryText(DEFAULT_INPUTS, t, fmtPl, fmtCPl, url);
+    expect(text).not.toBeNull();
+    expect(text).toContain(url);
+  });
+
+  it('regression: returns null instead of throwing for a corrupted scenario — a hand-edited or broken import can carry a scenario whose inputs pass parseScenariosJSON\'s shape check but fail validateInputs (e.g. loanMonths: NaN), and computeCalcState on that would throw a RangeError from Array(NaN) inside a click handler', () => {
+    const corrupted = { ...DEFAULT_INPUTS, loanMonths: NaN };
+    expect(() => scenarioSummaryText(corrupted, t, fmtPl, fmtCPl, url)).not.toThrow();
+    expect(scenarioSummaryText(corrupted, t, fmtPl, fmtCPl, url)).toBeNull();
+  });
+
+  it('returns null for a scenario with an out-of-range loan amount, same as any other invalid form input', () => {
+    const invalid = { ...DEFAULT_INPUTS, loanAmount: -5 };
+    expect(scenarioSummaryText(invalid, t, fmtPl, fmtCPl, url)).toBeNull();
   });
 });
 
