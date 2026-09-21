@@ -357,6 +357,7 @@ export default function SalaryCalculator({
                   <option value="ryczalt">{t('salary_b2b_form_ryczalt')}</option>
                   <option value="ipbox">{t('salary_b2b_form_ipbox')}</option>
                 </select>
+                {inputs.b2b.taxForm === 'liniowy' && <div className="hint">{t('salary_b2b_liniowy_health_hint')}</div>}
               </div>
             )}
 

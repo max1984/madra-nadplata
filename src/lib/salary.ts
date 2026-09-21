@@ -560,6 +560,11 @@ export function calcB2BContract(inputs: B2BInputs, ctx: AnnualContext = EMPTY_AN
   }
 
   if (inputs.taxForm === 'liniowy') {
+    // Uproszczenie: podstawa opodatkowania (income) tu NIE odejmuje zapłaconej
+    // składki zdrowotnej, mimo że liniowcy od 2022 mogą część zdrowotnej
+    // zaliczyć w koszty do rocznego limitu (ustawowo określona kwota,
+    // aktualizowana co roku). Miesięczne odliczenie byłoby nieprecyzyjne bez
+    // śledzenia limitu narastająco w roku — celowo pominięte, nie przeoczone.
     const healthInsurance = Math.max(round2(income * HEALTH_INSURANCE_RATE_LINIOWY), HEALTH_INSURANCE_MIN_SKALA_LINIOWY);
     const tax = Math.round(income * 0.19); // zaliczka do pełnych złotych, jak w scaleTax
     const net = round2(revenue - costs - socialContributions - healthInsurance - tax);

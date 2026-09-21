@@ -30,6 +30,7 @@ export type SalaryTranslationKey =
   | 'salary_student_toggle' | 'salary_sickness_toggle'
   | 'salary_b2b_revenue_label' | 'salary_b2b_costs_label' | 'salary_b2b_form_label'
   | 'salary_b2b_form_skala' | 'salary_b2b_form_liniowy' | 'salary_b2b_form_ryczalt' | 'salary_b2b_form_ipbox'
+  | 'salary_b2b_liniowy_health_hint'
   | 'salary_b2b_ryczalt_rate_label' | 'salary_b2b_ipbox_share_label'
   | 'salary_b2b_zus_label' | 'salary_b2b_zus_ulga_na_start' | 'salary_b2b_zus_preferencyjny'
   | 'salary_b2b_zus_maly_zus_plus' | 'salary_b2b_zus_pelny' | 'salary_b2b_maly_zus_base_label'
@@ -113,6 +114,7 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_b2b_form_liniowy: 'Podatek liniowy (19%)',
   salary_b2b_form_ryczalt: 'Ryczałt ewidencjonowany',
   salary_b2b_form_ipbox: 'IP Box (5%)',
+  salary_b2b_liniowy_health_hint: 'Uproszczenie: podatek liczony bez rocznego odliczenia części zapłaconej składki zdrowotnej (limit ustawowy, wymaga rozliczenia narastająco w roku) — realny podatek może być nieco niższy.',
   salary_b2b_ryczalt_rate_label: 'Stawka ryczałtu',
   salary_b2b_ipbox_share_label: '% dochodu z kwalifikowanego IP',
   salary_b2b_zus_label: 'Wariant ZUS',
@@ -225,6 +227,7 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_b2b_form_liniowy: 'Flat tax (19%)',
   salary_b2b_form_ryczalt: 'Lump-sum tax',
   salary_b2b_form_ipbox: 'IP Box (5%)',
+  salary_b2b_liniowy_health_hint: 'Simplification: tax is calculated without the annual deduction of part of the paid health contribution (statutory cap, requires tracking cumulatively through the year) — actual tax may be slightly lower.',
   salary_b2b_ryczalt_rate_label: 'Lump-sum rate',
   salary_b2b_ipbox_share_label: '% of income from qualified IP',
   salary_b2b_zus_label: 'ZUS variant',
