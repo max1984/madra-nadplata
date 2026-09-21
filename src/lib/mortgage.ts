@@ -35,12 +35,21 @@ export function buildSchedule(
   fixedStdPayment: number | null = null,
   perRowFixed?: (number | null)[]
 ): ScheduleRow[] {
+  if (customOverpay.length !== origMonths) {
+    // remaining = origMonths - i zakłada, że customOverpay ma dokładnie
+    // origMonths elementów. Przy krótszej/dłuższej tablicy remaining spada
+    // do 0 (lub ujemnej), calcStdPayment dzieli przez zero, a NaN/Infinity
+    // rozlewa się po całym harmonogramie bez żadnego komunikatu błędu.
+    throw new Error(
+      `buildSchedule: customOverpay.length (${customOverpay.length}) !== origMonths (${origMonths})`
+    );
+  }
+
   let balance = P;
   const rows: ScheduleRow[] = [];
   let cumInterest = 0;
-  const n = customOverpay.length;
 
-  for (let i = 0; i < n && balance > 0.005; i++) {
+  for (let i = 0; i < origMonths && balance > 0.005; i++) {
     const r = customRates[i] ?? globalR;
     const remaining = origMonths - i;
     const interest = balance * r;

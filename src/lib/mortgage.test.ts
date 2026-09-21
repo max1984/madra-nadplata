@@ -82,6 +82,16 @@ describe('buildBaseSchedule', () => {
 });
 
 describe('buildSchedule', () => {
+  it('regression: throws instead of silently producing NaN/Infinity when customOverpay is longer than origMonths', () => {
+    const r = 0.065 / 12;
+    expect(() => buildSchedule(300000, Array(24).fill(r), 12, 0, Array(24).fill(0), r)).toThrow();
+  });
+
+  it('regression: throws instead of silently producing NaN/Infinity when customOverpay is shorter than origMonths', () => {
+    const r = 0.065 / 12;
+    expect(() => buildSchedule(300000, Array(6).fill(r), 12, 0, Array(6).fill(0), r)).toThrow();
+  });
+
   it('zero overpay: rows.length equals months (full term)', () => {
     const r = 0.065 / 12;
     const rows = buildSchedule(300000, Array(360).fill(r), 360, 0, Array(360).fill(0), r);
