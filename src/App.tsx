@@ -22,7 +22,7 @@ function AppInner() {
   const { t } = useLang();
   const {
     inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults,
-    scenarios, scenarioSaveError, saveCurrentAsScenario, loadScenario, deleteScenario, renameScenario, duplicateScenario, importScenarios,
+    scenarios, scenarioSaveError, scenarioLimitReached, saveCurrentAsScenario, loadScenario, deleteScenario, renameScenario, duplicateScenario, importScenarios,
     onOverpayChange, onRateChange, onCustomEffectChange, onRowEffectChange,
     resetOverpays, clearOverpays, resetRates,
   } = useCalculator();
@@ -60,6 +60,7 @@ function AppInner() {
           calcError={calcError}
           scenarios={scenarios}
           scenarioSaveError={scenarioSaveError}
+          scenarioLimitReached={scenarioLimitReached}
           onSaveScenario={saveCurrentAsScenario}
           onLoadScenario={loadScenario}
           onDeleteScenario={deleteScenario}

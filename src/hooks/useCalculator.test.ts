@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, filterScenariosByName, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, type CalcState, type CalcInputs } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, filterScenariosByName, willDropOldestScenario, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, type CalcState, type CalcInputs } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -408,6 +408,29 @@ describe('resolveInitialInputs', () => {
     expect(resolveInitialInputs({ loanAmount: NaN })).toEqual(DEFAULT_INPUTS);
     expect(resolveInitialInputs({ loanMonths: 999999 })).toEqual(DEFAULT_INPUTS);
     expect(resolveInitialInputs({ strategy: 'refinance', refiRate: -5 } as Partial<CalcInputs>)).toEqual(DEFAULT_INPUTS);
+  });
+});
+
+describe('willDropOldestScenario', () => {
+  it('returns false while the list still has room for the new entries', () => {
+    expect(willDropOldestScenario(0, 1)).toBe(false);
+    expect(willDropOldestScenario(9, 1)).toBe(false);
+  });
+
+  it(
+    'regression: returns true right at the MAX_SCENARIOS boundary — addScenario/duplicateScenario/' +
+      'mergeImportedScenarios silently drop the oldest entries once the list would exceed the cap, ' +
+      'so a save/duplicate/import that hits it used to look identical in the UI to any other successful ' +
+      'one, even though an older saved scenario vanished with no warning',
+    () => {
+      expect(willDropOldestScenario(10, 1)).toBe(true);
+      expect(willDropOldestScenario(9, 2)).toBe(true);
+    },
+  );
+
+  it('accounts for adding more than one scenario at once, as an import does', () => {
+    expect(willDropOldestScenario(8, 2)).toBe(false);
+    expect(willDropOldestScenario(8, 3)).toBe(true);
   });
 });
 

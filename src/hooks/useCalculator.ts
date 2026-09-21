@@ -204,6 +204,17 @@ const SCENARIOS_KEY = 'calc_scenarios_v1';
 const MAX_SCENARIOS = 10;
 
 /**
+ * addScenario/duplicateScenario/mergeImportedScenarios obcinają listę do
+ * MAX_SCENARIOS, cicho wypychając najstarsze wpisy — ta czysta funkcja
+ * pozwala UI (przed samym zapisem) sprawdzić, czy dodanie `addingCount`
+ * nowych scenariuszy do listy o `currentCount` wpisach faktycznie coś
+ * wypchnie, żeby wtedy pokazać ostrzeżenie zamiast ciszy.
+ */
+export function willDropOldestScenario(currentCount: number, addingCount: number): boolean {
+  return currentCount + addingCount > MAX_SCENARIOS;
+}
+
+/**
  * Jak loadStoredInputs — localStorage jest edytowalne ręcznie i przeżywa
  * zmiany kształtu danych między wersjami, więc każdy wpis jest osobno
  * walidowany; jeden uszkodzony scenariusz nie może wywalić całej listy.
@@ -730,6 +741,7 @@ export function useCalculator() {
   const [calcError, setCalcError] = useState<TranslationKey | null>(null);
   const [scenarios, setScenarios] = useState<SavedScenario[]>(() => loadScenarios());
   const [scenarioSaveError, setScenarioSaveError] = useState(false);
+  const [scenarioLimitReached, setScenarioLimitReached] = useState(false);
 
   const isStale = calcState !== null && lastCalculatedInputs !== null && !inputsEqual(inputs, lastCalculatedInputs);
 
@@ -766,6 +778,7 @@ export function useCalculator() {
     setScenarios((prev) => {
       const next = addScenario(prev, name, inputs);
       setScenarioSaveError(!persistScenarios(next));
+      setScenarioLimitReached(willDropOldestScenario(prev.length, 1));
       return next;
     });
   }, [inputs]);
@@ -786,6 +799,7 @@ export function useCalculator() {
     setScenarios((prev) => {
       const next = removeScenario(prev, id);
       setScenarioSaveError(!persistScenarios(next));
+      setScenarioLimitReached(false);
       return next;
     });
   }, []);
@@ -794,14 +808,19 @@ export function useCalculator() {
     setScenarios((prev) => {
       const next = renameScenario(prev, id, newName);
       setScenarioSaveError(!persistScenarios(next));
+      setScenarioLimitReached(false);
       return next;
     });
   }, []);
 
+  // Jak addScenario — gdy lista jest już na MAX_SCENARIOS, dodanie kopii cicho
+  // wypycha najstarszy wpis (patrz addScenario/mergeImportedScenarios), więc
+  // duplikat "zjada" inny zapisany scenariusz bez żadnego ostrzeżenia.
   const duplicateScenarioById = useCallback((id: string, newName: string) => {
     setScenarios((prev) => {
       const next = duplicateScenario(prev, id, newName);
       setScenarioSaveError(!persistScenarios(next));
+      setScenarioLimitReached(willDropOldestScenario(prev.length, 1));
       return next;
     });
   }, []);
@@ -813,6 +832,7 @@ export function useCalculator() {
     setScenarios((prev) => {
       const next = mergeImportedScenarios(prev, imported);
       setScenarioSaveError(!persistScenarios(next));
+      setScenarioLimitReached(willDropOldestScenario(prev.length, imported.length));
       return next;
     });
     return imported.length;
@@ -988,6 +1008,7 @@ export function useCalculator() {
     resetToDefaults,
     scenarios,
     scenarioSaveError,
+    scenarioLimitReached,
     saveCurrentAsScenario,
     loadScenario,
     deleteScenario,

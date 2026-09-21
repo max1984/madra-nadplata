@@ -168,6 +168,7 @@ interface Props {
   calcError: TranslationKey | null;
   scenarios: SavedScenario[];
   scenarioSaveError: boolean;
+  scenarioLimitReached: boolean;
   onSaveScenario: (name: string) => void;
   onLoadScenario: (id: string) => void;
   onDeleteScenario: (id: string) => void;
@@ -178,7 +179,7 @@ interface Props {
 
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
-  scenarios, scenarioSaveError, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
+  scenarios, scenarioSaveError, scenarioLimitReached, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
   onImportScenarios,
 }: Props) {
   const { t, fmt, fmtC, fmtSignedC, lang } = useLang();
@@ -936,6 +937,11 @@ export default function Calculator({
                 {scenarioSaveError && (
                   <div className="scenario-save-error" role="alert" style={{ color: 'var(--danger)', fontSize: '.85rem', marginTop: '6px' }}>
                     {t('scenario_save_storage_error')}
+                  </div>
+                )}
+                {!scenarioSaveError && scenarioLimitReached && (
+                  <div className="scenario-limit-notice" role="status" style={{ color: 'var(--text3)', fontSize: '.85rem', marginTop: '6px' }}>
+                    {t('scenario_limit_reached')}
                   </div>
                 )}
               </div>

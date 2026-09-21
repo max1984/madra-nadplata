@@ -60,7 +60,7 @@ export type TranslationKey =
   | 'error_total_monthly' | 'error_overpay_amount' | 'error_shorten_amount'
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
-  | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_save_storage_error' | 'scenario_saved_title'
+  | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_save_storage_error' | 'scenario_limit_reached' | 'scenario_saved_title'
   | 'scenario_sort_label' | 'scenario_sort_newest' | 'scenario_sort_oldest' | 'scenario_sort_name'
   | 'scenario_filter_placeholder' | 'scenario_filter_no_match'
   | 'scenario_load' | 'scenario_delete' | 'scenario_diff_label' | 'scenario_rename_hint'
@@ -242,6 +242,7 @@ const pl: Translations = {
   scenario_name_placeholder: 'Nazwa scenariusza (np. "Wariant z nadpłatą 500 zł")',
   scenario_save: '💾 Zapisz scenariusz',
   scenario_save_storage_error: 'Nie udało się zapisać scenariusza na tym urządzeniu (pamięć przeglądarki jest pełna lub zablokowana) — po odświeżeniu strony może zniknąć.',
+  scenario_limit_reached: 'Limit 10 zapisanych scenariuszy osiągnięty — najstarszy został usunięty, żeby zrobić miejsce na nowy.',
   scenario_saved_title: 'Zapisane scenariusze',
   scenario_sort_label: 'Sortuj scenariusze',
   scenario_sort_newest: 'Najnowsze',
@@ -507,6 +508,7 @@ const en: Translations = {
   scenario_name_placeholder: 'Scenario name (e.g. "500 PLN overpay variant")',
   scenario_save: '💾 Save scenario',
   scenario_save_storage_error: 'Could not save this scenario on this device (browser storage is full or blocked) — it may disappear after a page refresh.',
+  scenario_limit_reached: 'Reached the 10 saved-scenario limit — the oldest one was removed to make room for this one.',
   scenario_saved_title: 'Saved scenarios',
   scenario_sort_label: 'Sort scenarios',
   scenario_sort_newest: 'Newest',
