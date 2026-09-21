@@ -242,6 +242,13 @@ for (const p of pages) {
 
 const urls = [
   { loc: `${SITE}/`, priority: '1.0', freq: 'weekly' },
+  // Drugi i trzeci entry point Vite (kalkulator wynagrodzeń, kalkulator
+  // zdolności kredytowej) — statycznie zbudowane strony poza tym
+  // generatorem (patrz wynagrodzenia.html/zdolnosc-kredytowa.html), ale
+  // bez wpisu tutaj sitemap.xml (jedyny sygnał dla Google poza samymi
+  // linkami wewnętrznymi) o nich milczał.
+  { loc: `${SITE}/wynagrodzenia.html`, priority: '0.9', freq: 'weekly' },
+  { loc: `${SITE}/zdolnosc-kredytowa.html`, priority: '0.9', freq: 'weekly' },
   ...pages.map((p) => ({ loc: `${SITE}/${p.slug}/`, priority: '0.7', freq: 'monthly' })),
 ];
 
