@@ -27,6 +27,7 @@ import {
   type SavedSalaryScenario,
 } from './useSalaryCalculator';
 import { LANGS } from '../lib/i18n';
+import { RYCZALT_RATES } from '../lib/salary';
 
 class FakeStorage {
   private store = new Map<string, string>();
@@ -302,6 +303,19 @@ describe('buildSalaryUrlParams / parseUrlSalaryInputs — round trip', () => {
     const patch = parseUrlSalaryInputs('?' + buildSalaryUrlParams(inputs));
     expect(patch.b2b).toMatchObject({ monthlyRevenue: 15000, monthlyCosts: 2000, taxForm: 'skala', zusVariant: 'maly_zus_plus', malyZusPlusBase: 3000 });
   });
+
+  it(
+    'regression: round-trips every ryczałt rate through the URL, including the ones added after the ' +
+      'dropdown was expanded from 5 to 10 rates — isRyczaltRate validates against the shared RYCZALT_RATES ' +
+      'constant, so this also guards against a future hardcoded/stale copy of the rate list creeping back in',
+    () => {
+      for (const ryczaltRate of RYCZALT_RATES) {
+        const inputs = withB2B({ taxForm: 'ryczalt', ryczaltRate });
+        const patch = parseUrlSalaryInputs('?' + buildSalaryUrlParams(inputs));
+        expect(patch.b2b).toMatchObject({ taxForm: 'ryczalt', ryczaltRate });
+      }
+    }
+  );
 
   it(
     'regression: leaves employment entirely unset when every field param is garbage — an empty ' +

@@ -28,6 +28,7 @@ import {
   type RyczaltRate,
   type B2BTaxForm,
   type B2BZusVariant,
+  RYCZALT_RATES,
 } from '../lib/salary';
 
 // ------------------------------------------------------------- stan ---
@@ -246,7 +247,6 @@ const KUP_OPTIONS: KupOption[] = ['standard', 'elevated'];
 const MANDATE_KUP_OPTIONS: MandateKupOption[] = ['standard', 'copyright'];
 const B2B_TAX_FORMS: B2BTaxForm[] = ['skala', 'liniowy', 'ryczalt', 'ipbox'];
 const B2B_ZUS_VARIANTS: B2BZusVariant[] = ['ulga_na_start', 'preferencyjny', 'maly_zus_plus', 'pelny'];
-const RYCZALT_RATES: RyczaltRate[] = [0.085, 0.12, 0.14, 0.15, 0.17];
 
 function isSpecialRelief(v: string | null): v is SpecialRelief {
   return v !== null && (SPECIAL_RELIEFS as string[]).includes(v);
