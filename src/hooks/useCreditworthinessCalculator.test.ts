@@ -60,11 +60,33 @@ describe('validateCreditworthinessInputs', () => {
   });
 
   it('rejects negative household cost / commitment fields', () => {
-    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, firstPersonCost: -1 })).toBe('error_cw_negative_field');
-    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, additionalPersonCost: -1 })).toBe('error_cw_negative_field');
-    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, existingLoanInstallments: -1 })).toBe('error_cw_negative_field');
-    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, creditCardLimits: -1 })).toBe('error_cw_negative_field');
-    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, alimony: -1 })).toBe('error_cw_negative_field');
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, firstPersonCost: -1 })).toBe('error_cw_out_of_range_field');
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, additionalPersonCost: -1 })).toBe('error_cw_out_of_range_field');
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, existingLoanInstallments: -1 })).toBe('error_cw_out_of_range_field');
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, creditCardLimits: -1 })).toBe('error_cw_out_of_range_field');
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, alimony: -1 })).toBe('error_cw_out_of_range_field');
+  });
+
+  it(
+    'regression: rejects household cost / commitment fields above the UI slider maximum instead of silently ' +
+      'accepting them — CreditworthinessCalculator.tsx clamps firstPersonCost/additionalPersonCost to 100 000 ' +
+      'and existingLoanInstallments/creditCardLimits/alimony to 1 000 000, but validation previously only ' +
+      'checked for negative values, so a hand-crafted URL/localStorage value above those caps used to pass ' +
+      'and skew the result instead of producing a clear error (same bug class as householdSize above 20)',
+    () => {
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, firstPersonCost: 100_001 })).toBe('error_cw_out_of_range_field');
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, firstPersonCost: 100_000 })).toBeNull();
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, additionalPersonCost: 100_001 })).toBe('error_cw_out_of_range_field');
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, existingLoanInstallments: 1_000_001 })).toBe('error_cw_out_of_range_field');
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, creditCardLimits: 1_000_001 })).toBe('error_cw_out_of_range_field');
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, alimony: 1_000_001 })).toBe('error_cw_out_of_range_field');
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, alimony: 1_000_000 })).toBeNull();
+    }
+  );
+
+  it('regression: rejects netIncome above the UI field maximum (1 000 000), matching the same slider-vs-validation pattern', () => {
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, netIncome: 1_000_001 })).toBe('error_cw_income');
+    expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, netIncome: 1_000_000 })).toBeNull();
   });
 });
 

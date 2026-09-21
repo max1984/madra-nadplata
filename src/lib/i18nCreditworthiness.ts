@@ -20,7 +20,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_result_disposable_income' | 'cw_result_dsti_threshold' | 'cw_result_max_installment'
   | 'cw_result_buffer' | 'cw_result_max_loan_amount' | 'cw_advanced_toggle'
   | 'error_cw_income' | 'error_cw_household_size' | 'error_cw_years' | 'error_cw_nominal_rate'
-  | 'error_cw_income_recognition' | 'error_cw_negative_field';
+  | 'error_cw_income_recognition' | 'error_cw_out_of_range_field';
 
 const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_nav_back: '← Kalkulator kredytu',
@@ -60,7 +60,7 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   error_cw_years: 'Okres kredytowania musi być między 1 a 40 lat',
   error_cw_nominal_rate: 'Oprocentowanie nominalne musi być między 0 a 30%',
   error_cw_income_recognition: 'Procent uznania dochodu musi być między 0 a 100%',
-  error_cw_negative_field: 'Ta wartość nie może być ujemna',
+  error_cw_out_of_range_field: 'Ta wartość jest poza dopuszczalnym zakresem',
 };
 
 const enCw: Record<CreditworthinessTranslationKey, string> = {
@@ -101,7 +101,7 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   error_cw_years: 'Loan term must be between 1 and 40 years',
   error_cw_nominal_rate: 'Nominal interest rate must be between 0 and 30%',
   error_cw_income_recognition: 'Income recognition percentage must be between 0 and 100%',
-  error_cw_negative_field: 'This value cannot be negative',
+  error_cw_out_of_range_field: 'This value is out of the allowed range',
 };
 
 export const CREDITWORTHINESS_TRANSLATIONS: Record<Lang, Record<CreditworthinessTranslationKey, string>> = {

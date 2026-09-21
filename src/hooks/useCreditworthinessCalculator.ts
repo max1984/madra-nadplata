@@ -34,6 +34,10 @@ function isFiniteNonNegative(n: number): boolean {
   return Number.isFinite(n) && n >= 0;
 }
 
+function isInRange(n: number, max: number): boolean {
+  return Number.isFinite(n) && n >= 0 && n <= max;
+}
+
 /**
  * Zwraca klucz i18n błędu albo null — jak validateInputs w useCalculator.ts.
  * Sprawdza tylko granice, których computeCreditworthiness nie clampuje po
@@ -42,7 +46,7 @@ function isFiniteNonNegative(n: number): boolean {
  * coś wpisał źle).
  */
 export function validateCreditworthinessInputs(inputs: CreditworthinessInputs): TranslationKey | null {
-  if (!isFiniteNonNegative(inputs.netIncome) || inputs.netIncome <= 0) return 'error_cw_income';
+  if (!isFiniteNonNegative(inputs.netIncome) || inputs.netIncome <= 0 || inputs.netIncome > 1_000_000) return 'error_cw_income';
   // Górna granica 20 zgodna z suwakiem w CreditworthinessCalculator.tsx — bez
   // niej ręcznie spreparowany link (?household=999) przechodził walidację i
   // dawał myląco zerowy wynik (koszty utrzymania astronomicznie wysokie),
@@ -58,11 +62,15 @@ export function validateCreditworthinessInputs(inputs: CreditworthinessInputs): 
     const r = inputs.incomeRecognitionRate;
     if (!Number.isFinite(r) || r < 0 || r > 100) return 'error_cw_income_recognition';
   }
-  if (!isFiniteNonNegative(inputs.firstPersonCost)) return 'error_cw_negative_field';
-  if (!isFiniteNonNegative(inputs.additionalPersonCost)) return 'error_cw_negative_field';
-  if (!isFiniteNonNegative(inputs.existingLoanInstallments)) return 'error_cw_negative_field';
-  if (!isFiniteNonNegative(inputs.creditCardLimits)) return 'error_cw_negative_field';
-  if (!isFiniteNonNegative(inputs.alimony)) return 'error_cw_negative_field';
+  // Górne granice zgodne z suwakami w CreditworthinessCalculator.tsx (100 000
+  // dla kosztów utrzymania, 1 000 000 dla zobowiązań) — ten sam wzorzec buga
+  // co householdSize wyżej: bez nich ręcznie spreparowany link przechodził
+  // walidację i dawał myląco zniekształcony wynik zamiast czytelnego błędu.
+  if (!isInRange(inputs.firstPersonCost, 100_000)) return 'error_cw_out_of_range_field';
+  if (!isInRange(inputs.additionalPersonCost, 100_000)) return 'error_cw_out_of_range_field';
+  if (!isInRange(inputs.existingLoanInstallments, 1_000_000)) return 'error_cw_out_of_range_field';
+  if (!isInRange(inputs.creditCardLimits, 1_000_000)) return 'error_cw_out_of_range_field';
+  if (!isInRange(inputs.alimony, 1_000_000)) return 'error_cw_out_of_range_field';
   return null;
 }
 
