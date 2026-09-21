@@ -473,11 +473,31 @@ describe('parseSalaryScenariosJSON / salaryScenariosToJSON / mergeImportedSalary
 
   it('mergeImportedSalaryScenarios caps the result at MAX_SALARY_SCENARIOS, keeping the newest', () => {
     let existing: SavedSalaryScenario[] = [];
-    for (let i = 0; i < MAX_SALARY_SCENARIOS; i++) existing = addSalaryScenario(existing, `S${i}`, DEFAULT_SALARY_INPUTS);
-    const imported = [{ id: 'x', name: 'Nowy import', savedAt: Date.now(), inputs: DEFAULT_SALARY_INPUTS }];
+    for (let i = 0; i < MAX_SALARY_SCENARIOS; i++) {
+      existing = addSalaryScenario(existing, `S${i}`, DEFAULT_SALARY_INPUTS);
+      existing[existing.length - 1]!.savedAt = i + 1;
+    }
+    const imported = [{ id: 'x', name: 'Nowy import', savedAt: MAX_SALARY_SCENARIOS + 1, inputs: DEFAULT_SALARY_INPUTS }];
     const merged = mergeImportedSalaryScenarios(existing, imported);
     expect(merged).toHaveLength(MAX_SALARY_SCENARIOS);
     expect(merged[merged.length - 1]!.name).toBe('Nowy import');
+  });
+
+  it('regression: importing an old export file must not delete the user\'s own newer scenarios — the cap used to trim by array position, so an old import could evict fresh, unrelated entries', () => {
+    let existing: SavedSalaryScenario[] = [];
+    for (let i = 0; i < 8; i++) {
+      existing = addSalaryScenario(existing, `Own${i}`, DEFAULT_SALARY_INPUTS);
+      existing[existing.length - 1]!.savedAt = 1000 + i;
+    }
+    const imported = Array.from({ length: 5 }, (_, i) => ({
+      id: `old-${i}`,
+      name: `Old${i}`,
+      savedAt: i + 1,
+      inputs: DEFAULT_SALARY_INPUTS,
+    }));
+    const merged = mergeImportedSalaryScenarios(existing, imported);
+    expect(merged).toHaveLength(MAX_SALARY_SCENARIOS);
+    expect(merged.filter((s) => s.savedAt >= 1000)).toHaveLength(8);
   });
 });
 

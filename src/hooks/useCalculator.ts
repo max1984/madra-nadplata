@@ -280,7 +280,9 @@ export function scenariosToJSON(list: SavedScenario[]): string {
  * Dokleja zaimportowane scenariusze do już zapisanych, nadając im nowe id
  * — inaczej import pliku wyeksportowanego wcześniej z TEJ SAMEJ przeglądarki
  * dawałby kolizję id z wpisami, które już tam są. Wynik obcięty do
- * MAX_SCENARIOS tak samo jak w addScenario (zachowuje najnowsze).
+ * MAX_SCENARIOS wg savedAt (zachowuje najnowsze), NIE wg pozycji w tablicy —
+ * import starego pliku eksportu przy przekroczonym limicie kasowałby
+ * własne, nowsze scenariusze zamiast starszych zaimportowanych.
  */
 export function mergeImportedScenarios(existing: SavedScenario[], imported: SavedScenario[]): SavedScenario[] {
   const reIded = imported.map((s) => ({
@@ -288,7 +290,9 @@ export function mergeImportedScenarios(existing: SavedScenario[], imported: Save
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
   }));
   const next = [...existing, ...reIded];
-  return next.length > MAX_SCENARIOS ? next.slice(next.length - MAX_SCENARIOS) : next;
+  if (next.length <= MAX_SCENARIOS) return next;
+  const keep = new Set([...next].sort((a, b) => b.savedAt - a.savedAt).slice(0, MAX_SCENARIOS));
+  return next.filter((s) => keep.has(s));
 }
 
 export type ScenarioSortKey = 'date-desc' | 'date-asc' | 'name-asc';

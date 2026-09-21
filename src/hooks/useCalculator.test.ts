@@ -621,7 +621,7 @@ describe('mergeImportedScenarios', () => {
     expect(new Set(next.map((s) => s.id)).size).toBe(2);
   });
 
-  it('caps the merged list at 10 entries, keeping the most recent', () => {
+  it('caps the merged list at 10 entries, keeping the most recent by savedAt', () => {
     let existing: ReturnType<typeof addScenario> = [];
     for (let i = 0; i < 8; i++) existing = addScenario(existing, `E${i}`, DEFAULT_INPUTS);
     const imported = [
@@ -631,8 +631,29 @@ describe('mergeImportedScenarios', () => {
     ];
     const next = mergeImportedScenarios(existing, imported);
     expect(next).toHaveLength(10);
-    expect(next[9]!.name).toBe('I3');
-    expect(next[0]!.name).toBe('E1');
+    // Importowane mają dużo starsze savedAt (1,2,3) niż existing (Date.now()),
+    // więc to najstarszy z nich (I1) wypada, nie najstarszy z existing.
+    expect(next.some((s) => s.name === 'I1')).toBe(false);
+    expect(next.some((s) => s.name === 'I2')).toBe(true);
+    expect(next.some((s) => s.name === 'I3')).toBe(true);
+    expect(next.filter((s) => s.name.startsWith('E'))).toHaveLength(8);
+  });
+
+  it('regression: importing an old export file must not delete the user\'s own newer scenarios — previously the merge trimmed by array position, so an old import could evict fresh, unrelated entries', () => {
+    let existing: ReturnType<typeof addScenario> = [];
+    for (let i = 0; i < 8; i++) {
+      existing = addScenario(existing, `Own${i}`, DEFAULT_INPUTS);
+      existing[existing.length - 1]!.savedAt = 1000 + i;
+    }
+    const imported = Array.from({ length: 5 }, (_, i) => ({
+      id: `old-${i}`,
+      name: `Old${i}`,
+      savedAt: i + 1,
+      inputs: DEFAULT_INPUTS,
+    }));
+    const next = mergeImportedScenarios(existing, imported);
+    expect(next).toHaveLength(10);
+    expect(next.filter((s) => s.savedAt >= 1000)).toHaveLength(8);
   });
 });
 

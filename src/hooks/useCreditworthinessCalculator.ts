@@ -309,7 +309,9 @@ export function cwScenariosToJSON(list: SavedCreditworthinessScenario[]): string
 /**
  * Jak mergeImportedSalaryScenarios w useSalaryCalculator.ts — nowe id dla
  * każdego zaimportowanego wpisu (unika kolizji z tym, co już jest zapisane
- * w tej samej przeglądarce), obcięte do MAX_CW_SCENARIOS (zachowuje najnowsze).
+ * w tej samej przeglądarce), obcięte do MAX_CW_SCENARIOS wg savedAt (zachowuje
+ * najnowsze), NIE wg pozycji w tablicy — import starego pliku eksportu przy
+ * przekroczonym limicie kasowałby własne, nowsze scenariusze.
  */
 export function mergeImportedCwScenarios(
   existing: SavedCreditworthinessScenario[],
@@ -320,7 +322,9 @@ export function mergeImportedCwScenarios(
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
   }));
   const next = [...existing, ...reIded];
-  return next.length > MAX_CW_SCENARIOS ? next.slice(next.length - MAX_CW_SCENARIOS) : next;
+  if (next.length <= MAX_CW_SCENARIOS) return next;
+  const keep = new Set([...next].sort((a, b) => b.savedAt - a.savedAt).slice(0, MAX_CW_SCENARIOS));
+  return next.filter((s) => keep.has(s));
 }
 
 // ------------------------------------------------------------- hook ---

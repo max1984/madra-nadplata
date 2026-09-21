@@ -408,11 +408,33 @@ describe('cwScenariosToJSON / mergeImportedCwScenarios', () => {
 
   it('mergeImportedCwScenarios caps the result at MAX_CW_SCENARIOS, keeping the newest', () => {
     let existing = addCreditworthinessScenario([], 'S0', DEFAULT_CREDITWORTHINESS_INPUTS);
-    for (let i = 1; i < MAX_CW_SCENARIOS; i++) existing = addCreditworthinessScenario(existing, `S${i}`, DEFAULT_CREDITWORTHINESS_INPUTS);
-    const imported = [{ id: 'x', name: 'Nowy import', savedAt: Date.now(), inputs: DEFAULT_CREDITWORTHINESS_INPUTS }];
+    existing[0]!.savedAt = 1;
+    for (let i = 1; i < MAX_CW_SCENARIOS; i++) {
+      existing = addCreditworthinessScenario(existing, `S${i}`, DEFAULT_CREDITWORTHINESS_INPUTS);
+      existing[existing.length - 1]!.savedAt = i + 1;
+    }
+    const imported = [{ id: 'x', name: 'Nowy import', savedAt: MAX_CW_SCENARIOS + 1, inputs: DEFAULT_CREDITWORTHINESS_INPUTS }];
     const merged = mergeImportedCwScenarios(existing, imported);
     expect(merged).toHaveLength(MAX_CW_SCENARIOS);
     expect(merged[merged.length - 1]!.name).toBe('Nowy import');
+  });
+
+  it('regression: importing an old export file must not delete the user\'s own newer scenarios — the cap used to trim by array position, so an old import could evict fresh, unrelated entries', () => {
+    let existing = addCreditworthinessScenario([], 'Own0', DEFAULT_CREDITWORTHINESS_INPUTS);
+    existing[0]!.savedAt = 1000;
+    for (let i = 1; i < 8; i++) {
+      existing = addCreditworthinessScenario(existing, `Own${i}`, DEFAULT_CREDITWORTHINESS_INPUTS);
+      existing[existing.length - 1]!.savedAt = 1000 + i;
+    }
+    const imported = Array.from({ length: 5 }, (_, i) => ({
+      id: `old-${i}`,
+      name: `Old${i}`,
+      savedAt: i + 1,
+      inputs: DEFAULT_CREDITWORTHINESS_INPUTS,
+    }));
+    const merged = mergeImportedCwScenarios(existing, imported);
+    expect(merged).toHaveLength(MAX_CW_SCENARIOS);
+    expect(merged.filter((s) => s.savedAt >= 1000)).toHaveLength(8);
   });
 });
 
