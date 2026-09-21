@@ -676,6 +676,8 @@ footer {
 footer a { color: var(--text2); text-decoration: none; transition: color .2s; }
 footer a:hover { color: var(--accent); }
 .footer-author { margin-top: 10px; font-size: .8rem; }
+.footer-other-tools { font-size: .85rem; margin-bottom: 6px; }
+.footer-other-tools a { font-weight: 600; }
 .footer-logo {
   font-size: 1rem; font-weight: 800;
   font-family: 'Inter', system-ui, sans-serif;

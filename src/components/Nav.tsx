@@ -58,6 +58,8 @@ export default function Nav() {
       <span className="nav-sec-label">{t('nav_tools')}</span>
       <a href="#calculator" onClick={() => setMenuOpen(false)}>{t('nav_calc')}</a>
       <a href="#schedule" onClick={() => setMenuOpen(false)}>{t('nav_schedule')}</a>
+      <a href="/wynagrodzenia.html">{t('nav_salary_calc')}</a>
+      <a href="/zdolnosc-kredytowa.html">{t('nav_creditworthiness_calc')}</a>
       <div className="lang-toggle" role="group" aria-label={t('nav_lang_group')}>
         <button
           className={`lang-btn${lang === 'pl' ? ' active' : ''}`}

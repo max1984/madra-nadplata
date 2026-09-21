@@ -7,7 +7,7 @@ export type TranslationKey =
   | SalaryTranslationKey
   | CreditworthinessTranslationKey
   | 'nav_knowledge' | 'nav_how' | 'nav_example' | 'nav_faq'
-  | 'nav_tools' | 'nav_calc' | 'nav_schedule' | 'tools_divider'
+  | 'nav_tools' | 'nav_calc' | 'nav_schedule' | 'nav_salary_calc' | 'nav_creditworthiness_calc' | 'tools_divider'
   | 'nav_lang_group' | 'nav_menu'
   | 'hero_badge' | 'hero_h1_full' | 'hero_p'
   | 'hero_stat1_lbl' | 'hero_stat2_lbl' | 'hero_stat3_lbl'
@@ -124,6 +124,7 @@ type Translations = Record<TranslationKey, string>;
 const pl: Translations = {
   nav_knowledge: 'Wiedza', nav_how: 'Jak to działa', nav_example: 'Przykład', nav_faq: 'FAQ',
   nav_tools: 'Narzędzia', nav_calc: 'Kalkulator', nav_schedule: 'Harmonogram',
+  nav_salary_calc: 'Kalkulator wynagrodzeń', nav_creditworthiness_calc: 'Zdolność kredytowa',
   tools_divider: 'Narzędzia kalkulatora',
   nav_lang_group: 'Język', nav_menu: 'Menu',
   hero_badge: 'Edukacja finansowa',
@@ -393,6 +394,7 @@ const pl: Translations = {
 const en: Translations = {
   nav_knowledge: 'Learn', nav_how: 'How it works', nav_example: 'Example', nav_faq: 'FAQ',
   nav_tools: 'Tools', nav_calc: 'Calculator', nav_schedule: 'Schedule',
+  nav_salary_calc: 'Salary calculator', nav_creditworthiness_calc: 'Credit capacity',
   tools_divider: 'Calculator Tools',
   nav_lang_group: 'Language', nav_menu: 'Menu',
   hero_badge: 'Financial Education',

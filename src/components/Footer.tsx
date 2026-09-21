@@ -41,6 +41,11 @@ export default function Footer() {
       )}
 
       <div className="footer-logo">💰 Mądra Nadpłata</div>
+      <div className="footer-other-tools">
+        <a href="/wynagrodzenia.html">{t('nav_salary_calc')}</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/zdolnosc-kredytowa.html">{t('nav_creditworthiness_calc')}</a>
+      </div>
       <p dangerouslySetInnerHTML={{ __html: t('footer_disclaimer') }} />
       <div className="footer-author" style={{ marginTop: 16 }}>
         {t('footer_author')} <strong style={{ color: 'var(--text2)' }}>Bartłomiej Derda</strong>
