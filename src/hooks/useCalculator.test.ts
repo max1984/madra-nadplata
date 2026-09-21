@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, type CalcState } from './useCalculator';
+import { parseUrlInputs, buildUrlParams, validateInputs, resolvePerRowFixed, resolveFixedStd, naturalOverpaysWithStart, flatOverpayWithStart, applyExtraAnnualPayment, clampCustomAnnualRate, saveInputs, loadStoredInputs, clearStoredInputs, inputsEqual, loadScenarios, persistScenarios, addScenario, removeScenario, renameScenario, duplicateScenario, sortScenarios, strategyLabelKey, buildScenarioComparisonRows, compareScenarioToCurrent, computeCalcState, parseScenariosJSON, scenariosToJSON, mergeImportedScenarios, DEFAULT_INPUTS, resolveInitialInputs, type CalcState, type CalcInputs } from './useCalculator';
 import { naturalOverpaysFromBalance } from '../lib/mortgage';
 
 class FakeStorage {
@@ -391,6 +391,23 @@ describe('saveInputs / loadStoredInputs', () => {
     expect(loadStoredInputs()).not.toBeNull();
     clearStoredInputs();
     expect(loadStoredInputs()).toBeNull();
+  });
+});
+
+describe('resolveInitialInputs', () => {
+  it('returns DEFAULT_INPUTS merged with a valid patch', () => {
+    const result = resolveInitialInputs({ loanAmount: 456000 });
+    expect(result).toEqual({ ...DEFAULT_INPUTS, loanAmount: 456000 });
+  });
+
+  it('returns DEFAULT_INPUTS unchanged when there is no patch', () => {
+    expect(resolveInitialInputs(null)).toEqual(DEFAULT_INPUTS);
+  });
+
+  it('regression: falls back to DEFAULT_INPUTS instead of leaking an invalid merged value into the form state — loadStoredInputs only checks that localStorage held a JSON object, not that its fields are sane, so a corrupted or hand-edited entry (e.g. loanAmount: NaN) used to flow straight into the `inputs` state that drives the form fields, even though calcState/lastCalculatedInputs already rejected the same data via validateInputs', () => {
+    expect(resolveInitialInputs({ loanAmount: NaN })).toEqual(DEFAULT_INPUTS);
+    expect(resolveInitialInputs({ loanMonths: 999999 })).toEqual(DEFAULT_INPUTS);
+    expect(resolveInitialInputs({ strategy: 'refinance', refiRate: -5 } as Partial<CalcInputs>)).toEqual(DEFAULT_INPUTS);
   });
 });
 

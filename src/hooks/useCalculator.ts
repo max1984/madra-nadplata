@@ -665,13 +665,26 @@ export function clampCustomAnnualRate(annualRateValue: string): number {
   return Math.min(25, Math.max(0.01, parseLocaleNumber(annualRateValue) || 0));
 }
 
+/**
+ * Scala DEFAULT_INPUTS z patchem z URL/localStorage dla stanu formularza
+ * (`inputs`), z walidacją — w przeciwieństwie do calcState/lastCalculatedInputs,
+ * ten stan trafia wprost do pól formularza, więc bez validateInputs uszkodzony
+ * wpis w localStorage (ręczna edycja w DevTools albo stary kształt danych
+ * sprzed zmiany wersji) pokazywał NaN-y/śmieci w polach i suwakach od razu po
+ * wczytaniu strony, mimo że calcState i tak zostawał null.
+ */
+export function resolveInitialInputs(patch: Partial<CalcInputs> | null): CalcInputs {
+  const merged = { ...DEFAULT_INPUTS, ...patch };
+  return validateInputs(merged) === null ? merged : DEFAULT_INPUTS;
+}
+
 export function useCalculator() {
   // Link URL to jawna, udostępniona intencja — ma pierwszeństwo przed cicho
   // zapamiętanymi danymi z poprzedniej wizyty w tej samej przeglądarce.
   const [inputs, setInputsState] = useState<CalcInputs>(() => {
     const urlPatch = parseUrlInputs();
     const patch = Object.keys(urlPatch).length ? urlPatch : loadStoredInputs();
-    return { ...DEFAULT_INPUTS, ...patch };
+    return resolveInitialInputs(patch);
   });
 
   const [calcState, setCalcState] = useState<CalcState | null>(() => {
