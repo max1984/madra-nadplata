@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -161,6 +161,28 @@ describe('resolveImportMessage', () => {
   it('regression: reports a read error instead of leaving the user with no feedback at all — handleImportFileChange only wired reader.onload, so a failed FileReader read (disk/permission error, file removed between picking it and reading it) used to fire neither onload nor any message', () => {
     expect(resolveImportMessage({ ok: false }, t)).toBe(translate('pl', 'scenario_import_error'));
   });
+});
+
+describe('formatChartYTick', () => {
+  const fmtPl = (n: number, dec?: number) => fmt(n, dec, 'pl');
+  const fmtEn = (n: number, dec?: number) => fmt(n, dec, 'en');
+
+  it('divides by 1000 and appends "k"', () => {
+    expect(formatChartYTick(12345, fmtPl)).toBe(`${fmtPl(12.345)}k`);
+  });
+
+  it(
+    'regression: reformats through whichever `fmt` is passed in, instead of a fixed locale — the balance ' +
+      'chart\'s Y-axis callback used to close over the `fmt` captured when the chart was first created, so ' +
+      'switching language later updated the series labels (via chart.update()) but left the Y-axis numbers ' +
+      'formatted in the old locale (e.g. comma instead of dot as the decimal separator); the chart effect ' +
+      'now rebuilds the callback through this function on every update, keyed off the current `fmt`',
+    () => {
+      expect(formatChartYTick(1234567, fmtPl)).not.toBe(formatChartYTick(1234567, fmtEn));
+      expect(formatChartYTick(1234567, fmtPl)).toBe(`${fmtPl(1234.567)}k`);
+      expect(formatChartYTick(1234567, fmtEn)).toBe(`${fmtEn(1234.567)}k`);
+    },
+  );
 });
 
 describe('buildScenarioComparisonCSV', () => {

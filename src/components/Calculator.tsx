@@ -192,6 +192,18 @@ interface Props {
   onImportScenarios: (json: string) => number;
 }
 
+/**
+ * Formatuje wartość osi Y wykresu salda (tysiące + "k") przez przekazany
+ * `fmt` zamiast domykania się nad nim raz na zawsze — inaczej callback
+ * Chart.js zapamiętywał `fmt` z chwili utworzenia wykresu, więc po
+ * przełączeniu języka oś Y dalej formatowała liczby w starym stylu (np.
+ * przecinek zamiast kropki dziesiętnej), mimo że reszta interfejsu (w tym
+ * etykiety serii) już się zaktualizowała.
+ */
+export function formatChartYTick(v: number, fmt: (n: number, dec?: number) => string): string {
+  return fmt(v / 1000) + 'k';
+}
+
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
   scenarios, scenarioSaveError, scenarioLimitReached, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
@@ -373,6 +385,13 @@ export default function Calculator({
       withoutDs!.label = t('chart_without');
       withDs!.data = withBals;
       withDs!.label = t('chart_with');
+      // Bez tego przełączenie języka aktualizowało etykiety serii (wyżej),
+      // ale oś Y zostawała z callbackiem domkniętym nad `fmt` z chwili
+      // utworzenia wykresu — liczby na osi Y dalej formatowały się w starym
+      // języku (np. przecinek zamiast kropki dziesiętnej) mimo widocznej
+      // zmiany reszty interfejsu.
+      const yTicks = chart.current.options.scales?.y?.ticks;
+      if (yTicks) yTicks.callback = (v) => formatChartYTick(Number(v), fmt);
       chart.current.update();
       return;
     }
@@ -392,7 +411,7 @@ export default function Calculator({
         plugins: { legend: { labels: { color: CHART.legend, font: { size: 11 } } } },
         scales: {
           x: { grid: { color: CHART.grid }, ticks: { color: CHART.ticks, maxTicksLimit: 10 } },
-          y: { grid: { color: CHART.grid }, ticks: { color: CHART.ticks, callback: (v) => fmt(Number(v) / 1000) + 'k' } },
+          y: { grid: { color: CHART.grid }, ticks: { color: CHART.ticks, callback: (v) => formatChartYTick(Number(v), fmt) } },
         },
       },
     });
