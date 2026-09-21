@@ -79,6 +79,7 @@ export type TranslationKey =
   | 'scenario_copy_link' | 'scenario_copy_link_copied' | 'scenario_copy_summary' | 'scenario_summary_invalid'
   | 'scenario_duplicate' | 'scenario_copy_suffix'
   | 'csv_export' | 'sch_csv_filename' | 'sch_interest_only_hint' | 'sch_print'
+  | 'calc_btn_shortcut_hint'
   | 'overpay_start_label' | 'overpay_start_hint'
   | 'extra_annual_label' | 'extra_annual_hint'
   | 'row_effect_shorten' | 'row_effect_reduce'
@@ -285,6 +286,7 @@ const pl: Translations = {
   scenario_duplicate: '📄 Duplikuj',
   scenario_copy_suffix: '(kopia)',
   csv_export: 'Pobierz CSV',
+  calc_btn_shortcut_hint: 'Skrót klawiszowy: Ctrl+Enter (Cmd+Enter na Mac)',
   sch_csv_filename: 'harmonogram',
   sch_interest_only_hint: 'Po podwyżce oprocentowania cała rata pokrywa same odsetki — kapitał w tym miesiącu nie maleje.',
   sch_print: 'Drukuj / Zapisz PDF',
@@ -557,6 +559,7 @@ const en: Translations = {
   scenario_duplicate: '📄 Duplicate',
   scenario_copy_suffix: '(copy)',
   csv_export: 'Download CSV',
+  calc_btn_shortcut_hint: 'Keyboard shortcut: Ctrl+Enter (Cmd+Enter on Mac)',
   sch_csv_filename: 'schedule',
   sch_interest_only_hint: 'After a rate increase the whole installment covers interest only — the principal did not decrease this month.',
   sch_print: 'Print / Save PDF',

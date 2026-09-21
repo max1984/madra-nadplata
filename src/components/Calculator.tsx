@@ -969,6 +969,7 @@ export default function Calculator({
             <motion.button
               type="button"
               className="calc-btn"
+              title={t('calc_btn_shortcut_hint')}
               onClick={() => onCalculate()}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}

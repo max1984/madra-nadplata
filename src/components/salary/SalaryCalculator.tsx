@@ -909,7 +909,7 @@ export default function SalaryCalculator({
           {calcError && <div className="calc-error" role="alert">{t(calcError)}</div>}
 
           <div className="form-group" style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-            <button type="button" className="calc-btn" onClick={onCalculate}>{t('salary_calculate_btn')}</button>
+            <button type="button" className="calc-btn" title={t('calc_btn_shortcut_hint')} onClick={onCalculate}>{t('salary_calculate_btn')}</button>
             <button type="button" className="toolbar-btn" onClick={onResetToDefaults}>{t('salary_reset_btn')}</button>
           </div>
           <div role="status" aria-live="polite" className="sr-only">{announcement}</div>

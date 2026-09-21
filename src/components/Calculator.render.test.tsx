@@ -48,6 +48,18 @@ function renderCalculator() {
   );
 }
 
+describe('Calculator keyboard shortcut discoverability (render)', () => {
+  it(
+    'regression: the "Oblicz" button has a title tooltip mentioning Ctrl+Enter — the Ctrl/Cmd+Enter shortcut ' +
+      '(isCalculateShortcut) worked but was never surfaced anywhere in the UI, so a user had no way to discover it',
+    () => {
+      renderCalculator();
+      const btn = screen.getByRole('button', { name: /oblicz/i });
+      expect(btn.getAttribute('title')).toMatch(/ctrl/i);
+    }
+  );
+});
+
 describe('Calculator onBlur clamping (render)', () => {
   it('regression: an absurdly large #total-monthly value is clamped to sliderMax on blur instead of accepted verbatim', async () => {
     const user = userEvent.setup();

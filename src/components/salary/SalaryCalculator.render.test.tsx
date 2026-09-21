@@ -44,6 +44,18 @@ function renderSalaryCalculator() {
   );
 }
 
+describe('SalaryCalculator keyboard shortcut discoverability (render)', () => {
+  it(
+    'regression: the "Oblicz" button has a title tooltip mentioning Ctrl+Enter — the Ctrl/Cmd+Enter shortcut ' +
+      '(isCalculateShortcut) worked but was never surfaced anywhere in the UI, so a user had no way to discover it',
+    () => {
+      renderSalaryCalculator();
+      const btn = screen.getByRole('button', { name: /oblicz/i });
+      expect(btn.getAttribute('title')).toMatch(/ctrl/i);
+    }
+  );
+});
+
 describe('SalaryCalculator print button (render)', () => {
   it('regression: a "Drukuj / Zapisz PDF" button appears once a result exists, matching the mortgage and creditworthiness calculators — the salary calculator previously had no print/PDF export at all', async () => {
     const user = userEvent.setup();
