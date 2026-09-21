@@ -33,28 +33,34 @@ function AppInner() {
       <PrivacyPolicy />
       <Nav />
       <Hero />
-      <Suspense fallback={null}>
+      {/* Granica osobna od kalkulatora (poniżej) — FAQ/HowItWorks/przykład
+          nie mają powodu czekać na chunk Calculatora (ciągnie za sobą
+          chart.js, spory kawałek). Fallback z minHeight zamiast null, żeby
+          doładowanie chunku nie robiło skoku layoutu. */}
+      <Suspense fallback={<div style={{ minHeight: 900 }} />}>
         <HowItWorks />
         <ExampleSection />
         <SupportOptions />
         <FAQ />
+      </Suspense>
 
-        <AdSlot slot="inArticle" />
+      <AdSlot slot="inArticle" />
 
-        <div className="tools-divider">
-          <div className="tools-divider-line" />
-          <div className="tools-divider-content">
-            <svg className="tools-divider-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M4 6h10M17 6h3M4 12h3M9 12h11M4 18h13M20 18h0" />
-              <circle cx="14" cy="6" r="2" />
-              <circle cx="6" cy="12" r="2" />
-              <circle cx="17" cy="18" r="2" />
-            </svg>
-            <div className="tools-divider-label">{t('tools_divider')}</div>
-          </div>
-          <div className="tools-divider-line right" />
+      <div className="tools-divider">
+        <div className="tools-divider-line" />
+        <div className="tools-divider-content">
+          <svg className="tools-divider-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M4 6h10M17 6h3M4 12h3M9 12h11M4 18h13M20 18h0" />
+            <circle cx="14" cy="6" r="2" />
+            <circle cx="6" cy="12" r="2" />
+            <circle cx="17" cy="18" r="2" />
+          </svg>
+          <div className="tools-divider-label">{t('tools_divider')}</div>
         </div>
+        <div className="tools-divider-line right" />
+      </div>
 
+      <Suspense fallback={<div style={{ minHeight: 1200 }} />}>
         <Calculator
           inputs={inputs}
           setInputs={setInputs}

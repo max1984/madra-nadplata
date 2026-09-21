@@ -332,7 +332,7 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="section-label">{t('sch_label')}</div>
           <div className="section-title">{t('sch_title')}</div>
@@ -343,8 +343,8 @@ export default function Schedule({ calcState, onOverpayChange, onRateChange, onC
           className="table-wrapper"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.6, delay: 0.15 }}
+          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+          transition={{ duration: 0.35, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="schedule-toolbar">
             <div style={{ fontSize: '.85rem', color: 'var(--text2)' }}>

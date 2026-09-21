@@ -99,7 +99,7 @@ export default function ExampleSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="section-label">{t('ex_label')}</div>
           <div className="section-title">{t('ex_title_text')}</div>
@@ -110,8 +110,8 @@ export default function ExampleSection() {
           className="impact-grid"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.6, delay: 0.15 }}
+          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+          transition={{ duration: 0.35, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="impact-card">
             <h3>{t('ex_without')}</h3>
@@ -135,8 +135,8 @@ export default function ExampleSection() {
           className="charts-row"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.6, delay: 0.25 }}
+          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
+          transition={{ duration: 0.35, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="chart-box">
             <h4>{t('chart_balance')}</h4>

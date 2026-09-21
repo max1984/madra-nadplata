@@ -8,7 +8,7 @@ const container = {
 
 const cardVariant = {
   hidden: { opacity: 0, y: 32 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
 export default function SupportOptions() {
@@ -21,7 +21,7 @@ export default function SupportOptions() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="section-label">{t('sup_label')}</div>
           <div className="section-title">{t('sup_title')}</div>
@@ -33,7 +33,7 @@ export default function SupportOptions() {
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
         >
           <motion.div className="support-card" variants={cardVariant}>
             <span className="support-badge">{t('sup_badge_active')}</span>

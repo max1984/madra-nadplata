@@ -10,7 +10,7 @@ const container = {
 
 const cardVariant = {
   hidden: { opacity: 0, y: 32 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
 export default function HowItWorks() {
@@ -23,7 +23,7 @@ export default function HowItWorks() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="section-label">{t('how_label')}</div>
           <div className="section-title">{t('how_title')}</div>
@@ -35,7 +35,7 @@ export default function HowItWorks() {
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
         >
           {STEPS.map((n) => (
             <motion.div
@@ -57,7 +57,7 @@ export default function HowItWorks() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.3, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           dangerouslySetInnerHTML={{ __html: t('how_formula') }}
         />
       </div>
