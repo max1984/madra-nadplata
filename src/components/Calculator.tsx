@@ -214,6 +214,16 @@ export function formatScenarioCount(count: number): string {
   return `${count}/${MAX_SCENARIOS}`;
 }
 
+/**
+ * Escape czyści pole wyszukiwania scenariuszy — dokładnie ten sam wzorzec,
+ * co już istnieje przy edycji nazwy scenariusza (Escape anuluje). Warunek na
+ * niepustym filtrze, żeby Escape z pustym polem nie robił nic (nie ma czego
+ * czyścić) i mógł swobodnie "przebąblować" do innych globalnych skrótów.
+ */
+export function shouldClearFilterOnEscape(key: string, currentFilter: string): boolean {
+  return key === 'Escape' && currentFilter.length > 0;
+}
+
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
   scenarios, scenarioSaveError, scenarioLimitReached, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
@@ -1032,6 +1042,7 @@ export default function Calculator({
                         className="scenario-filter-input"
                         value={scenarioFilter}
                         onChange={(e) => setScenarioFilter(e.target.value)}
+                        onKeyDown={(e) => { if (shouldClearFilterOnEscape(e.key, scenarioFilter)) setScenarioFilter(''); }}
                         placeholder={t('scenario_filter_placeholder')}
                         aria-label={t('scenario_filter_placeholder')}
                       />

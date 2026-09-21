@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -190,6 +190,27 @@ describe('formatScenarioCount', () => {
     expect(formatScenarioCount(0)).toBe('0/10');
     expect(formatScenarioCount(3)).toBe('3/10');
     expect(formatScenarioCount(10)).toBe('10/10');
+  });
+});
+
+describe('shouldClearFilterOnEscape', () => {
+  it('clears a non-empty filter on Escape', () => {
+    expect(shouldClearFilterOnEscape('Escape', 'wariant')).toBe(true);
+  });
+
+  it(
+    'regression: does nothing for Escape on an already-empty filter — the scenario search field ' +
+      '(added alongside sort/filter for saved scenarios) had no Escape-to-clear at all, unlike the ' +
+      'existing Escape-cancels-rename pattern on the scenario name edit field; guarding on a non-empty ' +
+      'filter avoids swallowing Escape (e.g. for closing something else) when there is nothing to clear',
+    () => {
+      expect(shouldClearFilterOnEscape('Escape', '')).toBe(false);
+    },
+  );
+
+  it('ignores any other key regardless of filter content', () => {
+    expect(shouldClearFilterOnEscape('Enter', 'wariant')).toBe(false);
+    expect(shouldClearFilterOnEscape('a', 'wariant')).toBe(false);
   });
 });
 
