@@ -16,7 +16,7 @@ export type SalaryTranslationKey =
   | 'salary_month_9' | 'salary_month_10' | 'salary_month_11' | 'salary_month_12'
   | 'salary_result_net' | 'salary_result_gross' | 'salary_result_tax'
   | 'salary_result_social' | 'salary_result_health' | 'salary_result_employer_cost'
-  | 'salary_result_kup' | 'salary_result_copyright_kup'
+  | 'salary_result_kup' | 'salary_result_copyright_kup' | 'salary_check_creditworthiness_link'
   | 'salary_annual_summary_title' | 'salary_annual_total_net' | 'salary_annual_total_tax'
   | 'salary_annual_total_social_health' | 'salary_annual_scale_crossed' | 'salary_annual_zus_crossed'
   | 'salary_annual_relief_crossed' | 'salary_annual_chart_label'
@@ -74,6 +74,7 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_result_employer_cost: 'Koszt pracodawcy',
   salary_result_kup: 'Koszty uzyskania przychodu',
   salary_result_copyright_kup: 'Koszty autorskie (50%)',
+  salary_check_creditworthiness_link: 'Sprawdź zdolność kredytową z tym dochodem →',
   salary_annual_summary_title: 'Podsumowanie roczne',
   salary_annual_total_net: 'Suma netto',
   salary_annual_total_tax: 'Suma podatku',
@@ -185,6 +186,7 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_result_employer_cost: 'Employer cost',
   salary_result_kup: 'Tax-deductible costs',
   salary_result_copyright_kup: 'Copyright costs (50%)',
+  salary_check_creditworthiness_link: 'Check credit capacity with this income →',
   salary_annual_summary_title: 'Annual summary',
   salary_annual_total_net: 'Total net',
   salary_annual_total_tax: 'Total tax',

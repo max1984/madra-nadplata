@@ -60,6 +60,13 @@ function shouldCancelDeleteConfirmOnEscape(key: string, confirmDeleteId: string 
   return key === 'Escape' && confirmDeleteId !== null;
 }
 
+/** Mapuje typ umowy wynagrodzeń na typ kalkulatora zdolności kredytowej (który rozróżnia mniej wariantów — patrz creditworthiness.ts). */
+function creditworthinessContractType(contractType: SalaryContractType): 'employment' | 'b2b' | 'mandate_or_specific_work' {
+  if (contractType === 'employment') return 'employment';
+  if (contractType === 'b2b') return 'b2b';
+  return 'mandate_or_specific_work';
+}
+
 const TABS: { key: SalaryContractType; label: TranslationKey }[] = [
   { key: 'employment', label: 'salary_tab_employment' },
   { key: 'mandate', label: 'salary_tab_mandate' },
@@ -840,7 +847,16 @@ export default function SalaryCalculator({
             {isStale && <div className="hint">{t('calc_stale')}</div>}
 
             {calcState.mode === 'single' ? (
-              <SingleResultCard result={calcState.result} fmtC={fmtC} t={t} />
+              <>
+                <SingleResultCard result={calcState.result} fmtC={fmtC} t={t} />
+                <a
+                  className="toolbar-btn"
+                  style={{ display: 'inline-block', marginTop: 12 }}
+                  href={`/zdolnosc-kredytowa.html?netIncome=${Math.round(calcState.result.net)}&contractType=${creditworthinessContractType(calcState.contractType)}`}
+                >
+                  {t('salary_check_creditworthiness_link')}
+                </a>
+              </>
             ) : (
               <>
                 <div className="result-card highlight-blue">
