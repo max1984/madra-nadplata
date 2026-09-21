@@ -938,7 +938,7 @@ export default function Calculator({
                 </div>
 
                 <div className="info-box" style={{ fontSize: '.85rem' }} dangerouslySetInnerHTML={{ __html: t('refi_hint') }} />
-                <div className="info-box" style={{ fontSize: '.82rem', marginTop: 8, borderColor: '#cbb6f5', background: 'var(--accent3-soft)', color: 'var(--accent3)' }}>
+                <div className="info-box" style={{ fontSize: '.82rem', marginTop: 8, borderColor: '#e3c48f', background: 'var(--accent3-soft)', color: 'var(--accent3)' }}>
                   {t('refi_no_overpay_note')}
                 </div>
               </div>

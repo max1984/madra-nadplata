@@ -14,7 +14,7 @@ export const CHART = {
   overBar: 'rgba(4,120,87,.45)',
   /** Kapitał — neutralny, żeby nie konkurował z odsetkami. */
   capitalBase: 'rgba(100,116,139,.28)',
-  capitalOver: 'rgba(37,99,235,.55)',
+  capitalOver: 'rgba(13,59,102,.55)',
   /** Elementy opisowe. */
   legend: '#475569',
   ticks: '#64748b',
