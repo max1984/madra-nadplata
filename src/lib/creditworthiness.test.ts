@@ -57,6 +57,36 @@ describe('computeCreditworthiness', () => {
     expect(r.dstiThreshold).toBe(DSTI_THRESHOLD_LOW);
   });
 
+  it(
+    'regression: próg DSTI liczony jest od surowego netIncome, nie od recognizedIncome — B2B z dochodem ' +
+      '12000 i uznaniem 60% (recognizedIncome=7200, poniżej średniej krajowej) dostaje mimo to wyższy próg 50%, ' +
+      'bo to netIncome (12000) klasyfikuje zamożność wnioskodawcy; liczenie progu od zdyskontowanego dochodu ' +
+      'karałoby B2B podwójnie (surowszy próg + mniejsza podstawa) bez uzasadnienia',
+    () => {
+      const r = computeCreditworthiness({
+        ...BASE,
+        contractType: 'b2b',
+        netIncome: 12000,
+        incomeRecognitionRate: 60,
+        existingLoanInstallments: 0,
+        creditCardLimits: 0,
+        alimony: 0,
+      });
+      expect(r.recognizedIncome).toBe(7200);
+      expect(r.dstiThreshold).toBe(DSTI_THRESHOLD_HIGH);
+      expect(r.maxInstallmentByDsti).toBe(3600); // 7200 * 0.5
+      expect(r.disposableIncome).toBe(5400); // 7200 - 1800 (firstPersonCost)
+      expect(r.maxInstallment).toBe(3600); // min(5400, 3600)
+    }
+  );
+
+  it('regression: umowa o pracę (incomeRecognitionRate zawsze ignorowane) — próg i rata liczone od pełnego netIncome, zachowanie niezmienione przez fix progu DSTI dla B2B', () => {
+    const r = computeCreditworthiness({ ...BASE, contractType: 'employment', netIncome: 12000, firstPersonCost: 1800 });
+    expect(r.recognizedIncome).toBe(12000);
+    expect(r.dstiThreshold).toBe(DSTI_THRESHOLD_HIGH);
+    expect(r.maxInstallmentByDsti).toBe(6000); // 12000 * 0.5
+  });
+
   it('B2B z częściowym uznaniem dochodu: recognizedIncome to netIncome × incomeRecognitionRate/100', () => {
     const r = computeCreditworthiness({ ...BASE, contractType: 'b2b', netIncome: 10000, incomeRecognitionRate: 85 });
     expect(r.recognizedIncome).toBe(8500);

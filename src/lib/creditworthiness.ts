@@ -6,12 +6,18 @@
  * normy kosztów utrzymania i własną interpretację Rekomendacji S w
  * dopuszczalnych przez nią granicach.
  *
- * Stawki i progi 2026 poniżej — źródła: Rekomendacja S KNF (zaostrzona
- * 19.06.2026 — DSTI i bufor), GUS (przeciętne wynagrodzenie w gospodarce
- * narodowej, II kwartał 2026: 9233,13 zł brutto). Sprawdzone: wrzesień 2026.
- * WYMAGA weryfikacji na początku każdego kolejnego roku/kwartału — te
- * wartości zmieniają się regularnie (GUS co kwartał, KNF przy nowelizacjach
- * Rekomendacji S).
+ * Stawki i progi poniżej — źródła: Rekomendacja S KNF, nowelizacja przyjęta
+ * 19.06.2023 (termin dostosowania banków: 1.07.2024) — wprowadziła DSTI
+ * (zamiast DTI) z progami ostrożności 40%/50% wg dochodu oraz bufor na
+ * wzrost stóp min. 2,5 p.p. dla kredytów okresowo stałych, wyższy dla
+ * zmiennych (knf.gov.pl/komunikacja/komunikaty?articleId=82735&p_id=18).
+ * UWAGA: wcześniejsza wersja tego komentarza błędnie datowała nowelizację
+ * na 19.06.2026 — źródła KNF nie potwierdzają nowelizacji z tą datą, to była
+ * pomyłka (prawdopodobnie przesunięcie roku przy zachowaniu dnia/miesiąca
+ * prawdziwej nowelizacji z 2023). Skorygowano po weryfikacji WebSearch
+ * 2026-09-21. GUS: przeciętne wynagrodzenie w gospodarce narodowej, II
+ * kwartał 2026: 9233,13 zł brutto (do zweryfikowania przy każdej aktualizacji
+ * — patrz docs/WERYFIKACJA-STALYCH-2026.md).
  */
 
 // --------------------------------------------------------------- stałe ---
@@ -33,9 +39,11 @@ export const AVERAGE_NATIONAL_WAGE_NET_2026 = 6624;
 export const DSTI_THRESHOLD_LOW = 0.4; // dochód ≤ przeciętne wynagrodzenie
 export const DSTI_THRESHOLD_HIGH = 0.5; // dochód > przeciętne wynagrodzenie
 
-// Rekomendacja S KNF, zaostrzona 19.06.2026 — bufor obniżony z 5 do 2,5 p.p.
-// dla kredytów o oprocentowaniu okresowo stałym; dla zmiennego pozostaje
-// wyższy (przyjęto 5 p.p. — banki stosują własne warianty w tych granicach).
+// Rekomendacja S KNF (nowelizacja 19.06.2023, patrz komentarz na górze pliku)
+// — minimalny bufor 2,5 p.p. dla kredytów o oprocentowaniu okresowo stałym;
+// dla zmiennego bank ma stosować poziom "adekwatnie wyższy" bez wskazanej
+// liczby (przyjęto tu 5 p.p. jako orientacyjny punkt startowy — banki
+// stosują własne warianty w tych granicach).
 export const BUFFER_FIXED_RATE_PP = 2.5;
 export const BUFFER_VARIABLE_RATE_PP = 5;
 
@@ -135,6 +143,13 @@ export function computeCreditworthiness(inputs: CreditworthinessInputs): Creditw
   const recognitionRate = resolveIncomeRecognitionRate(inputs);
   const recognizedIncome = round2(netIncome * recognitionRate);
 
+  // Koszty utrzymania odejmowane są świadomie od recognizedIncome (dochodu
+  // po dyskoncie uznania źródła, np. B2B/zlecenie), nie od surowego
+  // netIncome — to konserwatywne uproszczenie: skoro bank nie uznaje pełnej
+  // kwoty jako wiarygodnej podstawy spłaty, tym bardziej nie powinien z niej
+  // wyliczać nadwyżki ponad koszty życia. Próg DSTI (niżej) liczony jest
+  // inaczej — od pełnego netIncome — bo klasyfikuje zamożność wnioskodawcy,
+  // nie wiarygodność źródła dochodu.
   const householdSize = Math.max(1, Math.round(nonNegative(inputs.householdSize) || 1));
   const firstPersonCost = nonNegative(inputs.firstPersonCost);
   const additionalPersonCost = nonNegative(inputs.additionalPersonCost);
@@ -148,7 +163,12 @@ export function computeCreditworthiness(inputs: CreditworthinessInputs): Creditw
 
   const disposableIncome = round2(Math.max(0, recognizedIncome - householdCost - otherCommitments));
 
-  const dstiThreshold = recognizedIncome > AVERAGE_NATIONAL_WAGE_NET_2026 ? DSTI_THRESHOLD_HIGH : DSTI_THRESHOLD_LOW;
+  // Próg 40%/50% liczony od surowego netIncome, NIE od recognizedIncome —
+  // dyskonto uznania źródła dochodu (B2B/zlecenie) już raz obniża dostępną
+  // kwotę przez disposableIncome/maxInstallmentByDsti niżej; liczenie progu
+  // od tego samego zdyskontowanego dochodu karałoby wnioskodawcę podwójnie
+  // (surowszy próg + mniejsza podstawa) bez uzasadnienia metodologicznego.
+  const dstiThreshold = netIncome > AVERAGE_NATIONAL_WAGE_NET_2026 ? DSTI_THRESHOLD_HIGH : DSTI_THRESHOLD_LOW;
   const maxInstallmentByDsti = round2(recognizedIncome * dstiThreshold);
   const maxInstallment = round2(Math.min(disposableIncome, maxInstallmentByDsti));
 

@@ -10,7 +10,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_nav_back' | 'cw_page_title' | 'cw_page_subtitle' | 'cw_footer_disclaimer'
   | 'cw_income_label' | 'cw_contract_type_label'
   | 'cw_contract_employment' | 'cw_contract_b2b' | 'cw_contract_mandate_or_specific_work'
-  | 'cw_income_recognition_label'
+  | 'cw_income_recognition_label' | 'cw_income_recognition_hint'
   | 'cw_household_size_label' | 'cw_first_person_cost_label' | 'cw_additional_person_cost_label'
   | 'cw_existing_loan_installments_label' | 'cw_credit_card_limits_label' | 'cw_alimony_label'
   | 'cw_years_label' | 'cw_nominal_rate_label' | 'cw_rate_type_label'
@@ -41,6 +41,7 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_contract_b2b: 'B2B',
   cw_contract_mandate_or_specific_work: 'Zlecenie / dzieło',
   cw_income_recognition_label: '% dochodu uznawany przez bank',
+  cw_income_recognition_hint: 'Obniża podstawę do wyliczenia dostępnej nadwyżki (po kosztach życia), ale nie próg 40%/50% — ten liczony jest od pełnego dochodu netto.',
   cw_household_size_label: 'Liczba osób w gospodarstwie domowym',
   cw_first_person_cost_label: 'Koszt utrzymania — pierwsza osoba',
   cw_additional_person_cost_label: 'Koszt utrzymania — każda kolejna osoba',
@@ -107,6 +108,7 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_contract_b2b: 'B2B',
   cw_contract_mandate_or_specific_work: 'Mandate / specific-work contract',
   cw_income_recognition_label: '% of income recognized by the bank',
+  cw_income_recognition_hint: 'Lowers the base used for the surplus after living costs, but not the 40%/50% threshold — that is calculated from full net income.',
   cw_household_size_label: 'Household size',
   cw_first_person_cost_label: 'Maintenance cost — first person',
   cw_additional_person_cost_label: 'Maintenance cost — each additional person',

@@ -224,6 +224,7 @@ export default function CreditworthinessCalculator({
                 />
                 <span className="input-suffix">%</span>
               </div>
+              <div className="hint">{t('cw_income_recognition_hint')}</div>
             </div>
           )}
 
