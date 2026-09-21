@@ -1,4 +1,5 @@
 import { useLang } from '../../contexts/LangContext';
+import BrandMark from '../BrandMark';
 
 /**
  * Lekki nav dla drugiej podstrony — reużywa istniejące klasy CSS z
@@ -13,7 +14,7 @@ export default function SalaryNav() {
   return (
     <nav>
       <div className="nav-logo">
-        <span className="nav-logo-mark" aria-hidden="true">💼</span>
+        <span className="nav-logo-mark"><BrandMark variant="salary" /></span>
         <span>{t('salary_page_title')}</span>
       </div>
       <div className="nav-links nav-links-compact">

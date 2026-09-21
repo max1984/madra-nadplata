@@ -34,7 +34,11 @@ export default class ErrorBoundary extends Component<Props, State> {
           fontFamily: '"DM Sans", system-ui, sans-serif',
           padding: '2rem', textAlign: 'center',
         }}>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginBottom: '1rem' }}>
+            <path d="M12 3 2 20h20L12 3Z" />
+            <path d="M12 10v4" />
+            <circle cx="12" cy="17.5" r="0.5" fill="var(--warn)" />
+          </svg>
           <h2 style={{ color: 'var(--text)', marginBottom: '0.5rem' }}>Coś poszło nie tak / Something went wrong</h2>
           <p style={{ maxWidth: 400, lineHeight: 1.6 }}>Wystąpił nieoczekiwany błąd. Odśwież stronę, aby spróbować ponownie.</p>
           <button

@@ -1,4 +1,5 @@
 import { useLang } from '../../contexts/LangContext';
+import BrandMark from '../BrandMark';
 
 /**
  * Jak Footer.tsx, ale bez SEO_LINKS (lista podstron kredytowych nie ma tu
@@ -10,7 +11,7 @@ export default function SalaryFooter() {
 
   return (
     <footer>
-      <div className="footer-logo">💼 {t('salary_page_title')}</div>
+      <div className="footer-logo"><BrandMark variant="salary" /> {t('salary_page_title')}</div>
       <p dangerouslySetInnerHTML={{ __html: t('salary_footer_disclaimer') }} />
       <div className="footer-author" style={{ marginTop: 16 }}>
         {t('footer_author')} <strong style={{ color: 'var(--text2)' }}>Bartłomiej Derda</strong>

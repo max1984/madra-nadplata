@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
+import BrandMark from './BrandMark';
 
 /**
  * Media query mobilnego menu w index.css to @media(max-width:700px) —
@@ -90,7 +91,7 @@ export default function Nav() {
     <>
       <nav ref={navRef}>
         <div className="nav-logo">
-          <span className="nav-logo-mark" aria-hidden="true">💰</span>
+          <span className="nav-logo-mark"><BrandMark variant="mortgage" /></span>
           <span>Mądra Nadpłata</span>
         </div>
 

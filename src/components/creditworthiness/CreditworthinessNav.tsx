@@ -1,4 +1,5 @@
 import { useLang } from '../../contexts/LangContext';
+import BrandMark from '../BrandMark';
 
 /**
  * Jak SalaryNav.tsx — lekki nav dla trzeciej podstrony, bez hamburgera/menu
@@ -10,7 +11,7 @@ export default function CreditworthinessNav() {
   return (
     <nav>
       <div className="nav-logo">
-        <span className="nav-logo-mark" aria-hidden="true">🏦</span>
+        <span className="nav-logo-mark"><BrandMark variant="creditworthiness" /></span>
         <span>{t('cw_page_title')}</span>
       </div>
       <div className="nav-links nav-links-compact">

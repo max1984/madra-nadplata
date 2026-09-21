@@ -1,4 +1,5 @@
 import { useLang } from '../contexts/LangContext';
+import BrandMark from './BrandMark';
 
 /**
  * Linki do statycznych podstron generowanych przez scripts/build-seo.mjs.
@@ -40,7 +41,7 @@ export default function Footer() {
         </div>
       )}
 
-      <div className="footer-logo">💰 Mądra Nadpłata</div>
+      <div className="footer-logo"><BrandMark variant="mortgage" /> Mądra Nadpłata</div>
       <div className="footer-other-tools">
         <a href="/wynagrodzenia.html">{t('nav_salary_calc')}</a>
         <span aria-hidden="true"> · </span>
