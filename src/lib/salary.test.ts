@@ -78,13 +78,28 @@ describe('calcEmploymentContract', () => {
       'ZUS pracownika 13,71% z 8000 = 1096,80 (emerytalna 780,80 + rentowa 120 + chorobowa 196); ' +
       'zdrowotna 9% z (8000-1096,80=6903,20) = 621,29 (grosze, bez zaokrąglenia do pełnego złotego, ' +
       'jak reszta tej apki liczy na groszach); dochód do podatku = 6903,20-250(KUP) = 6653,20; ' +
-      'podatek 12% z 6653,20 = 798,38, minus 300 (PIT-2) = 498,38; netto = 8000-1096,80-621,29-498,38 = 5783,53',
+      'podatek 12% z 6653,20 = 798,38, minus 300 (PIT-2) = 498,38, zaokrąglone do pełnych złotych ' +
+      '(art. 63 §1 Ordynacji podatkowej) = 498; netto = 8000-1096,80-621,29-498 = 5783,91',
     () => {
       const r = calcEmploymentContract(employmentDefaults);
       expect(r.employeeSocialTotal).toBeCloseTo(1096.8, 2);
       expect(r.healthInsurance).toBeCloseTo(621.29, 2);
-      expect(r.tax).toBeCloseTo(498.38, 2);
-      expect(r.net).toBeCloseTo(5783.53, 2);
+      expect(r.tax).toBe(Math.round(798.38 - 300));
+      expect(r.net).toBeCloseTo(8000 - 1096.8 - 621.29 - Math.round(798.38 - 300), 2);
+    }
+  );
+
+  it(
+    'regression: brutto 8500 zł — składniki muszą sumować się do netto co do grosza; przed poprawką ' +
+      'zaokrąglenia zaliczki PIT do pełnych złotych net był o 1 zł niższy niż suma odjętych składników',
+    () => {
+      const r = calcEmploymentContract({ ...employmentDefaults, grossMonthly: 8500 });
+      expect(r.employeeSocialTotal).toBeCloseTo(1165.35, 2);
+      expect(r.healthInsurance).toBeCloseTo(660.12, 2);
+      expect(Number.isInteger(r.tax)).toBe(true);
+      expect(r.tax).toBe(550);
+      expect(r.net).toBeCloseTo(8500 - r.employeeSocialTotal - r.healthInsurance - r.tax, 2);
+      expect(r.net).toBeCloseTo(6124.53, 2);
     }
   );
 
@@ -203,7 +218,7 @@ describe('calcB2BContract', () => {
   it('liniowy: flat 19% tax on income after costs and social contributions', () => {
     const r = calcB2BContract({ ...b2bDefaults, taxForm: 'liniowy', zusVariant: 'ulga_na_start' });
     const expectedIncome = 10000 - 0 - 0;
-    expect(r.tax).toBeCloseTo(expectedIncome * 0.19, 2);
+    expect(r.tax).toBe(Math.round(expectedIncome * 0.19));
   });
 
   it(
@@ -222,7 +237,7 @@ describe('calcB2BContract', () => {
     const full = calcB2BContract({ ...b2bDefaults, taxForm: 'ipbox', ipBoxSharePercent: 100 });
     const none = calcB2BContract({ ...b2bDefaults, taxForm: 'ipbox', ipBoxSharePercent: 0 });
     const linear = calcB2BContract({ ...b2bDefaults, taxForm: 'liniowy' });
-    expect(full.tax).toBeCloseTo(full.income * 0.05, 2);
+    expect(full.tax).toBe(Math.round(full.income * 0.05));
     expect(none.tax).toBeCloseTo(linear.tax, 2);
   });
 

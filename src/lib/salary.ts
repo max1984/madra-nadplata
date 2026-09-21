@@ -156,13 +156,17 @@ function ppkRates(ppk: PpkOption): { employee: number; employer: number } {
  * roku (`priorTaxableIncome`, do wyznaczenia, jaka część dochodu z TEGO
  * miesiąca mieści się jeszcze w niższym progu) i kwoty zmniejszającej podatek.
  */
+// Zaliczka na PIT (miesięczna) zaokrąglana jest do pełnych złotych —
+// art. 63 §1 Ordynacji podatkowej dotyczy też zaliczek na podatek, zasada
+// "końcówki < 50 gr w dół, >= 50 gr w górę" odpowiada Math.round(). Składki
+// ZUS/zdrowotna NIE podlegają temu przepisowi i zostają w groszach (round2).
 function scaleTax(taxableIncome: number, priorTaxableIncome: number, reducingAmount: number): number {
   const income = nonNegative(taxableIncome);
   const roomAtLowRate = Math.max(0, TAX_SCALE_THRESHOLD - Math.max(0, priorTaxableIncome));
   const belowThreshold = Math.min(income, roomAtLowRate);
   const aboveThreshold = income - belowThreshold;
   const tax = belowThreshold * TAX_SCALE_RATE_LOW + aboveThreshold * TAX_SCALE_RATE_HIGH;
-  return Math.max(0, round2(tax - reducingAmount));
+  return Math.max(0, Math.round(tax - reducingAmount));
 }
 
 interface IncomeTaxResult {
@@ -535,8 +539,10 @@ export function calcB2BContract(inputs: B2BInputs, ctx: AnnualContext = EMPTY_AN
   if (inputs.taxForm === 'ryczalt') {
     const cumulativeRevenue = ctx.priorFlatRevenue + revenue;
     const healthInsurance = ryczaltHealthInsurance(cumulativeRevenue);
-    // Ryczałt: podatek liczony od PEŁNEGO przychodu, koszty firmowe go nie zmniejszają.
-    const tax = round2(revenue * inputs.ryczaltRate);
+    // Ryczałt: podatek liczony od PEŁNEGO przychodu, koszty firmowe go nie
+    // zmniejszają. Zaokrąglenie do pełnych złotych jak w scaleTax (art. 63
+    // §1 Ordynacji podatkowej dotyczy każdej zaliczki na podatek).
+    const tax = Math.round(revenue * inputs.ryczaltRate);
     const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
     return { monthlyRevenue: revenue, monthlyCosts: costs, income: revenue, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
   }
@@ -555,7 +561,7 @@ export function calcB2BContract(inputs: B2BInputs, ctx: AnnualContext = EMPTY_AN
 
   if (inputs.taxForm === 'liniowy') {
     const healthInsurance = Math.max(round2(income * HEALTH_INSURANCE_RATE_LINIOWY), HEALTH_INSURANCE_MIN_SKALA_LINIOWY);
-    const tax = round2(income * 0.19);
+    const tax = Math.round(income * 0.19); // zaliczka do pełnych złotych, jak w scaleTax
     const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
     return { monthlyRevenue: revenue, monthlyCosts: costs, income, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
   }
@@ -569,7 +575,7 @@ export function calcB2BContract(inputs: B2BInputs, ctx: AnnualContext = EMPTY_AN
   const ipBoxShare = clamp(inputs.ipBoxSharePercent, 0, 100) / 100;
   const incomeIpBox = income * ipBoxShare;
   const incomeOther = income - incomeIpBox;
-  const tax = round2(incomeIpBox * 0.05 + incomeOther * 0.19);
+  const tax = Math.round(incomeIpBox * 0.05 + incomeOther * 0.19); // zaliczka do pełnych złotych, jak w scaleTax
   const healthInsurance = Math.max(round2(income * HEALTH_INSURANCE_RATE_LINIOWY), HEALTH_INSURANCE_MIN_SKALA_LINIOWY);
   const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
   return { monthlyRevenue: revenue, monthlyCosts: costs, income, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
