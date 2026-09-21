@@ -455,6 +455,151 @@ export function resolveInitialSalaryInputs(patch: Partial<SalaryInputs> | null):
   return validateSalaryInputs(merged) === null ? merged : DEFAULT_SALARY_INPUTS;
 }
 
+// ---------------------------------------------------------- scenariusze ---
+
+export interface SavedSalaryScenario {
+  id: string;
+  name: string;
+  savedAt: number;
+  inputs: SalaryInputs;
+}
+
+const SALARY_SCENARIOS_KEY = 'salary_scenarios_v1';
+export const MAX_SALARY_SCENARIOS = 10;
+export const MAX_SALARY_SCENARIO_NAME_LENGTH = 60;
+
+/** Jak clampScenarioName w useCalculator.ts — patrz tam po uzasadnienie limitu. */
+function clampSalaryScenarioName(name: string): string {
+  return name.trim().slice(0, MAX_SALARY_SCENARIO_NAME_LENGTH);
+}
+
+/**
+ * addSalaryScenario/duplicateSalaryScenario/mergeImportedSalaryScenarios
+ * obcinają listę do MAX_SALARY_SCENARIOS, cicho wypychając najstarsze wpisy
+ * — ta czysta funkcja pozwala UI sprawdzić z wyprzedzeniem, czy dodanie
+ * `addingCount` scenariuszy do listy o `currentCount` wpisach coś wypchnie.
+ */
+export function willDropOldestSalaryScenario(currentCount: number, addingCount: number): boolean {
+  return currentCount + addingCount > MAX_SALARY_SCENARIOS;
+}
+
+/**
+ * Jak parseScenariosJSON w useCalculator.ts — jeden uszkodzony wpis (ręczna
+ * edycja localStorage albo zewnętrzny plik importu) nie wywala całej listy,
+ * a pusta/białoznakowa nazwa jest odrzucana tak samo jak tam.
+ */
+export function parseSalaryScenariosJSON(raw: string): SavedSalaryScenario[] {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((s): s is SavedSalaryScenario =>
+      typeof s === 'object' && s !== null &&
+      typeof (s as SavedSalaryScenario).id === 'string' &&
+      typeof (s as SavedSalaryScenario).name === 'string' &&
+      (s as SavedSalaryScenario).name.trim().length > 0 &&
+      typeof (s as SavedSalaryScenario).savedAt === 'number' &&
+      typeof (s as SavedSalaryScenario).inputs === 'object' && (s as SavedSalaryScenario).inputs !== null,
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function loadSalaryScenarios(): SavedSalaryScenario[] {
+  const raw = safeGetItem(SALARY_SCENARIOS_KEY);
+  if (!raw) return [];
+  return parseSalaryScenariosJSON(raw);
+}
+
+export function persistSalaryScenarios(list: SavedSalaryScenario[]): boolean {
+  return safeSetItem(SALARY_SCENARIOS_KEY, JSON.stringify(list));
+}
+
+/** Do przycisku "Eksportuj scenariusze" — czytelny, wcięty JSON do pliku. */
+export function salaryScenariosToJSON(list: SavedSalaryScenario[]): string {
+  return JSON.stringify(list, null, 2);
+}
+
+/**
+ * Jak mergeImportedScenarios w useCalculator.ts — nowe id dla każdego
+ * zaimportowanego wpisu (unika kolizji z tym, co już jest zapisane w tej
+ * samej przeglądarce), obcięte do MAX_SALARY_SCENARIOS (zachowuje najnowsze).
+ */
+export function mergeImportedSalaryScenarios(
+  existing: SavedSalaryScenario[],
+  imported: SavedSalaryScenario[]
+): SavedSalaryScenario[] {
+  const reIded = imported.map((s) => ({
+    ...s,
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+  }));
+  const next = [...existing, ...reIded];
+  return next.length > MAX_SALARY_SCENARIOS ? next.slice(next.length - MAX_SALARY_SCENARIOS) : next;
+}
+
+export type SalaryScenarioSortKey = 'date-desc' | 'date-asc' | 'name-asc';
+
+export function sortSalaryScenarios(list: SavedSalaryScenario[], sortBy: SalaryScenarioSortKey): SavedSalaryScenario[] {
+  const sorted = [...list];
+  switch (sortBy) {
+    case 'date-asc':
+      return sorted.sort((a, b) => a.savedAt - b.savedAt);
+    case 'name-asc':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    case 'date-desc':
+    default:
+      return sorted.sort((a, b) => b.savedAt - a.savedAt);
+  }
+}
+
+/** Jak filterScenariosByName w useCalculator.ts. */
+export function filterSalaryScenariosByName(list: SavedSalaryScenario[], query: string): SavedSalaryScenario[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return list;
+  return list.filter((s) => s.name.toLowerCase().includes(q));
+}
+
+/**
+ * Dodaje nowy scenariusz na koniec listy, obcinając najstarsze wpisy powyżej
+ * MAX_SALARY_SCENARIOS. Zapisuje CAŁY stan SalaryInputs (łącznie z aktywną
+ * zakładką contractType) — inaczej niż kredyt, tu nie ma jednego "wyniku"
+ * tylko 4 niezależne formularze, więc wczytanie musi przywrócić wszystko.
+ */
+export function addSalaryScenario(list: SavedSalaryScenario[], name: string, inputs: SalaryInputs): SavedSalaryScenario[] {
+  const scenario: SavedSalaryScenario = {
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    name: clampSalaryScenarioName(name),
+    savedAt: Date.now(),
+    inputs,
+  };
+  const next = [...list, scenario];
+  return next.length > MAX_SALARY_SCENARIOS ? next.slice(next.length - MAX_SALARY_SCENARIOS) : next;
+}
+
+export function removeSalaryScenario(list: SavedSalaryScenario[], id: string): SavedSalaryScenario[] {
+  return list.filter((s) => s.id !== id);
+}
+
+/** Pusta/białoznakowa nazwa jest ignorowana (scenariusz zachowuje poprzednią nazwę) — jak renameScenario w useCalculator.ts. */
+export function renameSalaryScenario(list: SavedSalaryScenario[], id: string, newName: string): SavedSalaryScenario[] {
+  const trimmed = clampSalaryScenarioName(newName);
+  if (!trimmed) return list;
+  return list.map((s) => (s.id === id ? { ...s, name: trimmed } : s));
+}
+
+export function duplicateSalaryScenario(list: SavedSalaryScenario[], id: string, newName: string): SavedSalaryScenario[] {
+  const original = list.find((s) => s.id === id);
+  if (!original) return list;
+  const copy: SavedSalaryScenario = {
+    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    name: clampSalaryScenarioName(newName) || original.name,
+    savedAt: Date.now(),
+    inputs: original.inputs,
+  };
+  const next = [...list, copy];
+  return next.length > MAX_SALARY_SCENARIOS ? next.slice(next.length - MAX_SALARY_SCENARIOS) : next;
+}
+
 // ------------------------------------------------------------- hook ---
 
 export function useSalaryCalculator() {
@@ -481,6 +626,9 @@ export function useSalaryCalculator() {
   });
 
   const [calcError, setCalcError] = useState<string | null>(null);
+  const [scenarios, setScenarios] = useState<SavedSalaryScenario[]>(() => loadSalaryScenarios());
+  const [scenarioSaveError, setScenarioSaveError] = useState(false);
+  const [scenarioLimitReached, setScenarioLimitReached] = useState(false);
 
   const isStale =
     calcState !== null && lastCalculatedInputs !== null && JSON.stringify(inputs) !== JSON.stringify(lastCalculatedInputs);
@@ -516,6 +664,72 @@ export function useSalaryCalculator() {
     window.history.replaceState(null, '', window.location.pathname);
   }, []);
 
+  // Zapisuje CAŁY bieżący stan `inputs` (nie tylko aktywną zakładkę) — patrz
+  // addSalaryScenario. localStorage.setItem może rzucić (storage pełny/
+  // zablokowany); scenarioSaveError daje UI sygnał do pokazania ostrzeżenia,
+  // tak samo jak w kalkulatorze kredytu (patrz useCalculator.ts).
+  const saveCurrentAsScenario = useCallback((name: string) => {
+    setScenarios((prev) => {
+      const next = addSalaryScenario(prev, name, inputs);
+      setScenarioSaveError(!persistSalaryScenarios(next));
+      setScenarioLimitReached(willDropOldestSalaryScenario(prev.length, 1));
+      return next;
+    });
+  }, [inputs]);
+
+  // resolveInitialSalaryInputs waliduje scenario.inputs przed wpisaniem do
+  // formularza — parseSalaryScenariosJSON sprawdza tylko kształt obiektu,
+  // nie wartości pól, więc uszkodzony/ręcznie zmodyfikowany zapisany
+  // scenariusz mógł inaczej wpisać NaN-y wprost w pola (patrz
+  // resolveInitialSalaryInputs i loadScenario w useCalculator.ts).
+  const loadScenario = useCallback((id: string) => {
+    const scenario = scenarios.find((s) => s.id === id);
+    if (!scenario) return;
+    const inp = resolveInitialSalaryInputs(scenario.inputs);
+    setInputsState(inp);
+    applyCalculation(inp);
+  }, [scenarios, applyCalculation]);
+
+  const deleteScenario = useCallback((id: string) => {
+    setScenarios((prev) => {
+      const next = removeSalaryScenario(prev, id);
+      setScenarioSaveError(!persistSalaryScenarios(next));
+      setScenarioLimitReached(false);
+      return next;
+    });
+  }, []);
+
+  const renameScenarioById = useCallback((id: string, newName: string) => {
+    setScenarios((prev) => {
+      const next = renameSalaryScenario(prev, id, newName);
+      setScenarioSaveError(!persistSalaryScenarios(next));
+      setScenarioLimitReached(false);
+      return next;
+    });
+  }, []);
+
+  const duplicateScenarioById = useCallback((id: string, newName: string) => {
+    setScenarios((prev) => {
+      const next = duplicateSalaryScenario(prev, id, newName);
+      setScenarioSaveError(!persistSalaryScenarios(next));
+      setScenarioLimitReached(willDropOldestSalaryScenario(prev.length, 1));
+      return next;
+    });
+  }, []);
+
+  /** Zwraca liczbę faktycznie zaimportowanych scenariuszy — do komunikatu w UI. */
+  const importScenarios = useCallback((json: string): number => {
+    const imported = parseSalaryScenariosJSON(json);
+    if (imported.length === 0) return 0;
+    setScenarios((prev) => {
+      const next = mergeImportedSalaryScenarios(prev, imported);
+      setScenarioSaveError(!persistSalaryScenarios(next));
+      setScenarioLimitReached(willDropOldestSalaryScenario(prev.length, imported.length));
+      return next;
+    });
+    return imported.length;
+  }, []);
+
   return {
     inputs,
     setInputs,
@@ -524,5 +738,14 @@ export function useSalaryCalculator() {
     calculate,
     isStale,
     resetToDefaults,
+    scenarios,
+    scenarioSaveError,
+    scenarioLimitReached,
+    saveCurrentAsScenario,
+    loadScenario,
+    deleteScenario,
+    renameScenarioById,
+    duplicateScenarioById,
+    importScenarios,
   };
 }

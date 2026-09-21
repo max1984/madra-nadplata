@@ -7,7 +7,11 @@ import SalaryFooter from './components/salary/SalaryFooter';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function SalaryAppInner() {
-  const { inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults } = useSalaryCalculator();
+  const {
+    inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults,
+    scenarios, scenarioSaveError, scenarioLimitReached,
+    saveCurrentAsScenario, loadScenario, deleteScenario, renameScenarioById, duplicateScenarioById, importScenarios,
+  } = useSalaryCalculator();
 
   return (
     <>
@@ -20,6 +24,15 @@ function SalaryAppInner() {
         onCalculate={calculate}
         onResetToDefaults={resetToDefaults}
         isStale={isStale}
+        scenarios={scenarios}
+        scenarioSaveError={scenarioSaveError}
+        scenarioLimitReached={scenarioLimitReached}
+        onSaveScenario={saveCurrentAsScenario}
+        onLoadScenario={loadScenario}
+        onDeleteScenario={deleteScenario}
+        onRenameScenario={renameScenarioById}
+        onDuplicateScenario={duplicateScenarioById}
+        onImportScenarios={importScenarios}
       />
       <SalaryFooter />
     </>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart } from 'chart.js';
 import { useLang } from '../../contexts/LangContext';
 import { CHART } from '../../lib/chartTheme';
@@ -6,8 +6,15 @@ import type { TranslationKey } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
 import {
   qualifiesForJointTaxation,
+  sortSalaryScenarios,
+  filterSalaryScenariosByName,
+  salaryScenariosToJSON,
+  MAX_SALARY_SCENARIOS,
+  MAX_SALARY_SCENARIO_NAME_LENGTH,
   type SalaryInputs,
   type SalaryState,
+  type SavedSalaryScenario,
+  type SalaryScenarioSortKey,
 } from '../../hooks/useSalaryCalculator';
 
 interface Props {
@@ -18,6 +25,39 @@ interface Props {
   onCalculate: () => void;
   onResetToDefaults: () => void;
   isStale: boolean;
+  /**
+   * Zapisywanie scenariuszy — wszystkie opcjonalne z bezpiecznymi
+   * domyślnymi, żeby ten komponent działał (i dało się go testować) także
+   * bez podłączonego hooka. Realne dane/funkcje z useSalaryCalculator()
+   * trzeba przekazać z rodzica (SalaryApp.tsx), żeby zapis faktycznie
+   * przetrwał odświeżenie strony.
+   */
+  scenarios?: SavedSalaryScenario[];
+  scenarioSaveError?: boolean;
+  scenarioLimitReached?: boolean;
+  onSaveScenario?: (name: string) => void;
+  onLoadScenario?: (id: string) => void;
+  onDeleteScenario?: (id: string) => void;
+  onRenameScenario?: (id: string, newName: string) => void;
+  onDuplicateScenario?: (id: string, newName: string) => void;
+  onImportScenarios?: (json: string) => number;
+}
+
+function formatSalaryScenarioCount(count: number): string {
+  return `${count}/${MAX_SALARY_SCENARIOS}`;
+}
+
+/**
+ * Jak shouldClearFilterOnEscape/shouldCancelDeleteConfirmOnEscape w
+ * Calculator.tsx — zduplikowane lokalnie (patrz formatSalaryChartYTick
+ * wyżej po to samo uzasadnienie: nie ciągnąć całego Calculator.tsx do
+ * bundla tej podstrony po dwie dwuliniowe funkcje).
+ */
+function shouldClearFilterOnEscape(key: string, currentFilter: string): boolean {
+  return key === 'Escape' && currentFilter.length > 0;
+}
+function shouldCancelDeleteConfirmOnEscape(key: string, confirmDeleteId: string | null): boolean {
+  return key === 'Escape' && confirmDeleteId !== null;
 }
 
 const TABS: { key: SalaryContractType; label: TranslationKey }[] = [
@@ -58,11 +98,94 @@ function setPrimaryAmount(inputs: SalaryInputs, v: number): Partial<SalaryInputs
   }
 }
 
-export default function SalaryCalculator({ inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale }: Props) {
+export default function SalaryCalculator({
+  inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
+  scenarios = [], scenarioSaveError = false, scenarioLimitReached = false,
+  onSaveScenario = () => {}, onLoadScenario = () => {}, onDeleteScenario = () => {},
+  onRenameScenario = () => {}, onDuplicateScenario = () => {}, onImportScenarios = () => 0,
+}: Props) {
   const { t, fmt, fmtC, lang } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
+
+  const [scenarioName, setScenarioName] = useState('');
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
+  const [editingScenarioName, setEditingScenarioName] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [scenarioSort, setScenarioSort] = useState<SalaryScenarioSortKey>('date-desc');
+  const [scenarioFilter, setScenarioFilter] = useState('');
+  const sortedScenarios = useMemo(
+    () => filterSalaryScenariosByName(sortSalaryScenarios(scenarios, scenarioSort), scenarioFilter),
+    [scenarios, scenarioSort, scenarioFilter],
+  );
+
+  // Escape anuluje potwierdzenie usunięcia scenariusza z dowolnego miejsca
+  // na stronie — jak w kalkulatorze kredytu (patrz Calculator.tsx).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (shouldCancelDeleteConfirmOnEscape(e.key, confirmDeleteId)) setConfirmDeleteId(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [confirmDeleteId]);
+
+  const handleSaveScenario = () => {
+    if (!scenarioName.trim()) return;
+    onSaveScenario(scenarioName.trim());
+    setScenarioName('');
+  };
+
+  const startEditingScenario = (s: SavedSalaryScenario) => {
+    setConfirmDeleteId(null);
+    setEditingScenarioId(s.id);
+    setEditingScenarioName(s.name);
+  };
+
+  const commitScenarioRename = () => {
+    if (editingScenarioId) onRenameScenario(editingScenarioId, editingScenarioName);
+    setEditingScenarioId(null);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    if (confirmDeleteId === id) {
+      onDeleteScenario(id);
+      setConfirmDeleteId(null);
+    } else {
+      setEditingScenarioId(null);
+      setConfirmDeleteId(id);
+    }
+  };
+
+  const handleExportScenarios = () => {
+    const blob = new Blob([salaryScenariosToJSON(scenarios)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `scenariusze-wynagrodzen-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    const showImportMessage = (key: TranslationKey, count?: number) => {
+      const msg = count !== undefined ? t(key).replace('{n}', String(count)) : t(key);
+      setImportMessage(msg);
+      setTimeout(() => setImportMessage(null), 4000);
+    };
+    reader.onload = () => {
+      const count = onImportScenarios(String(reader.result ?? ''));
+      showImportMessage(count > 0 ? 'salary_scenario_import_success' : 'salary_scenario_import_empty', count > 0 ? count : undefined);
+    };
+    reader.onerror = () => showImportMessage('salary_scenario_import_error');
+    reader.readAsText(file);
+  };
 
   // Wykres roczny: destroy+create (jak ExampleSection.tsx) — aktualizuje się
   // tylko po kliknięciu "Oblicz", nie na każde naciśnięcie klawisza, więc
@@ -563,6 +686,152 @@ export default function SalaryCalculator({ inputs, setInputs, calcState, calcErr
           <div className="form-group" style={{ display: 'flex', gap: 12, marginTop: 12 }}>
             <button type="button" className="calc-btn" onClick={onCalculate}>{t('salary_calculate_btn')}</button>
             <button type="button" className="toolbar-btn" onClick={onResetToDefaults}>{t('salary_reset_btn')}</button>
+          </div>
+
+          <div className="scenario-panel">
+            <div className="scenario-save-row">
+              <input
+                type="text"
+                className="scenario-name-input"
+                placeholder={t('salary_scenario_name_placeholder')}
+                value={scenarioName}
+                maxLength={MAX_SALARY_SCENARIO_NAME_LENGTH}
+                onChange={(e) => setScenarioName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSaveScenario(); }}
+              />
+              <button
+                type="button"
+                className="copy-link-btn"
+                onClick={handleSaveScenario}
+                disabled={!scenarioName.trim()}
+                style={!scenarioName.trim() ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+              >
+                {t('salary_scenario_save')}
+              </button>
+              {scenarioSaveError && (
+                <div className="scenario-save-error" role="alert" style={{ color: 'var(--danger)', fontSize: '.85rem', marginTop: '6px' }}>
+                  {t('salary_scenario_save_storage_error')}
+                </div>
+              )}
+              {!scenarioSaveError && scenarioLimitReached && (
+                <div className="scenario-limit-notice" role="status" style={{ color: 'var(--text3)', fontSize: '.85rem', marginTop: '6px' }}>
+                  {t('salary_scenario_limit_reached')}
+                </div>
+              )}
+            </div>
+            <div className="scenario-import-export-row">
+              <input
+                type="file"
+                accept="application/json"
+                ref={importInputRef}
+                onChange={handleImportFileChange}
+                style={{ display: 'none' }}
+              />
+              <button type="button" className="scenario-row-btn" onClick={() => importInputRef.current?.click()}>
+                {t('salary_scenario_import')}
+              </button>
+              {scenarios.length > 0 && (
+                <button type="button" className="scenario-row-btn" onClick={handleExportScenarios}>
+                  {t('salary_scenario_export')}
+                </button>
+              )}
+              {importMessage && <span className="scenario-import-message">{importMessage}</span>}
+            </div>
+            {scenarios.length > 0 && (
+              <div className="scenario-list">
+                <div className="scenario-list-header">
+                  <div className="scenario-list-title">
+                    {t('salary_scenario_saved_title')}
+                    <span className="scenario-count"> ({formatSalaryScenarioCount(scenarios.length)})</span>
+                  </div>
+                  {scenarios.length > 1 && (
+                    <input
+                      type="text"
+                      className="scenario-filter-input"
+                      value={scenarioFilter}
+                      onChange={(e) => setScenarioFilter(e.target.value)}
+                      onKeyDown={(e) => { if (shouldClearFilterOnEscape(e.key, scenarioFilter)) setScenarioFilter(''); }}
+                      placeholder={t('salary_scenario_filter_placeholder')}
+                      aria-label={t('salary_scenario_filter_placeholder')}
+                    />
+                  )}
+                  {scenarios.length > 1 && (
+                    <select
+                      className="scenario-sort-select"
+                      value={scenarioSort}
+                      onChange={(e) => setScenarioSort(e.target.value as SalaryScenarioSortKey)}
+                      aria-label={t('salary_scenario_sort_label')}
+                    >
+                      <option value="date-desc">{t('salary_scenario_sort_newest')}</option>
+                      <option value="date-asc">{t('salary_scenario_sort_oldest')}</option>
+                      <option value="name-asc">{t('salary_scenario_sort_name')}</option>
+                    </select>
+                  )}
+                </div>
+                {scenarios.length > 1 && scenarioFilter.trim() !== '' && sortedScenarios.length === 0 && (
+                  <div className="scenario-filter-empty">{t('salary_scenario_filter_no_match')}</div>
+                )}
+                {sortedScenarios.map((s) => {
+                  const isEditing = editingScenarioId === s.id;
+                  const isConfirmingDelete = confirmDeleteId === s.id;
+                  return (
+                    <div className="scenario-row" key={s.id}>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          className="scenario-name-edit-input"
+                          value={editingScenarioName}
+                          autoFocus
+                          maxLength={MAX_SALARY_SCENARIO_NAME_LENGTH}
+                          onChange={(e) => setEditingScenarioName(e.target.value)}
+                          onBlur={commitScenarioRename}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitScenarioRename();
+                            else if (e.key === 'Escape') setEditingScenarioId(null);
+                          }}
+                        />
+                      ) : (
+                        <span
+                          className="scenario-row-name"
+                          title={t('salary_scenario_rename_hint')}
+                          onClick={() => startEditingScenario(s)}
+                        >
+                          {s.name}
+                        </span>
+                      )}
+                      <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
+                        {t('salary_scenario_load')}
+                      </button>
+                      <button
+                        type="button"
+                        className="scenario-row-btn"
+                        onClick={() => onDuplicateScenario(s.id, `${s.name} ${t('salary_scenario_copy_suffix')}`)}
+                      >
+                        {t('salary_scenario_duplicate')}
+                      </button>
+                      {isConfirmingDelete ? (
+                        <>
+                          <button
+                            type="button"
+                            className="scenario-row-btn scenario-row-btn-delete"
+                            onClick={() => handleDeleteClick(s.id)}
+                          >
+                            {t('salary_scenario_delete_confirm')}
+                          </button>
+                          <button type="button" className="scenario-row-btn" onClick={() => setConfirmDeleteId(null)}>
+                            {t('salary_scenario_delete_cancel')}
+                          </button>
+                        </>
+                      ) : (
+                        <button type="button" className="scenario-row-btn scenario-row-btn-delete" onClick={() => handleDeleteClick(s.id)}>
+                          {t('salary_scenario_delete')}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

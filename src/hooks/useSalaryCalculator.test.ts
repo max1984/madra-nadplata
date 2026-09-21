@@ -9,7 +9,22 @@ import {
   loadStoredSalaryInputs,
   clearStoredSalaryInputs,
   DEFAULT_SALARY_INPUTS,
+  MAX_SALARY_SCENARIOS,
+  MAX_SALARY_SCENARIO_NAME_LENGTH,
+  willDropOldestSalaryScenario,
+  parseSalaryScenariosJSON,
+  loadSalaryScenarios,
+  persistSalaryScenarios,
+  salaryScenariosToJSON,
+  mergeImportedSalaryScenarios,
+  sortSalaryScenarios,
+  filterSalaryScenariosByName,
+  addSalaryScenario,
+  removeSalaryScenario,
+  renameSalaryScenario,
+  duplicateSalaryScenario,
   type SalaryInputs,
+  type SavedSalaryScenario,
 } from './useSalaryCalculator';
 
 class FakeStorage {
@@ -279,4 +294,202 @@ describe('saveSalaryInputs / loadStoredSalaryInputs / clearStoredSalaryInputs', 
     clearStoredSalaryInputs();
     expect(loadStoredSalaryInputs()).toBeNull();
   });
+});
+
+describe('willDropOldestSalaryScenario', () => {
+  it('returns false while the list still has room', () => {
+    expect(willDropOldestSalaryScenario(0, 1)).toBe(false);
+    expect(willDropOldestSalaryScenario(9, 1)).toBe(false);
+  });
+
+  it('returns true right at the MAX_SALARY_SCENARIOS boundary', () => {
+    expect(willDropOldestSalaryScenario(10, 1)).toBe(true);
+    expect(willDropOldestSalaryScenario(9, 2)).toBe(true);
+  });
+
+  it('accounts for adding more than one scenario at once, as an import does', () => {
+    expect(willDropOldestSalaryScenario(8, 2)).toBe(false);
+    expect(willDropOldestSalaryScenario(8, 3)).toBe(true);
+  });
+});
+
+describe('addSalaryScenario / removeSalaryScenario / renameSalaryScenario / duplicateSalaryScenario', () => {
+  it('adds a scenario with a trimmed name and a fresh id', () => {
+    const list = addSalaryScenario([], '  Wariant B2B  ', DEFAULT_SALARY_INPUTS);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.name).toBe('Wariant B2B');
+    expect(list[0]!.id).toBeTruthy();
+    expect(list[0]!.inputs).toEqual(DEFAULT_SALARY_INPUTS);
+  });
+
+  it('saves the whole SalaryInputs, not just the active tab — mirrors what the UI needs on load', () => {
+    const inputs: SalaryInputs = { ...DEFAULT_SALARY_INPUTS, contractType: 'b2b', annualMode: true };
+    const list = addSalaryScenario([], 'B2B roczny', inputs);
+    expect(list[0]!.inputs.contractType).toBe('b2b');
+    expect(list[0]!.inputs.annualMode).toBe(true);
+  });
+
+  it('clamps a very long scenario name to MAX_SALARY_SCENARIO_NAME_LENGTH', () => {
+    const long = 'x'.repeat(MAX_SALARY_SCENARIO_NAME_LENGTH + 40);
+    const list = addSalaryScenario([], long, DEFAULT_SALARY_INPUTS);
+    expect(list[0]!.name).toHaveLength(MAX_SALARY_SCENARIO_NAME_LENGTH);
+  });
+
+  it('drops the oldest scenario once the list exceeds MAX_SALARY_SCENARIOS', () => {
+    let list: SavedSalaryScenario[] = [];
+    for (let i = 0; i < MAX_SALARY_SCENARIOS; i++) list = addSalaryScenario(list, `S${i}`, DEFAULT_SALARY_INPUTS);
+    expect(list).toHaveLength(MAX_SALARY_SCENARIOS);
+    const oldestId = list[0]!.id;
+    list = addSalaryScenario(list, 'Nowy', DEFAULT_SALARY_INPUTS);
+    expect(list).toHaveLength(MAX_SALARY_SCENARIOS);
+    expect(list.some((s) => s.id === oldestId)).toBe(false);
+    expect(list[list.length - 1]!.name).toBe('Nowy');
+  });
+
+  it('removeSalaryScenario removes only the matching id', () => {
+    const list = addSalaryScenario(addSalaryScenario([], 'A', DEFAULT_SALARY_INPUTS), 'B', DEFAULT_SALARY_INPUTS);
+    const next = removeSalaryScenario(list, list[0]!.id);
+    expect(next).toHaveLength(1);
+    expect(next[0]!.name).toBe('B');
+  });
+
+  it('renameSalaryScenario updates the name and clamps it', () => {
+    const list = addSalaryScenario([], 'Oryginał', DEFAULT_SALARY_INPUTS);
+    const long = 'y'.repeat(MAX_SALARY_SCENARIO_NAME_LENGTH + 10);
+    const next = renameSalaryScenario(list, list[0]!.id, long);
+    expect(next[0]!.name).toHaveLength(MAX_SALARY_SCENARIO_NAME_LENGTH);
+  });
+
+  it('renameSalaryScenario ignores a blank new name, keeping the original', () => {
+    const list = addSalaryScenario([], 'Oryginał', DEFAULT_SALARY_INPUTS);
+    const next = renameSalaryScenario(list, list[0]!.id, '   ');
+    expect(next[0]!.name).toBe('Oryginał');
+  });
+
+  it('duplicateSalaryScenario copies inputs under a new id/name, keeping the original scenario intact', () => {
+    const list = addSalaryScenario([], 'Oryginał', DEFAULT_SALARY_INPUTS);
+    const next = duplicateSalaryScenario(list, list[0]!.id, 'Oryginał (kopia)');
+    expect(next).toHaveLength(2);
+    expect(next[1]!.name).toBe('Oryginał (kopia)');
+    expect(next[1]!.id).not.toBe(list[0]!.id);
+    expect(next[1]!.inputs).toEqual(list[0]!.inputs);
+    expect(next[0]!.name).toBe('Oryginał');
+  });
+
+  it('duplicateSalaryScenario falls back to the original name when the given new name is blank', () => {
+    const list = addSalaryScenario([], 'Oryginał', DEFAULT_SALARY_INPUTS);
+    const next = duplicateSalaryScenario(list, list[0]!.id, '   ');
+    expect(next[1]!.name).toBe('Oryginał');
+  });
+
+  it('duplicateSalaryScenario on a non-existent id returns the list unchanged', () => {
+    const list = addSalaryScenario([], 'A', DEFAULT_SALARY_INPUTS);
+    expect(duplicateSalaryScenario(list, 'nonexistent', 'X')).toEqual(list);
+  });
+});
+
+describe('sortSalaryScenarios / filterSalaryScenariosByName', () => {
+  const scenarios: SavedSalaryScenario[] = [
+    { id: '1', name: 'Umowa o pracę', savedAt: 100, inputs: DEFAULT_SALARY_INPUTS },
+    { id: '2', name: 'B2B liniowy', savedAt: 300, inputs: DEFAULT_SALARY_INPUTS },
+    { id: '3', name: 'Zlecenie studenckie', savedAt: 200, inputs: DEFAULT_SALARY_INPUTS },
+  ];
+
+  it('date-desc sorts newest first', () => {
+    expect(sortSalaryScenarios(scenarios, 'date-desc').map((s) => s.id)).toEqual(['2', '3', '1']);
+  });
+
+  it('date-asc sorts oldest first', () => {
+    expect(sortSalaryScenarios(scenarios, 'date-asc').map((s) => s.id)).toEqual(['1', '3', '2']);
+  });
+
+  it('name-asc sorts alphabetically, case-insensitive', () => {
+    expect(sortSalaryScenarios(scenarios, 'name-asc').map((s) => s.id)).toEqual(['2', '1', '3']);
+  });
+
+  it('filterSalaryScenariosByName matches case-insensitively on a substring', () => {
+    expect(filterSalaryScenariosByName(scenarios, 'b2b').map((s) => s.id)).toEqual(['2']);
+  });
+
+  it('filterSalaryScenariosByName with a blank (whitespace-only) query returns the full list unchanged', () => {
+    expect(filterSalaryScenariosByName(scenarios, '   ')).toEqual(scenarios);
+  });
+});
+
+describe('parseSalaryScenariosJSON / salaryScenariosToJSON / mergeImportedSalaryScenarios', () => {
+  it('round-trips a valid list through JSON', () => {
+    const list = addSalaryScenario([], 'A', DEFAULT_SALARY_INPUTS);
+    expect(parseSalaryScenariosJSON(salaryScenariosToJSON(list))).toEqual(list);
+  });
+
+  it('returns an empty array for malformed JSON instead of throwing', () => {
+    expect(() => parseSalaryScenariosJSON('not json {{{')).not.toThrow();
+    expect(parseSalaryScenariosJSON('not json {{{')).toEqual([]);
+  });
+
+  it('drops entries with a blank name (e.g. a hand-edited import file) instead of importing an unlabeled row', () => {
+    const valid = { id: '1', name: 'OK', savedAt: Date.now(), inputs: DEFAULT_SALARY_INPUTS };
+    const blank = { id: '2', name: '   ', savedAt: Date.now(), inputs: DEFAULT_SALARY_INPUTS };
+    const parsed = parseSalaryScenariosJSON(JSON.stringify([valid, blank]));
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]!.name).toBe('OK');
+  });
+
+  it('drops entries missing required fields', () => {
+    expect(parseSalaryScenariosJSON(JSON.stringify({ not: 'an array' }))).toEqual([]);
+    expect(parseSalaryScenariosJSON(JSON.stringify([{ id: '1' }, 'garbage', null]))).toEqual([]);
+  });
+
+  it('mergeImportedSalaryScenarios assigns fresh ids to imported entries, avoiding collisions', () => {
+    const existing = addSalaryScenario([], 'Istniejący', DEFAULT_SALARY_INPUTS);
+    const imported = [{ id: existing[0]!.id, name: 'Zaimportowany', savedAt: Date.now(), inputs: DEFAULT_SALARY_INPUTS }];
+    const merged = mergeImportedSalaryScenarios(existing, imported);
+    expect(merged).toHaveLength(2);
+    expect(merged[1]!.id).not.toBe(existing[0]!.id);
+  });
+
+  it('mergeImportedSalaryScenarios caps the result at MAX_SALARY_SCENARIOS, keeping the newest', () => {
+    let existing: SavedSalaryScenario[] = [];
+    for (let i = 0; i < MAX_SALARY_SCENARIOS; i++) existing = addSalaryScenario(existing, `S${i}`, DEFAULT_SALARY_INPUTS);
+    const imported = [{ id: 'x', name: 'Nowy import', savedAt: Date.now(), inputs: DEFAULT_SALARY_INPUTS }];
+    const merged = mergeImportedSalaryScenarios(existing, imported);
+    expect(merged).toHaveLength(MAX_SALARY_SCENARIOS);
+    expect(merged[merged.length - 1]!.name).toBe('Nowy import');
+  });
+});
+
+describe('loadSalaryScenarios / persistSalaryScenarios (localStorage)', () => {
+  let fake: FakeStorage;
+
+  beforeEach(() => {
+    fake = new FakeStorage();
+    vi.stubGlobal('localStorage', fake);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns an empty list when nothing has been saved yet', () => {
+    expect(loadSalaryScenarios()).toEqual([]);
+  });
+
+  it('round-trips scenarios through persistSalaryScenarios/loadSalaryScenarios', () => {
+    const list = addSalaryScenario([], 'Wariant', DEFAULT_SALARY_INPUTS);
+    persistSalaryScenarios(list);
+    expect(loadSalaryScenarios()).toEqual(list);
+  });
+
+  it(
+    'regression: persistSalaryScenarios reports storage failure — a full/blocked localStorage used to ' +
+      'look identical in the UI to a successful save until the next page refresh, mirroring the same fix ' +
+      'already applied to the mortgage calculator (persistScenarios in useCalculator.ts)',
+    () => {
+      vi.spyOn(fake, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+      const list = addSalaryScenario([], 'Wariant', DEFAULT_SALARY_INPUTS);
+      expect(persistSalaryScenarios(list)).toBe(false);
+    }
+  );
 });

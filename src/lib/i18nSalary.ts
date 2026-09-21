@@ -38,7 +38,16 @@ export type SalaryTranslationKey =
   | 'error_salary_gross' | 'error_salary_bonus' | 'error_salary_copyright_share'
   | 'error_salary_revenue' | 'error_salary_costs' | 'error_salary_ipbox_share'
   | 'error_salary_maly_zus_base' | 'error_salary_annual_length' | 'error_salary_annual_value'
-  | 'error_salary_spouse_income';
+  | 'error_salary_spouse_income'
+  | 'salary_scenario_name_placeholder' | 'salary_scenario_save' | 'salary_scenario_save_storage_error'
+  | 'salary_scenario_limit_reached' | 'salary_scenario_saved_title'
+  | 'salary_scenario_sort_label' | 'salary_scenario_sort_newest' | 'salary_scenario_sort_oldest' | 'salary_scenario_sort_name'
+  | 'salary_scenario_filter_placeholder' | 'salary_scenario_filter_no_match'
+  | 'salary_scenario_load' | 'salary_scenario_delete' | 'salary_scenario_rename_hint'
+  | 'salary_scenario_delete_confirm' | 'salary_scenario_delete_cancel'
+  | 'salary_scenario_export' | 'salary_scenario_import'
+  | 'salary_scenario_import_success' | 'salary_scenario_import_empty' | 'salary_scenario_import_error'
+  | 'salary_scenario_duplicate' | 'salary_scenario_copy_suffix';
 
 const plSalary: Record<SalaryTranslationKey, string> = {
   salary_nav_back: '← Kalkulator kredytu',
@@ -126,6 +135,29 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   error_salary_annual_length: 'Rozliczenie roczne wymaga 12 wartości miesięcznych',
   error_salary_annual_value: 'Każda wartość miesięczna musi być poprawną, nieujemną kwotą',
   error_salary_spouse_income: 'Podaj poprawny roczny dochód małżonka',
+  salary_scenario_name_placeholder: 'Nazwa scenariusza (np. "Umowa o pracę 8000 zł")',
+  salary_scenario_save: '💾 Zapisz scenariusz wynagrodzenia',
+  salary_scenario_save_storage_error: 'Nie udało się zapisać scenariusza na tym urządzeniu (pamięć przeglądarki jest pełna lub zablokowana) — po odświeżeniu strony może zniknąć.',
+  salary_scenario_limit_reached: 'Limit 10 zapisanych scenariuszy osiągnięty — najstarszy został usunięty, żeby zrobić miejsce na nowy.',
+  salary_scenario_saved_title: 'Zapisane scenariusze',
+  salary_scenario_sort_label: 'Sortuj scenariusze',
+  salary_scenario_sort_newest: 'Najnowsze',
+  salary_scenario_sort_oldest: 'Najstarsze',
+  salary_scenario_sort_name: 'Nazwa (A-Z)',
+  salary_scenario_filter_placeholder: '🔍 Szukaj scenariusza…',
+  salary_scenario_filter_no_match: 'Brak scenariuszy pasujących do wyszukiwania.',
+  salary_scenario_load: 'Wczytaj',
+  salary_scenario_delete: 'Usuń',
+  salary_scenario_rename_hint: 'Kliknij, aby zmienić nazwę',
+  salary_scenario_delete_confirm: 'Na pewno?',
+  salary_scenario_delete_cancel: 'Anuluj',
+  salary_scenario_export: '⬇️ Eksportuj',
+  salary_scenario_import: '⬆️ Importuj',
+  salary_scenario_import_success: 'Zaimportowano {n} scenariuszy',
+  salary_scenario_import_empty: 'Nie znaleziono poprawnych scenariuszy w pliku',
+  salary_scenario_import_error: 'Nie udało się odczytać pliku',
+  salary_scenario_duplicate: '📄 Duplikuj',
+  salary_scenario_copy_suffix: '(kopia)',
 };
 
 const enSalary: Record<SalaryTranslationKey, string> = {
@@ -214,6 +246,29 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   error_salary_annual_length: 'Annual reconciliation requires 12 monthly values',
   error_salary_annual_value: 'Every monthly value must be a valid, non-negative amount',
   error_salary_spouse_income: "Enter a valid spouse's annual income",
+  salary_scenario_name_placeholder: 'Scenario name (e.g. "Employment contract 8000 zł")',
+  salary_scenario_save: '💾 Save salary scenario',
+  salary_scenario_save_storage_error: 'Could not save this scenario on this device (browser storage is full or blocked) — it may disappear after a page refresh.',
+  salary_scenario_limit_reached: 'Reached the 10 saved-scenario limit — the oldest one was removed to make room for this one.',
+  salary_scenario_saved_title: 'Saved scenarios',
+  salary_scenario_sort_label: 'Sort scenarios',
+  salary_scenario_sort_newest: 'Newest',
+  salary_scenario_sort_oldest: 'Oldest',
+  salary_scenario_sort_name: 'Name (A-Z)',
+  salary_scenario_filter_placeholder: '🔍 Search scenarios…',
+  salary_scenario_filter_no_match: 'No scenarios match your search.',
+  salary_scenario_load: 'Load',
+  salary_scenario_delete: 'Delete',
+  salary_scenario_rename_hint: 'Click to rename',
+  salary_scenario_delete_confirm: 'Sure?',
+  salary_scenario_delete_cancel: 'Cancel',
+  salary_scenario_export: '⬇️ Export',
+  salary_scenario_import: '⬆️ Import',
+  salary_scenario_import_success: 'Imported {n} scenarios',
+  salary_scenario_import_empty: 'No valid scenarios found in the file',
+  salary_scenario_import_error: 'Could not read the file',
+  salary_scenario_duplicate: '📄 Duplicate',
+  salary_scenario_copy_suffix: '(copy)',
 };
 
 export const SALARY_TRANSLATIONS: Record<Lang, Record<SalaryTranslationKey, string>> = {
