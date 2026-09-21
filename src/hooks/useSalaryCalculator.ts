@@ -48,7 +48,20 @@ export interface SalaryInputs {
   annualMode: boolean;
   /** 12 elementów, użyte tylko gdy `annualMode === true`. */
   annualMonthlyValues: number[];
-  jointTaxation: { enabled: boolean; spouseAnnualTaxableIncome: number };
+  jointTaxation: {
+    enabled: boolean;
+    spouseAnnualTaxableIncome: number;
+    /**
+     * Oświadczenie u płatnika (pracodawcy/zleceniodawcy) o zamiarze
+     * wspólnego opodatkowania z małżonkiem bez dochodów/w niższym progu —
+     * art. 32 ust. 1a pkt 2 ustawy o PIT. Odrębne od `enabled` (który
+     * dotyczy TYLKO podsumowania rocznego): to pole realnie zmienia
+     * wysokość miesięcznej zaliczki (flat 12% przez cały rok zamiast
+     * progresji), bo taki jest efekt złożenia tego oświadczenia u
+     * pracodawcy — nie tylko rozliczenia rocznego.
+     */
+    flatRateDeclared: boolean;
+  };
 }
 
 export const DEFAULT_SALARY_INPUTS: SalaryInputs = {
@@ -84,7 +97,7 @@ export const DEFAULT_SALARY_INPUTS: SalaryInputs = {
   },
   annualMode: false,
   annualMonthlyValues: Array(12).fill(6000),
-  jointTaxation: { enabled: false, spouseAnnualTaxableIncome: 0 },
+  jointTaxation: { enabled: false, spouseAnnualTaxableIncome: 0, flatRateDeclared: false },
 };
 
 export type SalaryState =
@@ -139,12 +152,18 @@ export function computeSalaryState(inputs: SalaryInputs): SalaryState {
   const joint = inputs.jointTaxation.enabled && qualifiesForJointTaxation(inputs) ? inputs.jointTaxation : null;
   const spouseIncome = joint ? nonNegativeFinite(joint.spouseAnnualTaxableIncome) : 0;
   const reducingAmountAnnual = reducingAmountAnnualFor(inputs);
+  // Oświadczenie art. 32 ust. 1a pkt 2 dotyczy płatnika (pracodawcy/
+  // zleceniodawcy) — ma sens tylko dla umowy o pracę/zlecenie, nie dla
+  // dzieła (zwykle bez bieżących oświadczeń PIT-2-podobnych) ani B2B
+  // (przedsiębiorca sam sobie jest płatnikiem, inny mechanizm zaliczek).
+  const flatRateDeclared =
+    !!joint && joint.flatRateDeclared && (contractType === 'employment' || contractType === 'mandate');
 
   if (!inputs.annualMode) {
     let result: SalarySingleResult;
     switch (contractType) {
-      case 'employment': result = calcEmploymentContract(inputs.employment); break;
-      case 'mandate': result = calcMandateContract(inputs.mandate); break;
+      case 'employment': result = calcEmploymentContract({ ...inputs.employment, flatRateDeclared }); break;
+      case 'mandate': result = calcMandateContract({ ...inputs.mandate, flatRateDeclared }); break;
       case 'specific_work': result = calcSpecificWorkContract(inputs.specificWork); break;
       case 'b2b': result = calcB2BContract(inputs.b2b); break;
     }
@@ -156,8 +175,8 @@ export function computeSalaryState(inputs: SalaryInputs): SalaryState {
 
   let schedule: AnnualScheduleResult<SalarySingleResult>;
   switch (contractType) {
-    case 'employment': schedule = computeAnnualSalarySchedule('employment', inputs.annualMonthlyValues, inputs.employment); break;
-    case 'mandate': schedule = computeAnnualSalarySchedule('mandate', inputs.annualMonthlyValues, inputs.mandate); break;
+    case 'employment': schedule = computeAnnualSalarySchedule('employment', inputs.annualMonthlyValues, { ...inputs.employment, flatRateDeclared }); break;
+    case 'mandate': schedule = computeAnnualSalarySchedule('mandate', inputs.annualMonthlyValues, { ...inputs.mandate, flatRateDeclared }); break;
     case 'specific_work': schedule = computeAnnualSalarySchedule('specific_work', inputs.annualMonthlyValues, inputs.specificWork); break;
     case 'b2b': schedule = computeAnnualSalarySchedule('b2b', inputs.annualMonthlyValues, inputs.b2b); break;
   }

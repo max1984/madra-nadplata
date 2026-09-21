@@ -37,6 +37,7 @@ export type SalaryTranslationKey =
   | 'salary_b2b_zus_maly_zus_plus' | 'salary_b2b_zus_pelny' | 'salary_b2b_maly_zus_base_label'
   | 'salary_joint_taxation_toggle' | 'salary_joint_spouse_income_label' | 'salary_joint_savings_positive'
   | 'salary_joint_savings_negative' | 'salary_joint_not_eligible'
+  | 'salary_joint_flat_rate_toggle' | 'salary_joint_flat_rate_hint'
   | 'error_salary_gross' | 'error_salary_bonus' | 'error_salary_copyright_share'
   | 'error_salary_revenue' | 'error_salary_costs' | 'error_salary_ipbox_share'
   | 'error_salary_maly_zus_base' | 'error_salary_annual_length' | 'error_salary_annual_value'
@@ -131,6 +132,8 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_joint_savings_positive: 'Wspólne rozliczenie oszczędza',
   salary_joint_savings_negative: 'Wspólne rozliczenie nie daje korzyści w tym przypadku',
   salary_joint_not_eligible: 'Ta forma opodatkowania B2B nie kwalifikuje się do wspólnego rozliczenia',
+  salary_joint_flat_rate_toggle: 'Złożyłem/am u pracodawcy oświadczenie o wspólnym opodatkowaniu (art. 32 ust. 1a pkt 2 ustawy o PIT)',
+  salary_joint_flat_rate_hint: 'Dotyczy sytuacji, gdy Twój dochód przekracza pierwszy próg, a małżonek nie osiąga dochodów (lub mieści się w niższym progu) — pracodawca pobiera wtedy zaliczkę 12% przez cały rok zamiast przechodzić na 32% po przekroczeniu 120 000 zł. Ostateczne rozliczenie i tak następuje w rocznym PIT.',
   error_salary_gross: 'Podaj poprawną kwotę wynagrodzenia brutto',
   error_salary_bonus: 'Podaj poprawną kwotę premii',
   error_salary_copyright_share: 'Udział kosztów autorskich musi być między 0 i 100%',
@@ -246,6 +249,8 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_joint_savings_positive: 'Joint taxation saves',
   salary_joint_savings_negative: 'Joint taxation gives no benefit in this case',
   salary_joint_not_eligible: 'This B2B tax form is not eligible for joint taxation',
+  salary_joint_flat_rate_toggle: "I've filed a declaration with my employer for joint taxation (Art. 32(1a)(2) of the PIT Act)",
+  salary_joint_flat_rate_hint: "Applies when your income exceeds the first bracket but your spouse has no income (or is in a lower bracket) — the employer then withholds a flat 12% all year instead of switching to 32% past 120,000 zł. The final settlement still happens in the annual return.",
   error_salary_gross: 'Enter a valid gross salary amount',
   error_salary_bonus: 'Enter a valid bonus amount',
   error_salary_copyright_share: 'Copyright cost share must be between 0 and 100%',

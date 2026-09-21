@@ -218,8 +218,16 @@ export default function SalaryCalculator({
     // dwa niezależne zdarzenia, które mogą wypaść w różnych miesiącach.
     const crossedIdx = calcState.result.scaleThresholdCrossedMonth;
     const zusIdx = calcState.result.zusLimitCrossedMonth;
+    // Jeśli aktywne jest oświadczenie art. 32 ust. 1a pkt 2 (flatRateDeclared),
+    // zaliczka zostaje płaska 12% mimo przekroczenia 120 000 zł — kolorowanie
+    // słupków "próg 32%" byłoby wtedy mylące, bo realnie tego progu nie widać
+    // w zaliczce (tylko ewentualnie w rocznym rozliczeniu).
+    const flatRateActive =
+      inputs.jointTaxation.enabled &&
+      inputs.jointTaxation.flatRateDeclared &&
+      (inputs.contractType === 'employment' || inputs.contractType === 'mandate');
     const backgroundColor = netValues.map((_, i) =>
-      crossedIdx !== null && i >= crossedIdx - 1 ? CHART.bracketBar : CHART.overBar
+      !flatRateActive && crossedIdx !== null && i >= crossedIdx - 1 ? CHART.bracketBar : CHART.overBar
     );
     const borderColor = netValues.map((_, i) => (zusIdx !== null && i === zusIdx - 1 ? CHART.zusLimitBorder : 'transparent'));
     const borderWidth = netValues.map((_, i) => (zusIdx !== null && i === zusIdx - 1 ? 3 : 0));
@@ -712,6 +720,20 @@ export default function SalaryCalculator({
                       />
                       <span className="input-suffix">{t('currency')}</span>
                     </div>
+                    {(inputs.contractType === 'employment' || inputs.contractType === 'mandate') && (
+                      <>
+                        <label className="checkbox-row" htmlFor="joint-tax-flat-rate" style={{ marginTop: 10 }}>
+                          <input
+                            id="joint-tax-flat-rate"
+                            type="checkbox"
+                            checked={inputs.jointTaxation.flatRateDeclared}
+                            onChange={(e) => setInputs({ jointTaxation: { ...inputs.jointTaxation, flatRateDeclared: e.target.checked } })}
+                          />
+                          <span>{t('salary_joint_flat_rate_toggle')}</span>
+                        </label>
+                        <div className="hint">{t('salary_joint_flat_rate_hint')}</div>
+                      </>
+                    )}
                   </div>
                 )}
                 {!canJointTax && inputs.jointTaxation.enabled && (
@@ -912,7 +934,9 @@ export default function SalaryCalculator({
                 </div>
                 {(calcState.result.scaleThresholdCrossedMonth !== null || calcState.result.zusLimitCrossedMonth !== null) && (
                   <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, fontSize: '.8rem', color: 'var(--text2)' }}>
-                    {calcState.result.scaleThresholdCrossedMonth !== null && (
+                    {calcState.result.scaleThresholdCrossedMonth !== null &&
+                      !(inputs.jointTaxation.enabled && inputs.jointTaxation.flatRateDeclared &&
+                        (inputs.contractType === 'employment' || inputs.contractType === 'mandate')) && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--warn)', flexShrink: 0 }} />
                         {t('salary_chart_legend_bracket')}

@@ -103,6 +103,21 @@ describe('calcEmploymentContract', () => {
     }
   );
 
+  it(
+    'flatRateDeclared (art. 32 ust. 1a pkt 2 ustawy o PIT — oświadczenie o wspólnym opodatkowaniu z małżonkiem ' +
+      'bez dochodów) keeps the withholding at a flat 12% even when cumulative taxable income (ctx.priorTaxableIncome) ' +
+      'is already far past the 120 000 zł threshold, instead of the progressive 32% scaleTax would otherwise apply',
+    () => {
+      const ctx = { priorTaxableIncome: 200_000, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0, priorCopyrightCostsUsed: 0 };
+      const progressive = calcEmploymentContract(employmentDefaults, ctx);
+      const flat = calcEmploymentContract({ ...employmentDefaults, flatRateDeclared: true }, ctx);
+      expect(flat.tax).toBeLessThan(progressive.tax);
+      expect(flat.net).toBeGreaterThan(progressive.net);
+      // 12% niezależnie od tego, że priorTaxableIncome jest daleko za progiem.
+      expect(flat.tax).toBe(Math.max(0, Math.round(flat.taxableIncomeThisMonth * 0.12 - 300)));
+    }
+  );
+
   it('higher KUP (elevated) lowers the tax vs standard, all else equal', () => {
     const standard = calcEmploymentContract({ ...employmentDefaults, kup: 'standard' });
     const elevated = calcEmploymentContract({ ...employmentDefaults, kup: 'elevated' });
@@ -176,6 +191,13 @@ describe('calcMandateContract', () => {
     expect(withSickness.employeeSickness).toBeGreaterThan(0);
     expect(withoutSickness.employeeSickness).toBe(0);
     expect(withoutSickness.net).toBeGreaterThan(withSickness.net);
+  });
+
+  it('flatRateDeclared keeps a flat 12% withholding for a non-student contract too, even past the 120 000 zł threshold', () => {
+    const ctx = { priorTaxableIncome: 200_000, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0, priorCopyrightCostsUsed: 0 };
+    const progressive = calcMandateContract(mandateDefaults, ctx);
+    const flat = calcMandateContract({ ...mandateDefaults, flatRateDeclared: true }, ctx);
+    expect(flat.tax).toBeLessThan(progressive.tax);
   });
 });
 

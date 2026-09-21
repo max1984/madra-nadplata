@@ -186,13 +186,25 @@ interface IncomeTaxResult {
  */
 function applyIncomeTax(
   incomeThisMonth: number,
-  opts: { specialRelief: SpecialRelief; reducingAmount: number; ctx: AnnualContext }
+  opts: { specialRelief: SpecialRelief; reducingAmount: number; ctx: AnnualContext; flatRateDeclared?: boolean }
 ): IncomeTaxResult {
   const income = nonNegative(incomeThisMonth);
   const reliefRoom = opts.specialRelief === 'none' ? 0 : Math.max(0, YOUNG_RELIEF_LIMIT - opts.ctx.priorReliefUsed);
   const reliefUsedThisMonth = Math.min(income, reliefRoom);
   const taxableIncomeThisMonth = income - reliefUsedThisMonth;
-  const tax = scaleTax(taxableIncomeThisMonth, opts.ctx.priorTaxableIncome, opts.reducingAmount);
+  // Art. 32 ust. 1a pkt 2 ustawy o PIT: pracownik, który złożył u płatnika
+  // oświadczenie o zamiarze opodatkowania dochodów łącznie z małżonkiem
+  // (małżonek nie osiąga dochodów albo mieści się w niższym progu), ma
+  // zaliczkę 12% przez WSZYSTKIE miesiące roku — próg 120 000 zł (i
+  // narastający `ctx.priorTaxableIncome`) jest wtedy pomijany na etapie
+  // zaliczki, bo do rozliczenia progresji dochodzi dopiero w rocznym PIT.
+  // Warunek uprawniający (własny dochód > 120k, dochód małżonka w niższym
+  // progu) NIE jest tu sprawdzany — to świadome oświadczenie użytkownika
+  // złożone u realnego pracodawcy, nie coś, co kalkulator może/powinien
+  // automatycznie wykrywać z samych liczb w formularzu.
+  const tax = opts.flatRateDeclared
+    ? Math.max(0, Math.round(taxableIncomeThisMonth * TAX_SCALE_RATE_LOW - opts.reducingAmount))
+    : scaleTax(taxableIncomeThisMonth, opts.ctx.priorTaxableIncome, opts.reducingAmount);
   return { tax, reliefUsedThisMonth, taxableIncomeThisMonth };
 }
 
@@ -227,6 +239,8 @@ export interface EmploymentInputs {
   specialRelief: SpecialRelief;
   reducingShare: TaxReducingShare;
   ppk: PpkOption;
+  /** Oświadczenie art. 32 ust. 1a pkt 2 ustawy o PIT u tego płatnika — patrz `applyIncomeTax`. */
+  flatRateDeclared?: boolean;
 }
 
 export interface EmploymentResult {
@@ -290,6 +304,7 @@ export function calcEmploymentContract(
     specialRelief: inputs.specialRelief,
     reducingAmount,
     ctx,
+    flatRateDeclared: inputs.flatRateDeclared,
   });
 
   // PPK potrącane po opodatkowaniu — uproszczenie: w realnych listach płac
@@ -348,6 +363,8 @@ export interface MandateInputs {
   reducingShare: TaxReducingShare;
   isStudentUnder26: boolean; // zwolnienie z ZUS i zdrowotnej, niezależnie od specialRelief
   sicknessVoluntary: boolean; // chorobowa jest dobrowolna na zleceniu
+  /** Oświadczenie art. 32 ust. 1a pkt 2 ustawy o PIT u tego płatnika — patrz `applyIncomeTax`. */
+  flatRateDeclared?: boolean;
 }
 
 export interface MandateResult {
@@ -380,6 +397,7 @@ export function calcMandateContract(
       specialRelief: inputs.specialRelief,
       reducingAmount,
       ctx,
+      flatRateDeclared: inputs.flatRateDeclared,
     });
     return {
       grossMonthly: gross,
@@ -413,6 +431,7 @@ export function calcMandateContract(
     specialRelief: inputs.specialRelief,
     reducingAmount,
     ctx,
+    flatRateDeclared: inputs.flatRateDeclared,
   });
 
   const net = round2(gross - employeeSocialTotal - healthInsurance - tax);

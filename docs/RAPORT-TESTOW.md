@@ -4,6 +4,8 @@ Data: 2026-09-21
 Zakres: 3 aplikacje — kalkulator nadpłaty kredytu hipotecznego (`/`), kalkulator wynagrodzeń brutto-netto (`/wynagrodzenia.html`), kalkulator zdolności kredytowej (`/zdolnosc-kredytowa.html`).
 Metoda: white-box (przegląd kodu i testów jednostkowych z ekspertyzą finansowo-podatkową) + black-box (testy manualne w przeglądarce, wszystkie 3 apki, edge case'y) + ocena UI/UX.
 
+**STATUS (2026-09-21, po sesji naprawczej): wszystkie pozycje 🔴/🟠/🟡 poniżej NAPRAWIONE — 18 commitów, 504/504 testów zielonych, plan naprawy i korekty ustaleń (menu mobilne miało inną przyczynę niż pierwotnie opisano) w historii commitów od `445b653` do `69b4d64`. Szczegóły przy każdej pozycji.**
+
 Legenda priorytetów: 🔴 KRYTYCZNE (naprawić przed kolejnym wydaniem) · 🟠 WAŻNE (zaplanować) · 🟡 DROBNE (nice-to-have) · ⚪ BRAK TESTÓW (dług testowy) · 🔵 DO WERYFIKACJI (wymaga sprawdzenia danych/przepisów, nie kodu).
 
 ---

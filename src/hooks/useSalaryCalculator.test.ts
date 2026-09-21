@@ -96,7 +96,7 @@ describe('computeSalaryState — joint taxation (wspólne rozliczenie)', () => {
   it('employment always qualifies — enabling it produces a non-null jointTaxation result', () => {
     const inputs: SalaryInputs = {
       ...DEFAULT_SALARY_INPUTS,
-      jointTaxation: { enabled: true, spouseAnnualTaxableIncome: 20000 },
+      jointTaxation: { enabled: true, spouseAnnualTaxableIncome: 20000, flatRateDeclared: false },
     };
     const state = computeSalaryState(inputs);
     expect(state.jointTaxation).not.toBeNull();
@@ -104,7 +104,7 @@ describe('computeSalaryState — joint taxation (wspólne rozliczenie)', () => {
 
   it('b2b on skala qualifies for joint taxation', () => {
     const inputs = withB2B({ taxForm: 'skala' });
-    inputs.jointTaxation = { enabled: true, spouseAnnualTaxableIncome: 20000 };
+    inputs.jointTaxation = { enabled: true, spouseAnnualTaxableIncome: 20000, flatRateDeclared: false };
     const state = computeSalaryState(inputs);
     expect(state.jointTaxation).not.toBeNull();
   });
@@ -115,7 +115,7 @@ describe('computeSalaryState — joint taxation (wspólne rozliczenie)', () => {
     () => {
       for (const taxForm of ['liniowy', 'ryczalt', 'ipbox'] as const) {
         const inputs = withB2B({ taxForm });
-        inputs.jointTaxation = { enabled: true, spouseAnnualTaxableIncome: 20000 };
+        inputs.jointTaxation = { enabled: true, spouseAnnualTaxableIncome: 20000, flatRateDeclared: false };
         const state = computeSalaryState(inputs);
         expect(state.jointTaxation).toBeNull();
       }
@@ -125,6 +125,56 @@ describe('computeSalaryState — joint taxation (wspólne rozliczenie)', () => {
   it('disabled toggle always yields null jointTaxation, even for a qualifying contract type', () => {
     const state = computeSalaryState(DEFAULT_SALARY_INPUTS);
     expect(state.jointTaxation).toBeNull();
+  });
+
+  it(
+    'regression: flatRateDeclared threads through to the annual schedule for employment — keeps every ' +
+      'month at a flat 12% withholding instead of the progressive 32% that kicks in after 120 000 zł ' +
+      'cumulative, matching art. 32 ust. 1a pkt 2 ustawy o PIT (declared at the payer, not just an annual summary)',
+    () => {
+      const highIncome = Array(12).fill(30000); // 360 000 zł/rok — crosses 120k mid-year
+      const withFlat: SalaryInputs = {
+        ...DEFAULT_SALARY_INPUTS,
+        annualMode: true,
+        annualMonthlyValues: highIncome,
+        jointTaxation: { enabled: true, spouseAnnualTaxableIncome: 0, flatRateDeclared: true },
+      };
+      const withoutFlat: SalaryInputs = { ...withFlat, jointTaxation: { ...withFlat.jointTaxation, flatRateDeclared: false } };
+
+      const flatState = computeSalaryState(withFlat);
+      const progressiveState = computeSalaryState(withoutFlat);
+      if (flatState.mode !== 'annual' || progressiveState.mode !== 'annual') throw new Error('expected annual mode');
+
+      // Bez oświadczenia próg zostaje przekroczony w trakcie roku.
+      expect(progressiveState.result.scaleThresholdCrossedMonth).not.toBeNull();
+
+      // Z oświadczeniem: efektywna stawka podatku zostaje ~12% w KAŻDYM
+      // miesiącu, także po przekroczeniu 120 000 zł narastająco (nie
+      // porównujemy tu netto wprost — ZUS ma osobny, niezależny limit
+      // 30-krotności, który też może zostać przekroczony w trakcie roku
+      // i podbić netto z zupełnie innego powodu, patrz test wyżej).
+      for (const m of flatState.result.months) {
+        if ('taxableIncomeThisMonth' in m && m.taxableIncomeThisMonth > 0) {
+          expect(m.tax / m.taxableIncomeThisMonth).toBeCloseTo(0.12, 1);
+        }
+      }
+      // Bez oświadczenia: przynajmniej jeden miesiąc ma efektywną stawkę bliską 32%.
+      const progressiveRates = progressiveState.result.months
+        .filter((m): m is typeof m & { taxableIncomeThisMonth: number } => 'taxableIncomeThisMonth' in m && m.taxableIncomeThisMonth > 0)
+        .map((m) => m.tax / m.taxableIncomeThisMonth);
+      expect(Math.max(...progressiveRates)).toBeGreaterThan(0.2);
+    }
+  );
+
+  it('flatRateDeclared has no effect on specific_work or b2b — art. 32 ust. 1a applies only at a payer (employment/mandate)', () => {
+    const inputs: SalaryInputs = {
+      ...DEFAULT_SALARY_INPUTS,
+      contractType: 'specific_work',
+      jointTaxation: { enabled: true, spouseAnnualTaxableIncome: 0, flatRateDeclared: true },
+    };
+    const withFlat = computeSalaryState(inputs);
+    const withoutFlat = computeSalaryState({ ...inputs, jointTaxation: { ...inputs.jointTaxation, flatRateDeclared: false } });
+    expect(withFlat.result).toEqual(withoutFlat.result);
   });
 });
 
@@ -172,9 +222,9 @@ describe('validateSalaryInputs', () => {
   });
 
   it('rejects a negative spouseAnnualTaxableIncome only when joint taxation is enabled', () => {
-    const inputs: SalaryInputs = { ...DEFAULT_SALARY_INPUTS, jointTaxation: { enabled: true, spouseAnnualTaxableIncome: -5 } };
+    const inputs: SalaryInputs = { ...DEFAULT_SALARY_INPUTS, jointTaxation: { enabled: true, spouseAnnualTaxableIncome: -5, flatRateDeclared: false } };
     expect(validateSalaryInputs(inputs)).toBe('error_salary_spouse_income');
-    const disabled: SalaryInputs = { ...DEFAULT_SALARY_INPUTS, jointTaxation: { enabled: false, spouseAnnualTaxableIncome: -5 } };
+    const disabled: SalaryInputs = { ...DEFAULT_SALARY_INPUTS, jointTaxation: { enabled: false, spouseAnnualTaxableIncome: -5, flatRateDeclared: false } };
     expect(validateSalaryInputs(disabled)).toBeNull();
   });
 });
