@@ -26,6 +26,7 @@ import {
   type SalaryInputs,
   type SavedSalaryScenario,
 } from './useSalaryCalculator';
+import { LANGS } from '../lib/i18n';
 
 class FakeStorage {
   private store = new Map<string, string>();
@@ -227,6 +228,34 @@ describe('validateSalaryInputs', () => {
     const disabled: SalaryInputs = { ...DEFAULT_SALARY_INPUTS, jointTaxation: { enabled: false, spouseAnnualTaxableIncome: -5, flatRateDeclared: false } };
     expect(validateSalaryInputs(disabled)).toBeNull();
   });
+
+  it(
+    'regression: every error key validateSalaryInputs can return resolves to real, non-empty text in both ' +
+      'languages — validateSalaryInputs used to return a plain `string` (not TranslationKey), so a typo\'d key ' +
+      'compiled fine and only showed up as a raw untranslated string (or nothing) in front of a real user',
+    () => {
+      const triggers: [string, SalaryInputs][] = [
+        ['error_salary_gross', { ...DEFAULT_SALARY_INPUTS, employment: { ...DEFAULT_SALARY_INPUTS.employment, grossMonthly: -1 } }],
+        ['error_salary_bonus', { ...DEFAULT_SALARY_INPUTS, employment: { ...DEFAULT_SALARY_INPUTS.employment, bonusMonthly: -1 } }],
+        ['error_salary_copyright_share', { ...DEFAULT_SALARY_INPUTS, employment: { ...DEFAULT_SALARY_INPUTS.employment, copyrightSharePercent: 200 } }],
+        ['error_salary_revenue', withB2B({ monthlyRevenue: -1 })],
+        ['error_salary_costs', withB2B({ monthlyCosts: -1 })],
+        ['error_salary_ipbox_share', withB2B({ taxForm: 'ipbox', ipBoxSharePercent: 200 })],
+        ['error_salary_maly_zus_base', withB2B({ zusVariant: 'maly_zus_plus', malyZusPlusBase: 0 })],
+        ['error_salary_annual_length', { ...DEFAULT_SALARY_INPUTS, annualMode: true, annualMonthlyValues: [1000] }],
+        ['error_salary_annual_value', { ...DEFAULT_SALARY_INPUTS, annualMode: true, annualMonthlyValues: Array(12).fill(-1) }],
+        ['error_salary_spouse_income', { ...DEFAULT_SALARY_INPUTS, jointTaxation: { enabled: true, spouseAnnualTaxableIncome: -1, flatRateDeclared: false } }],
+      ];
+      for (const [expectedKey, inputs] of triggers) {
+        const key = validateSalaryInputs(inputs);
+        expect(key).toBe(expectedKey);
+        if (key) {
+          expect(LANGS.pl[key]?.trim()).toBeTruthy();
+          expect(LANGS.en[key]?.trim()).toBeTruthy();
+        }
+      }
+    }
+  );
 });
 
 describe('buildSalaryUrlParams / parseUrlSalaryInputs — round trip', () => {

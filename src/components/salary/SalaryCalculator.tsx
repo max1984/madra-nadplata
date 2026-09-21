@@ -23,7 +23,7 @@ interface Props {
   inputs: SalaryInputs;
   setInputs: (patch: Partial<SalaryInputs>) => void;
   calcState: SalaryState | null;
-  calcError: string | null;
+  calcError: TranslationKey | null;
   onCalculate: () => void;
   onResetToDefaults: () => void;
   isStale: boolean;
@@ -763,7 +763,7 @@ export default function SalaryCalculator({
             )}
           </div>
 
-          {calcError && <div className="calc-error" role="alert">{t(calcError as TranslationKey)}</div>}
+          {calcError && <div className="calc-error" role="alert">{t(calcError)}</div>}
 
           <div className="form-group" style={{ display: 'flex', gap: 12, marginTop: 12 }}>
             <button type="button" className="calc-btn" onClick={onCalculate}>{t('salary_calculate_btn')}</button>

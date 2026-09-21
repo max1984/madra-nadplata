@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../lib/safeStorage';
 import { uniqueScenarioName } from '../lib/scenarioNames';
+import type { TranslationKey } from '../lib/i18n';
 import {
   calcEmploymentContract,
   calcMandateContract,
@@ -192,13 +193,8 @@ function isFiniteNonNegative(n: number): boolean {
   return Number.isFinite(n) && n >= 0;
 }
 
-/**
- * Zwraca komunikat błędu albo null. Na razie zwykły string — i18nSalary.ts
- * (kolejny krok planu) zamieni te literały na TranslationKey, tak jak
- * validateInputs robi to dla kalkulatora kredytu.
- * TODO: zamienić stringi na TranslationKey z i18nSalary.ts w następnym kroku.
- */
-export function validateSalaryInputs(inputs: SalaryInputs): string | null {
+/** Zwraca klucz i18n błędu albo null — jak validateInputs w useCalculator.ts. */
+export function validateSalaryInputs(inputs: SalaryInputs): TranslationKey | null {
   switch (inputs.contractType) {
     case 'employment':
       if (!isFiniteNonNegative(inputs.employment.grossMonthly)) return 'error_salary_gross';
@@ -652,7 +648,7 @@ export function useSalaryCalculator() {
     return validateSalaryInputs(resolved) === null ? resolved : null;
   });
 
-  const [calcError, setCalcError] = useState<string | null>(null);
+  const [calcError, setCalcError] = useState<TranslationKey | null>(null);
   const [scenarios, setScenarios] = useState<SavedSalaryScenario[]>(() => loadSalaryScenarios());
   const [scenarioSaveError, setScenarioSaveError] = useState(false);
   const [scenarioLimitReached, setScenarioLimitReached] = useState(false);
