@@ -466,8 +466,14 @@ export default function Calculator({
     reader.readAsText(file);
   };
 
+  // &lang= dołączony na końcu (poza buildUrlParams, które zna tylko CalcInputs)
+  // — bez tego odbiorca linku widział kalkulator w swoim zapamiętanym/domyślnym
+  // języku zamiast w tym, w którym scenariusz faktycznie wysłano (patrz LangContext).
+  const scenarioShareUrl = (s: SavedScenario) =>
+    `${window.location.origin}${window.location.pathname}?${buildUrlParams(s.inputs)}&lang=${lang}`;
+
   const handleCopyScenarioLink = (s: SavedScenario) => {
-    const url = `${window.location.origin}${window.location.pathname}?${buildUrlParams(s.inputs)}`;
+    const url = scenarioShareUrl(s);
     copyToClipboard(url, () => {
       setCopiedScenarioId(s.id);
       setTimeout(() => setCopiedScenarioId(null), 2000);
@@ -475,7 +481,7 @@ export default function Calculator({
   };
 
   const handleCopyScenarioSummary = (s: SavedScenario) => {
-    const url = `${window.location.origin}${window.location.pathname}?${buildUrlParams(s.inputs)}`;
+    const url = scenarioShareUrl(s);
     const text = scenarioSummaryText(s.inputs, t, fmt, fmtC, url);
     if (text === null) {
       setInvalidScenarioSummaryId(s.id);

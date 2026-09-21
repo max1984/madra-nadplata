@@ -15,11 +15,23 @@ interface LangContextValue {
 
 const LangContext = createContext<LangContextValue | null>(null);
 
+/**
+ * ?lang= ma pierwszeństwo przed localStorage — udostępniony link do
+ * scenariusza (Calculator.tsx) niesie ten parametr, żeby odbiorca zobaczył
+ * kalkulator w tym samym języku, w którym go wysłano, a nie w swoim
+ * domyślnym/poprzednio zapamiętanym. Wydzielone jako czysta funkcja, żeby dało
+ * się to przetestować bez renderowania LangProvider.
+ */
+export function resolveInitialLang(search: string, stored: string | null): Lang {
+  const fromUrl = new URLSearchParams(search).get('lang');
+  if (fromUrl === 'en' || fromUrl === 'pl') return fromUrl;
+  return (stored === 'en' || stored === 'pl') ? stored : 'pl';
+}
+
 export function LangProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => {
-    const stored = safeGetItem('lang');
-    return (stored === 'en' || stored === 'pl') ? stored : 'pl';
-  });
+  const [lang, setLangState] = useState<Lang>(() =>
+    resolveInitialLang(window.location.search, safeGetItem('lang')),
+  );
 
   const setLang = (l: Lang) => {
     safeSetItem('lang', l);
