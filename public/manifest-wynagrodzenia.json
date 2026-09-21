@@ -1,0 +1,15 @@
+{
+  "name": "Mądra Nadpłata — Kalkulator wynagrodzeń brutto-netto",
+  "short_name": "Kalkulator wynagrodzeń",
+  "description": "Darmowy kalkulator wynagrodzeń brutto-netto — umowa o pracę, zlecenie, dzieło i B2B, z rocznym rozliczeniem ze zmiennym wynagrodzeniem.",
+  "start_url": "/wynagrodzenia.html",
+  "scope": "/",
+  "display": "standalone",
+  "lang": "pl",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Mądra Nadpłata — Kalkulator zdolności kredytowej",
+  "short_name": "Zdolność kredytowa",
+  "description": "Oszacuj maksymalną kwotę kredytu hipotecznego wg metodologii Rekomendacji S KNF (DSTI, bufor ostrożnościowy, koszty utrzymania gospodarstwa domowego).",
+  "start_url": "/zdolnosc-kredytowa.html",
+  "scope": "/",
+  "display": "standalone",
+  "lang": "pl",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
