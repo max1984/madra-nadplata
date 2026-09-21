@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
+import AnimatedNumber from '../AnimatedNumber';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
 import { MAX_LOAN_YEARS } from '../../lib/creditworthiness';
@@ -515,7 +516,7 @@ export default function CreditworthinessCalculator({
             {isStale && <div className="hint">{t('calc_stale')}</div>}
             <div className="result-card highlight-green">
               <div className="result-card-label">{t('cw_result_max_loan_amount')}</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 700 }}>{fmtC(calcState.maxLoanAmount)}</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700 }}><AnimatedNumber value={calcState.maxLoanAmount} format={fmtC} /></div>
               <div style={{ marginTop: 12, display: 'grid', gap: 4, fontSize: '.9rem' }}>
                 <div>{t('cw_result_recognized_income')}: {fmtC(calcState.recognizedIncome)}</div>
                 <div>{t('cw_result_household_cost')}: {fmtC(calcState.householdCost)}</div>

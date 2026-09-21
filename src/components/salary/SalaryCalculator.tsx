@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart } from 'chart.js';
 import { useLang } from '../../contexts/LangContext';
 import { CHART } from '../../lib/chartTheme';
+import AnimatedNumber from '../AnimatedNumber';
 import type { TranslationKey } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
 import {
@@ -927,7 +928,7 @@ function SingleResultCard({
   return (
     <div className="result-card highlight-green">
       <div className="result-card-label">{t('salary_result_net')}</div>
-      <div style={{ fontSize: '1.8rem', fontWeight: 700 }}>{fmtC(result.net)}</div>
+      <div style={{ fontSize: '1.8rem', fontWeight: 700 }}><AnimatedNumber value={result.net} format={fmtC} /></div>
       <div style={{ marginTop: 12, display: 'grid', gap: 4, fontSize: '.9rem' }}>
         <div>{t('salary_result_tax')}: {fmtC(result.tax)}</div>
         {'employeeSocialTotal' in result && <div>{t('salary_result_social')}: {fmtC(result.employeeSocialTotal)}</div>}

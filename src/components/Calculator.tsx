@@ -5,6 +5,7 @@ import { CHART } from '../lib/chartTheme';
 import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
+import AnimatedNumber from './AnimatedNumber';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
 import { compareScenarioToCurrent, scenariosToJSON, inputsEqual, buildUrlParams, sortScenarios, filterScenariosByName, buildScenarioComparisonRows, strategyLabelKey, computeCalcState, validateInputs, MAX_SCENARIO_NAME_LENGTH, MAX_SCENARIOS, type ScenarioSortKey, type ScenarioComparisonRow } from '../hooks/useCalculator';
@@ -1406,7 +1407,7 @@ function renderStats(
     <>
       {goalCard}
       <div className="result-card highlight-green">
-        <div className="result-big green">{fmtC(savedMoney)}</div>
+        <div className="result-big green"><AnimatedNumber value={savedMoney} format={fmtC} /></div>
         <div className="result-label">{t('stats_saved')}</div>
       </div>
       <div className="result-card highlight-blue">
