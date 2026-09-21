@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape } from './Calculator';
+import { canUseNativeShare, overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape, shouldCancelDeleteConfirmOnEscape } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -211,6 +211,26 @@ describe('shouldClearFilterOnEscape', () => {
   it('ignores any other key regardless of filter content', () => {
     expect(shouldClearFilterOnEscape('Enter', 'wariant')).toBe(false);
     expect(shouldClearFilterOnEscape('a', 'wariant')).toBe(false);
+  });
+});
+
+describe('shouldCancelDeleteConfirmOnEscape', () => {
+  it('cancels an active delete confirmation on Escape', () => {
+    expect(shouldCancelDeleteConfirmOnEscape('Escape', 'scenario-1')).toBe(true);
+  });
+
+  it(
+    'regression: does nothing for Escape when no delete confirmation is active — the "Na pewno?" ' +
+      'state for a saved scenario had no keyboard way out at all (only the "Anuluj" button), unlike ' +
+      'the existing Escape-cancels-rename and Escape-clears-filter patterns in the same scenario list',
+    () => {
+      expect(shouldCancelDeleteConfirmOnEscape('Escape', null)).toBe(false);
+    },
+  );
+
+  it('ignores any other key regardless of confirmDeleteId', () => {
+    expect(shouldCancelDeleteConfirmOnEscape('Enter', 'scenario-1')).toBe(false);
+    expect(shouldCancelDeleteConfirmOnEscape('a', 'scenario-1')).toBe(false);
   });
 });
 

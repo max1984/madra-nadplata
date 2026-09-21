@@ -224,6 +224,16 @@ export function shouldClearFilterOnEscape(key: string, currentFilter: string): b
   return key === 'Escape' && currentFilter.length > 0;
 }
 
+/**
+ * Escape anuluje potwierdzenie usunięcia scenariusza — ten sam wzorzec, co
+ * już istnieje dla edycji nazwy (Escape anuluje) i pola wyszukiwania
+ * (Escape czyści). Bez tego jedynym sposobem wyjścia z trybu "Na pewno?"
+ * był klik w przycisk "Anuluj" — klawiatura nie miała żadnej drogi ucieczki.
+ */
+export function shouldCancelDeleteConfirmOnEscape(key: string, confirmDeleteId: string | null): boolean {
+  return key === 'Escape' && confirmDeleteId !== null;
+}
+
 export default function Calculator({
   inputs, setInputs, calcState, onCalculate, onResetToDefaults, isStale, calcError,
   scenarios, scenarioSaveError, scenarioLimitReached, onSaveScenario, onLoadScenario, onDeleteScenario, onRenameScenario, onDuplicateScenario,
@@ -297,6 +307,19 @@ export default function Calculator({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
+
+  // Bez tego jedynym sposobem wyjścia z trybu potwierdzenia usunięcia
+  // scenariusza ("Na pewno?") był klik w przycisk "Anuluj" — Escape już
+  // anuluje edycję nazwy i czyści filtr wyszukiwania (patrz wyżej), ale to
+  // trzecie miejsce w tej samej liście scenariuszy nie miało żadnej drogi
+  // ucieczki z klawiatury.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (shouldCancelDeleteConfirmOnEscape(e.key, confirmDeleteId)) setConfirmDeleteId(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [confirmDeleteId]);
 
   const [investRate, setInvestRate] = useState(5);
   const resultsRef = useRef<HTMLDivElement>(null);
