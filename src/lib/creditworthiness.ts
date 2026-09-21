@@ -14,10 +14,11 @@
  * UWAGA: wcześniejsza wersja tego komentarza błędnie datowała nowelizację
  * na 19.06.2026 — źródła KNF nie potwierdzają nowelizacji z tą datą, to była
  * pomyłka (prawdopodobnie przesunięcie roku przy zachowaniu dnia/miesiąca
- * prawdziwej nowelizacji z 2023). Skorygowano po weryfikacji WebSearch
- * 2026-09-21. GUS: przeciętne wynagrodzenie w gospodarce narodowej, II
- * kwartał 2026: 9233,13 zł brutto (do zweryfikowania przy każdej aktualizacji
- * — patrz docs/WERYFIKACJA-STALYCH-2026.md).
+ * prawdziwej nowelizacji z 2023). GUS: przeciętne wynagrodzenie w gospodarce
+ * narodowej, II kwartał 2026: 9233,13 zł brutto — zgodne z komunikatem GUS,
+ * potwierdzone WebSearch 2026-09-21 (patrz docs/WERYFIKACJA-STALYCH-2026.md).
+ * WYMAGA ponownej weryfikacji przy każdej aktualizacji (GUS co kwartał, KNF
+ * przy kolejnych nowelizacjach Rekomendacji S).
  */
 
 // --------------------------------------------------------------- stałe ---

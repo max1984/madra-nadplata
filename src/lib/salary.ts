@@ -2,12 +2,15 @@
  * Kalkulator wynagrodzeń brutto-netto — 4 typy umów (umowa o pracę, zlecenie,
  * dzieło, B2B) + roczne rozliczenie ze zmiennym wynagrodzeniem miesięcznym.
  *
- * Stawki i limity 2026 poniżej — źródła: zus.pl (składki, limity), ustawa o
- * PIT (skala, kwota zmniejszająca, ulgi), GUS (przeciętne wynagrodzenie jako
- * baza dla zdrowotnej ryczałtu). Sprawdzone: wrzesień 2026. WYMAGA
- * weryfikacji na początku każdego kolejnego roku podatkowego — kwoty
- * (minimalne wynagrodzenie, limity, stawki ryczałtu zdrowotnego) zmieniają
- * się rocznie.
+ * Stawki i limity 2026 poniżej — zweryfikowane WebSearch 2026-09-21 (patrz
+ * docs/WERYFIKACJA-STALYCH-2026.md dla źródeł per stała): rozporządzenie RM
+ * z 11.09.2025 (minimalne wynagrodzenie), obwieszczenie MRPiPS z 19.11.2025
+ * (limit 30-krotności), zus.pl (progi ryczałtu zdrowotnego, ZUS pełny/
+ * preferencyjny przedsiębiorcy), GUS (przeciętne wynagrodzenie), ustawa
+ * o PIT (skala, kwota zmniejszająca, ulgi — bez zmian od Polskiego Ładu
+ * 2022). WSZYSTKIE potwierdzone zgodne z kodem. WYMAGA ponownej weryfikacji
+ * na początku każdego kolejnego roku podatkowego — kwoty (minimalne
+ * wynagrodzenie, limity, stawki ryczałtu zdrowotnego) zmieniają się rocznie.
  *
  * Każda funkcja liczy JEDEN miesiąc. `computeAnnualSalarySchedule` woła te
  * same funkcje 12 razy, przekazując dalej narastający `AnnualContext` —

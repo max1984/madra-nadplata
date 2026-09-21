@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeCreditworthiness,
+  AVERAGE_NATIONAL_WAGE_GROSS_2026,
   AVERAGE_NATIONAL_WAGE_NET_2026,
   BUFFER_FIXED_RATE_PP,
   BUFFER_VARIABLE_RATE_PP,
@@ -9,6 +10,7 @@ import {
   type CreditworthinessInputs,
 } from './creditworthiness';
 import { calcStdPayment } from './mortgage';
+import { calcEmploymentContract } from './salary';
 
 const BASE: CreditworthinessInputs = {
   netIncome: 8000,
@@ -167,4 +169,20 @@ describe('computeCreditworthiness', () => {
     expect(r.otherCommitments).toBe(0);
     expect(Number.isFinite(r.maxLoanAmount)).toBe(true);
   });
+
+  it(
+    'AVERAGE_NATIONAL_WAGE_NET_2026 zgadza się (±2 zł) z przeliczeniem AVERAGE_NATIONAL_WAGE_GROSS_2026 na netto ' +
+      'tą samą metodologią co salary.ts (umowa o pracę, standardowe KUP, pełne PIT-2, bez ulg) — wyłapuje rozjazd ' +
+      'automatycznie, gdyby ktoś zaktualizował jedną stałą bez przeliczenia drugiej',
+    () => {
+      const r = calcEmploymentContract({
+        grossMonthly: AVERAGE_NATIONAL_WAGE_GROSS_2026,
+        kup: 'standard',
+        specialRelief: 'none',
+        reducingShare: 'full',
+        ppk: { mode: 'none' },
+      });
+      expect(Math.abs(r.net - AVERAGE_NATIONAL_WAGE_NET_2026)).toBeLessThanOrEqual(2);
+    }
+  );
 });
