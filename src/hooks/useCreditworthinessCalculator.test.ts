@@ -160,6 +160,18 @@ describe('resolveInitialCreditworthinessInputs', () => {
       expect(resolveInitialCreditworthinessInputs({ years: 999 })).toEqual(DEFAULT_CREDITWORTHINESS_INPUTS);
     }
   );
+
+  it(
+    'regression: also falls back to defaults for the upper-bound fields added in 0be975b/418fc1e ' +
+      '(householdSize, firstPersonCost, existingLoanInstallments) — those commits fixed validateCreditworthinessInputs ' +
+      'itself, but this locks in that the initial-load path (the one a crafted URL/localStorage entry actually ' +
+      'goes through) rejects the same out-of-range values instead of leaking a distorted form state',
+    () => {
+      expect(resolveInitialCreditworthinessInputs({ householdSize: 999 })).toEqual(DEFAULT_CREDITWORTHINESS_INPUTS);
+      expect(resolveInitialCreditworthinessInputs({ firstPersonCost: 999_999_999 })).toEqual(DEFAULT_CREDITWORTHINESS_INPUTS);
+      expect(resolveInitialCreditworthinessInputs({ existingLoanInstallments: 99_999_999 })).toEqual(DEFAULT_CREDITWORTHINESS_INPUTS);
+    }
+  );
 });
 
 describe('saveCreditworthinessInputs / loadStoredCreditworthinessInputs / clearStoredCreditworthinessInputs', () => {
