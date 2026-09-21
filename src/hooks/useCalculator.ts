@@ -320,8 +320,17 @@ export interface ScenarioComparisonRow {
  * innymi scenariuszami na liście — więc mają sens nawet przy porównywaniu
  * kredytów o różnej kwocie czy oprocentowaniu.
  */
+/**
+ * Pomija scenariusze, których inputs nie przechodzą validateInputs — inaczej
+ * niż compareScenarioToCurrent (patrz niżej), ta funkcja tego nie robiła.
+ * parseScenariosJSON sprawdza tylko kształt obiektu (id/name/savedAt/inputs),
+ * nie wartości pól, więc ręcznie zmodyfikowany albo uszkodzony plik importu
+ * mógł przemycić scenariusz z np. inputs={} — bez tego filtra computeCalcState
+ * dostawało undefined zamiast liczb i po cichu produkowało wiersz-śmieć
+ * ("0 miesięcy", NaN-y) w tabeli porównania i eksporcie CSV zamiast go pominąć.
+ */
 export function buildScenarioComparisonRows(scenarios: SavedScenario[]): ScenarioComparisonRow[] {
-  return scenarios.map((s) => {
+  return scenarios.filter((s) => validateInputs(s.inputs) === null).map((s) => {
     const state = computeCalcState(s.inputs);
     const totalInterest = state.rows.length ? state.rows[state.rows.length - 1]!.cumInterest : 0;
     return {

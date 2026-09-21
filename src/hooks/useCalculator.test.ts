@@ -594,6 +594,14 @@ describe('buildScenarioComparisonRows', () => {
   it('returns an empty array for an empty scenario list', () => {
     expect(buildScenarioComparisonRows([])).toEqual([]);
   });
+
+  it('regression: skips a scenario whose saved inputs fail validation instead of feeding garbage (undefined-derived NaNs) into computeCalcState — parseScenariosJSON only checks the shape of an imported scenario, not the field values, so a hand-edited or corrupted import file could carry inputs like {}', () => {
+    const valid = addScenario([], 'OK', { ...DEFAULT_INPUTS })[0]!;
+    const corrupted = { id: 'x', name: 'Uszkodzony', savedAt: Date.now(), inputs: {} as unknown as typeof DEFAULT_INPUTS };
+    const rows = buildScenarioComparisonRows([valid, corrupted]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.name).toBe('OK');
+  });
 });
 
 describe('sortScenarios', () => {
