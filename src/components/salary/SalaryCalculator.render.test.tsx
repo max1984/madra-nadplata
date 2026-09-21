@@ -55,6 +55,25 @@ describe('SalaryCalculator print button (render)', () => {
   });
 });
 
+describe('SalaryCalculator CSV export button (render)', () => {
+  it(
+    'regression: a "Pobierz CSV" button appears only in annual mode, once a result exists — the annual chart ' +
+      'shows net pay per month visually but there was no way to read exact figures or paste them into a ' +
+      'spreadsheet, unlike the mortgage schedule which has had CSV export for a while',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+
+      await user.click(screen.getByRole('button', { name: /oblicz/i }));
+      expect(screen.queryByRole('button', { name: /pobierz csv/i })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('checkbox', { name: /rozliczenie roczne/i }));
+      await user.click(screen.getByRole('button', { name: /oblicz/i }));
+      expect(screen.getByRole('button', { name: /pobierz csv/i })).toBeInTheDocument();
+    }
+  );
+});
+
 describe('SalaryCalculator copy link/summary buttons (render)', () => {
   it('regression: "Kopiuj link" and "Kopiuj podsumowanie" buttons appear once a result exists — the salary calculator previously had neither, unlike the mortgage and creditworthiness calculators', async () => {
     const user = userEvent.setup();

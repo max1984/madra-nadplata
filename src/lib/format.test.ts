@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fmt, fmtC, parseLocaleNumber, fmtMonthYear, fmtSignedC, csvDec, parseISODateLocal } from './format';
+import { fmt, fmtC, parseLocaleNumber, fmtMonthYear, fmtSignedC, csvDec, parseISODateLocal, csvFilename } from './format';
 
 describe('fmt', () => {
   it('clamps negative and non-finite numbers to 0', () => {
@@ -107,4 +107,15 @@ describe('csvDec', () => {
     expect(csvDec(1234.5, 'en')).toBe('1234.50');
     expect(csvDec(999.99, 'en')).not.toContain(',');
   });
+});
+
+describe('csvFilename', () => {
+  it(
+    'regression: shared with every CSV export in the project (mortgage schedule, salary annual schedule) — ' +
+      'extracted from Schedule.tsx so a future export does not duplicate this date-formatting logic',
+    () => {
+      expect(csvFilename('harmonogram', new Date(2026, 8, 21))).toBe('harmonogram-2026-09-21.csv');
+      expect(csvFilename('rozliczenie-roczne', new Date(2026, 0, 5))).toBe('rozliczenie-roczne-2026-01-05.csv');
+    }
+  );
 });

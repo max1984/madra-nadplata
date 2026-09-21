@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
 import type { Lang, TranslationKey } from '../lib/i18n';
 import { totalAppliedOverpay, type ScheduleRow } from '../lib/mortgage';
-import { csvDec } from '../lib/format';
+import { csvDec, csvFilename } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
 import type { CalcState } from '../hooks/useCalculator';
 
@@ -222,12 +222,7 @@ export function buildJumpUrl(currentUrl: string, month: number): string {
   return url.toString();
 }
 
-export function scheduleCsvFilename(base: string, date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${base}-${y}-${m}-${d}.csv`;
-}
+export { csvFilename as scheduleCsvFilename };
 
 function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lang: Lang) {
   const sep = lang === 'en' ? ',' : ';';
@@ -254,7 +249,7 @@ function exportCSV(calcState: CalcState, t: (key: TranslationKey) => string, lan
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = scheduleCsvFilename(t('sch_csv_filename'), new Date());
+  a.download = csvFilename(t('sch_csv_filename'), new Date());
   a.click();
   URL.revokeObjectURL(url);
 }

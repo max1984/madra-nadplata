@@ -7,9 +7,10 @@ import { barSegments } from '../../lib/resultBars';
 import { copyToClipboard } from '../../lib/clipboard';
 import { canUseNativeShare } from '../../lib/share';
 import { isCalculateShortcut } from '../../lib/keyboardShortcuts';
-import type { TranslationKey } from '../../lib/i18n';
+import type { TranslationKey, Lang } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
 import { RYCZALT_RATES } from '../../lib/salary';
+import { csvDec, csvFilename } from '../../lib/format';
 import {
   qualifiesForJointTaxation,
   sortSalaryScenarios,
@@ -149,6 +150,33 @@ export function formatSalarySummaryText(
     .replace('{url}', url);
 }
 
+/**
+ * Rozliczenie roczne (12 miesięcy) nie miało nigdzie tabeli z dokładnymi
+ * kwotami per miesiąc — tylko wykres słupkowy, z którego nie da się odczytać
+ * dokładnej wartości ani wkleić jej do arkusza. Mortgage (Schedule.tsx) ma
+ * eksport CSV od dawna; wynagrodzenia nie miały żadnego odpowiednika mimo,
+ * że to jedyny z trzech kalkulatorów liczący 12 osobnych wierszy na wynik.
+ *
+ * `grossMonthly` istnieje na 3 z 4 wariantów wyniku (employment/mandate/
+ * specific_work) — B2B ma zamiast tego `monthlyRevenue` (przychód, nie
+ * brutto w sensie umowy o pracę). `tax`/`net` są wspólne dla wszystkich 4.
+ */
+export function formatAnnualScheduleCsv(
+  state: Extract<SalaryState, { mode: 'annual' }>,
+  t: (key: TranslationKey) => string,
+  lang: Lang,
+): string {
+  const sep = lang === 'en' ? ',' : ';';
+  const headers = [t('salary_csv_col_month'), t('salary_result_gross'), t('salary_result_tax'), t('salary_result_net')];
+  const rows = state.result.months.map((m, i) => {
+    const gross = 'grossMonthly' in m ? m.grossMonthly : m.monthlyRevenue;
+    return [i + 1, csvDec(gross, lang), csvDec(m.tax, lang), csvDec(m.net, lang)].join(sep);
+  });
+  // BOM na początku — jak w Schedule.tsx exportCSV, żeby Excel na Windows
+  // nie połamał polskich znaków w nagłówkach kolumn.
+  return '﻿' + [headers.join(sep), ...rows].join('\n');
+}
+
 export default function SalaryCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
   scenarios = [], scenarioSaveError = false, scenarioLimitReached = false,
@@ -280,6 +308,18 @@ export default function SalaryCalculator({
 
   const handleShare = () => {
     navigator.share({ title: 'Mądra Nadpłata', url: window.location.href }).catch(() => {});
+  };
+
+  const handleExportCsv = () => {
+    if (!calcState || calcState.mode !== 'annual') return;
+    const csv = formatAnnualScheduleCsv(calcState, t, lang);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = csvFilename(t('salary_csv_filename'), new Date());
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Wykres roczny: destroy+create (jak ExampleSection.tsx) — aktualizuje się
@@ -1064,6 +1104,11 @@ export default function SalaryCalculator({
               <button type="button" className="toolbar-btn" onClick={handleCopySummary}>
                 {copiedSummary ? t('copy_summary_copied') : t('copy_summary')}
               </button>
+              {calcState.mode === 'annual' && (
+                <button type="button" className="toolbar-btn" onClick={handleExportCsv}>
+                  {t('csv_export')}
+                </button>
+              )}
               {canShare && (
                 <button type="button" className="toolbar-btn" onClick={handleShare}>
                   {t('share_native')}

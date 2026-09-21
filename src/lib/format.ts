@@ -69,3 +69,16 @@ export function parseISODateLocal(iso: string): Date {
  */
 export const csvDec = (n: number, lang: Lang = 'pl') =>
   lang === 'en' ? n.toFixed(2) : n.toFixed(2).replace('.', ',');
+
+/**
+ * "<base>-YYYY-MM-DD.csv" — wspólna nazwa pliku dla każdego eksportu CSV w
+ * projekcie (harmonogram nadpłat, roczne rozliczenie wynagrodzeń...), żeby
+ * format daty w nazwie nie rozjechał się między kalkulatorami przy kolejnych
+ * zmianach jednego z nich.
+ */
+export function csvFilename(base: string, date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${base}-${y}-${m}-${d}.csv`;
+}
