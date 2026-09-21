@@ -983,6 +983,12 @@ export default function SalaryCalculator({
                 )}
               </div>
             )}
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+              <button type="button" className="toolbar-btn" onClick={() => window.print()}>
+                {t('salary_print')}
+              </button>
+            </div>
           </div>
         )}
       </div>
