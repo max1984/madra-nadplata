@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { readFileSync } from 'fs'
@@ -11,6 +12,14 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(version),
   },
   base: '/',
+  // environment domyślnie 'node' (jak dotąd — reszta suity go zakłada, np.
+  // vi.stubGlobal('localStorage', ...) w testach hooków). Testy renderujące
+  // komponenty włączają jsdom per-plik przez `// @vitest-environment jsdom`,
+  // zamiast przełączać całą suitę i ryzykować regresję w ~480 istniejących
+  // testach.
+  test: {
+    setupFiles: ['./src/test/setup.ts'],
+  },
   build: {
     rollupOptions: {
       // Druga i trzecia podstrona (kalkulator wynagrodzeń, kalkulator
