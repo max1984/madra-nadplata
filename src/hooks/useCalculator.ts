@@ -795,10 +795,18 @@ export function useCalculator() {
     });
   }, [inputs]);
 
+  // scenario.inputs pochodzi z localStorage — parseScenariosJSON sprawdza
+  // tylko kształt obiektu, nie wartości pól (patrz resolveInitialInputs przy
+  // starcie strony), więc ręcznie zmodyfikowany albo uszkodzony zapisany
+  // scenariusz (np. z importu JSON) mógł nadpisać stan formularza wprost
+  // wartościami typu NaN — applyCalculation poniżej odrzuca takie dane przy
+  // liczeniu (calcError), ale setInputsState je już pokazywał w polach.
+  // resolveInitialInputs daje tę samą walidację co przy pierwszym wczytaniu
+  // strony, z fallbackiem do DEFAULT_INPUTS zamiast śmieci w formularzu.
   const loadScenario = useCallback((id: string) => {
     const scenario = scenarios.find((s) => s.id === id);
     if (!scenario) return;
-    const inp = { ...DEFAULT_INPUTS, ...scenario.inputs };
+    const inp = resolveInitialInputs(scenario.inputs);
     setInputsState(inp);
     applyCalculation(inp);
   }, [scenarios, applyCalculation]);

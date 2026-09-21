@@ -409,6 +409,11 @@ describe('resolveInitialInputs', () => {
     expect(resolveInitialInputs({ loanMonths: 999999 })).toEqual(DEFAULT_INPUTS);
     expect(resolveInitialInputs({ strategy: 'refinance', refiRate: -5 } as Partial<CalcInputs>)).toEqual(DEFAULT_INPUTS);
   });
+
+  it('regression: also guards a saved-scenario load, not just the initial page load — loadScenario() in useCalculator() now feeds scenario.inputs through this same function instead of a raw {...DEFAULT_INPUTS, ...scenario.inputs} merge; parseScenariosJSON only checks the shape of a saved/imported scenario, not its field values, so clicking "Wczytaj" on a corrupted entry (e.g. from a hand-edited import file) used to write NaN-derived garbage straight into the form fields before applyCalculation() had a chance to reject it', () => {
+    const corruptedScenarioInputs = { ...DEFAULT_INPUTS, loanAmount: NaN } as CalcInputs;
+    expect(resolveInitialInputs(corruptedScenarioInputs)).toEqual(DEFAULT_INPUTS);
+  });
 });
 
 describe('willDropOldestScenario', () => {
