@@ -69,9 +69,17 @@ function ContentPL() {
         </a>.
       </p>
       <p>
-        Serwis przechowuje w <code>localStorage</code> przeglądarki wyłącznie Twój wybór
-        dotyczący zgody na reklamy (klucz <code>ad_consent_v1</code>) oraz preferencję
-        językową (<code>lang</code>). Dane te nie są przesyłane na żaden serwer.
+        Serwis przechowuje w <code>localStorage</code> przeglądarki Twój wybór dotyczący
+        zgody na reklamy (klucz <code>ad_consent_v1</code>) oraz preferencję językową
+        (<code>lang</code>). Jeśli korzystasz z kalkulatora nadpłaty kredytu, wynagrodzeń
+        lub zdolności kredytowej i zapiszesz dane formularza albo nazwany scenariusz,
+        zostają one również zapisane lokalnie w Twojej przeglądarce (np. klucze
+        takie jak <code>calc_inputs_v1</code>, <code>calc_scenarios_v1</code>,{' '}
+        <code>salary_inputs_v1</code>, <code>salary_scenarios_v1</code>,{' '}
+        <code>creditworthiness_inputs_v1</code>, <code>creditworthiness_scenarios_v1</code>).
+        Żadne z tych danych nie są przesyłane na żaden serwer — pozostają wyłącznie
+        na Twoim urządzeniu, dopóki ich sam nie usuniesz (np. czyszcząc dane strony
+        w ustawieniach przeglądarki).
       </p>
 
       <h2>5. Przekazywanie danych do państw trzecich</h2>
@@ -171,9 +179,15 @@ function ContentEN() {
         </a>.
       </p>
       <p>
-        This site stores only your ad consent choice (<code>ad_consent_v1</code>) and
-        language preference (<code>lang</code>) in the browser's <code>localStorage</code>.
-        This data is never sent to any server.
+        This site stores your ad consent choice (<code>ad_consent_v1</code>) and language
+        preference (<code>lang</code>) in the browser's <code>localStorage</code>. If you
+        use the mortgage overpayment, salary, or credit-capacity calculator and save form
+        data or a named scenario, that is also stored locally in your browser (e.g. keys
+        such as <code>calc_inputs_v1</code>, <code>calc_scenarios_v1</code>,{' '}
+        <code>salary_inputs_v1</code>, <code>salary_scenarios_v1</code>,{' '}
+        <code>creditworthiness_inputs_v1</code>, <code>creditworthiness_scenarios_v1</code>).
+        None of this data is ever sent to any server — it stays on your device until you
+        delete it yourself (e.g. by clearing site data in your browser settings).
       </p>
 
       <h2>5. International data transfers</h2>
