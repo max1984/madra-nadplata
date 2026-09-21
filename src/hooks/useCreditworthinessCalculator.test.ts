@@ -10,6 +10,7 @@ import {
   DEFAULT_CREDITWORTHINESS_INPUTS,
   addCreditworthinessScenario,
   removeCreditworthinessScenario,
+  renameCreditworthinessScenario,
   loadCreditworthinessScenarios,
   persistCreditworthinessScenarios,
   parseCwScenariosJSON,
@@ -264,6 +265,41 @@ describe('addCreditworthinessScenario / removeCreditworthinessScenario', () => {
   it('removeCreditworthinessScenario is a no-op for an unknown id', () => {
     const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
     expect(removeCreditworthinessScenario(list, 'nonexistent')).toEqual(list);
+  });
+});
+
+describe('renameCreditworthinessScenario', () => {
+  it('renames the matching scenario, trimmed', () => {
+    const list = addCreditworthinessScenario([], 'Stary', DEFAULT_CREDITWORTHINESS_INPUTS);
+    const next = renameCreditworthinessScenario(list, list[0]!.id, '  Nowy  ');
+    expect(next[0]!.name).toBe('Nowy');
+  });
+
+  it('ignores an empty/whitespace-only new name, keeping the previous one', () => {
+    const list = addCreditworthinessScenario([], 'Oryginał', DEFAULT_CREDITWORTHINESS_INPUTS);
+    const next = renameCreditworthinessScenario(list, list[0]!.id, '   ');
+    expect(next[0]!.name).toBe('Oryginał');
+  });
+
+  it('is a no-op for an unknown id', () => {
+    const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
+    expect(renameCreditworthinessScenario(list, 'nonexistent', 'X')).toEqual(list);
+  });
+
+  it('clamps a very long new name to MAX_CW_SCENARIO_NAME_LENGTH, matching addCreditworthinessScenario', () => {
+    const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
+    const long = 'y'.repeat(MAX_CW_SCENARIO_NAME_LENGTH + 10);
+    const next = renameCreditworthinessScenario(list, list[0]!.id, long);
+    expect(next[0]!.name).toHaveLength(MAX_CW_SCENARIO_NAME_LENGTH);
+  });
+
+  it('does not affect other scenarios in the list', () => {
+    const list = addCreditworthinessScenario(
+      addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS), 'B', DEFAULT_CREDITWORTHINESS_INPUTS
+    );
+    const next = renameCreditworthinessScenario(list, list[0]!.id, 'Zmieniona');
+    expect(next[0]!.name).toBe('Zmieniona');
+    expect(next[1]!.name).toBe('B');
   });
 });
 

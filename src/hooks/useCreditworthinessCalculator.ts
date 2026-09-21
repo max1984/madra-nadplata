@@ -259,6 +259,15 @@ export function removeCreditworthinessScenario(list: SavedCreditworthinessScenar
   return list.filter((s) => s.id !== id);
 }
 
+/** Pusta/białoznakowa nazwa jest ignorowana (scenariusz zachowuje poprzednią nazwę) — jak renameSalaryScenario w useSalaryCalculator.ts. */
+export function renameCreditworthinessScenario(
+  list: SavedCreditworthinessScenario[], id: string, newName: string
+): SavedCreditworthinessScenario[] {
+  const trimmed = clampCwScenarioName(newName);
+  if (!trimmed) return list;
+  return list.map((s) => (s.id === id ? { ...s, name: trimmed } : s));
+}
+
 /**
  * addCreditworthinessScenario obcina listę do MAX_CW_SCENARIOS, cicho
  * wypychając najstarszy wpis — jak willDropOldestSalaryScenario w
@@ -411,6 +420,15 @@ export function useCreditworthinessCalculator() {
     });
   }, []);
 
+  const renameScenarioById = useCallback((id: string, newName: string) => {
+    setScenarios((prev) => {
+      const next = renameCreditworthinessScenario(prev, id, newName);
+      setScenarioSaveError(!persistCreditworthinessScenarios(next));
+      setScenarioLimitReached(false);
+      return next;
+    });
+  }, []);
+
   /** Zwraca liczbę faktycznie zaimportowanych scenariuszy — do komunikatu w UI, jak w useSalaryCalculator.ts. */
   const importScenarios = useCallback((json: string): number => {
     const imported = parseCwScenariosJSON(json);
@@ -438,6 +456,7 @@ export function useCreditworthinessCalculator() {
     saveCurrentAsScenario,
     loadScenario,
     deleteScenario,
+    renameScenarioById,
     importScenarios,
   };
 }

@@ -10,7 +10,7 @@ function CreditworthinessAppInner() {
   const {
     inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults,
     scenarios, scenarioSaveError, scenarioLimitReached, saveCurrentAsScenario, loadScenario, deleteScenario,
-    importScenarios,
+    renameScenarioById, importScenarios,
   } = useCreditworthinessCalculator();
 
   return (
@@ -30,6 +30,7 @@ function CreditworthinessAppInner() {
         onSaveScenario={saveCurrentAsScenario}
         onLoadScenario={loadScenario}
         onDeleteScenario={deleteScenario}
+        onRenameScenario={renameScenarioById}
         onImportScenarios={importScenarios}
       />
       <CreditworthinessFooter />

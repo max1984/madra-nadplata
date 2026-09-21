@@ -48,6 +48,7 @@ interface Props {
   onSaveScenario?: (name: string) => void;
   onLoadScenario?: (id: string) => void;
   onDeleteScenario?: (id: string) => void;
+  onRenameScenario?: (id: string, newName: string) => void;
   onImportScenarios?: (json: string) => number;
 }
 
@@ -90,13 +91,15 @@ export default function CreditworthinessCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
   scenarios = [], scenarioSaveError = false, scenarioLimitReached = false,
   onSaveScenario = () => {}, onLoadScenario = () => {}, onDeleteScenario = () => {},
-  onImportScenarios = () => 0,
+  onRenameScenario = () => {}, onImportScenarios = () => 0,
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [scenarioName, setScenarioName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
+  const [editingScenarioName, setEditingScenarioName] = useState('');
   const [scenarioSort, setScenarioSort] = useState<CwScenarioSortKey>('date-desc');
   const [scenarioFilter, setScenarioFilter] = useState('');
   const [importMessage, setImportMessage] = useState<string | null>(null);
@@ -112,11 +115,23 @@ export default function CreditworthinessCalculator({
     setScenarioName('');
   };
 
+  const startEditingScenario = (s: SavedCreditworthinessScenario) => {
+    setConfirmDeleteId(null);
+    setEditingScenarioId(s.id);
+    setEditingScenarioName(s.name);
+  };
+
+  const commitScenarioRename = () => {
+    if (editingScenarioId) onRenameScenario(editingScenarioId, editingScenarioName);
+    setEditingScenarioId(null);
+  };
+
   const handleDeleteClick = (id: string) => {
     if (confirmDeleteId === id) {
       onDeleteScenario(id);
       setConfirmDeleteId(null);
     } else {
+      setEditingScenarioId(null);
       setConfirmDeleteId(id);
     }
   };
@@ -437,10 +452,33 @@ export default function CreditworthinessCalculator({
                   <div className="scenario-filter-empty">{t('cw_scenario_filter_no_match')}</div>
                 )}
                 {sortedScenarios.map((s) => {
+                  const isEditing = editingScenarioId === s.id;
                   const isConfirmingDelete = confirmDeleteId === s.id;
                   return (
                     <div className="scenario-row" key={s.id}>
-                      <span className="scenario-row-name">{s.name}</span>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          className="scenario-name-edit-input"
+                          value={editingScenarioName}
+                          autoFocus
+                          maxLength={MAX_CW_SCENARIO_NAME_LENGTH}
+                          onChange={(e) => setEditingScenarioName(e.target.value)}
+                          onBlur={commitScenarioRename}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitScenarioRename();
+                            else if (e.key === 'Escape') setEditingScenarioId(null);
+                          }}
+                        />
+                      ) : (
+                        <span
+                          className="scenario-row-name"
+                          title={t('cw_scenario_rename_hint')}
+                          onClick={() => startEditingScenario(s)}
+                        >
+                          {s.name}
+                        </span>
+                      )}
                       <button type="button" className="scenario-row-btn" onClick={() => onLoadScenario(s.id)}>
                         {t('cw_scenario_load')}
                       </button>
