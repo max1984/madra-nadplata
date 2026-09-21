@@ -284,8 +284,14 @@ function parseNum(sp: URLSearchParams, key: string): number | undefined {
 /**
  * Serializuje tylko `contractType` + pola AKTUALNIE aktywnego typu umowy +
  * `annualMode` — bez `annualMonthlyValues` (12 liczb, zbyt długie na URL,
- * tylko w localStorage) i bez niestandardowych stawek PPK (rzadki przypadek,
- * nieopłacalny do serializacji; link odtworzy PPK jako 'none'/'standard').
+ * tylko w localStorage), bez niestandardowych stawek PPK (rzadki przypadek,
+ * nieopłacalny do serializacji; link odtworzy PPK jako 'none'/'standard') i
+ * BEZ `jointTaxation` (świadomie, nie przeoczenie) — dochód małżonka to
+ * dane finansowe osoby trzeciej, których "Kopiuj link"/URL w pasku
+ * przeglądarki nie powinien cicho wynosić na zewnątrz (historia
+ * przeglądarki, zrzuty ekranu, nagłówek referrer). Link odtworzy wspólne
+ * rozliczenie jako wyłączone — użytkownik musi świadomie zaznaczyć je
+ * ponownie u odbiorcy linku.
  */
 export function buildSalaryUrlParams(inputs: SalaryInputs): string {
   const sp = new URLSearchParams();

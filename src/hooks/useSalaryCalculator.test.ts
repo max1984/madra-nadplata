@@ -318,6 +318,24 @@ describe('buildSalaryUrlParams / parseUrlSalaryInputs — round trip', () => {
   it('a completely empty search string produces a fully empty patch object', () => {
     expect(parseUrlSalaryInputs('')).toEqual({});
   });
+
+  it(
+    'regression: jointTaxation (spouse income, flatRateDeclared) never ends up in the URL — "Kopiuj link" copies ' +
+      'window.location.href verbatim, so a spouse\'s income must not silently leak into a shareable URL/browser ' +
+      'history/referrer header; intentional per the docblock above buildSalaryUrlParams, not an oversight',
+    () => {
+      const inputs: SalaryInputs = {
+        ...DEFAULT_SALARY_INPUTS,
+        jointTaxation: { enabled: true, spouseAnnualTaxableIncome: 123456, flatRateDeclared: true },
+      };
+      const params = buildSalaryUrlParams(inputs);
+      expect(params).not.toMatch(/123456/);
+      expect(params.toLowerCase()).not.toMatch(/joint|spouse|malzon|małżon/);
+
+      const patch = parseUrlSalaryInputs('?' + params);
+      expect(patch.jointTaxation).toBeUndefined();
+    }
+  );
 });
 
 describe('resolveInitialSalaryInputs', () => {
