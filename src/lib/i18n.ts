@@ -57,6 +57,7 @@ export type TranslationKey =
   | 'error_refi_rate' | 'error_refi_months' | 'error_refi_month'
   | 'error_refi_origination_fee' | 'error_refi_flat_fee'
   | 'error_overpay_start'
+  | 'error_total_monthly' | 'error_overpay_amount' | 'error_shorten_amount'
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
   | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_saved_title'
@@ -228,6 +229,9 @@ const pl: Translations = {
   error_refi_origination_fee: 'Prowizja za udzielenie nowego kredytu musi wynosić od 0% do 10%.',
   error_refi_flat_fee: 'Opłata stała za refinansowanie musi mieścić się od 0 do 10 000 000 zł.',
   error_overpay_start: 'Opóźnienie startu nadpłaty musi mieścić się w okresie kredytu.',
+  error_total_monthly: 'Łączna rata miesięczna musi wynosić od 0 do 10 000 000 zł.',
+  error_overpay_amount: 'Kwota nadpłaty musi wynosić od 0 do 10 000 000 zł.',
+  error_shorten_amount: 'Kwota skracająca okres kredytu musi wynosić od 0 do 10 000 000 zł.',
   copy_link: 'Kopiuj link',
   copy_link_copied: '✓ Skopiowano!',
   reset_defaults: '↺ Przywróć domyślne dane',
@@ -486,6 +490,9 @@ const en: Translations = {
   error_refi_origination_fee: 'The new loan origination fee must be between 0% and 10%.',
   error_refi_flat_fee: 'The flat refinancing fee must be between 0 and 10,000,000 PLN.',
   error_overpay_start: 'The overpay start delay must fall within the loan term.',
+  error_total_monthly: 'The total monthly payment must be between 0 and 10,000,000 PLN.',
+  error_overpay_amount: 'The overpay amount must be between 0 and 10,000,000 PLN.',
+  error_shorten_amount: 'The period-shortening amount must be between 0 and 10,000,000 PLN.',
   copy_link: 'Copy link',
   copy_link_copied: '✓ Copied!',
   reset_defaults: '↺ Reset to defaults',

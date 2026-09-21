@@ -444,6 +444,27 @@ export function validateInputs(inp: CalcInputs): TranslationKey | null {
       return 'error_goal_months';
     }
   }
+  // totalMonthlySlider/overpayAmountSlider/shortenAmountSlider mają w UI
+  // dynamiczne granice suwaka (zależne od raty), ale trafiają tu też wprost
+  // z linku (?total=/?overpay=/?shorten=) z pominięciem suwaka — bez tej
+  // walidacji ujemna albo absurdalnie duża wartość z linku po cichu dawała
+  // inny wynik niż to, co URL deklarował (buildSchedule przycina nadpłatę
+  // do salda), zamiast jawnie zgłosić błąd jak każde inne pole formularza.
+  if (inp.strategy === 'reduce_payment' || inp.strategy === 'fixed_total') {
+    if (!isFinite(inp.totalMonthlySlider) || inp.totalMonthlySlider < 0 || inp.totalMonthlySlider > 10_000_000) {
+      return 'error_total_monthly';
+    }
+  }
+  if (inp.strategy === 'fixed_overpay') {
+    if (!isFinite(inp.overpayAmountSlider) || inp.overpayAmountSlider < 0 || inp.overpayAmountSlider > 10_000_000) {
+      return 'error_overpay_amount';
+    }
+  }
+  if (inp.strategy === 'shorten_period') {
+    if (!isFinite(inp.shortenAmountSlider) || inp.shortenAmountSlider < 0 || inp.shortenAmountSlider > 10_000_000) {
+      return 'error_shorten_amount';
+    }
+  }
   // Bez tego link z ?start=999999999 trafiał wprost do computeCalcState, które
   // alokuje tablicę Array(overpayStartMonth) — ogromna, skończona wartość z URL
   // (nieograniczona suwakiem, którego dotyczy tylko UI) zawieszała/crashowała kartę.

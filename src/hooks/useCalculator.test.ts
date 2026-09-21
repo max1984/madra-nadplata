@@ -101,6 +101,28 @@ describe('validateInputs', () => {
     expect(validateInputs({ ...DEFAULT_INPUTS, prepayFee: 5 })).toBeNull();
   });
 
+  it('regression: rejects a negative or absurdly large totalMonthlySlider — a crafted ?total= link bypassed the UI slider entirely and silently got clamped deep inside buildSchedule instead of a clear error', () => {
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'fixed_total', totalMonthlySlider: -1 })).toBe('error_total_monthly');
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'fixed_total', totalMonthlySlider: 10_000_001 })).toBe('error_total_monthly');
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'fixed_total', totalMonthlySlider: 10_000_000 })).toBeNull();
+  });
+
+  it('regression: rejects a negative or absurdly large overpayAmountSlider — same ?overpay= link class of bug as totalMonthlySlider', () => {
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: -1 })).toBe('error_overpay_amount');
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 10_000_001 })).toBe('error_overpay_amount');
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'fixed_overpay', overpayAmountSlider: 10_000_000 })).toBeNull();
+  });
+
+  it('regression: rejects a negative or absurdly large shortenAmountSlider — same ?shorten= link class of bug as totalMonthlySlider', () => {
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'shorten_period', shortenAmountSlider: -1 })).toBe('error_shorten_amount');
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'shorten_period', shortenAmountSlider: 10_000_001 })).toBe('error_shorten_amount');
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'shorten_period', shortenAmountSlider: 10_000_000 })).toBeNull();
+  });
+
+  it('does not validate totalMonthlySlider/overpayAmountSlider/shortenAmountSlider for strategies that ignore them', () => {
+    expect(validateInputs({ ...DEFAULT_INPUTS, strategy: 'custom', totalMonthlySlider: -1, overpayAmountSlider: -1, shortenAmountSlider: -1 })).toBeNull();
+  });
+
   const validRefi = { ...DEFAULT_INPUTS, strategy: 'refinance' as const };
 
   it('accepts refinance inputs within the UI bounds', () => {
