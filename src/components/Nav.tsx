@@ -1,6 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '../contexts/LangContext';
+
+/**
+ * Media query mobilnego menu w index.css to @media(max-width:700px) —
+ * .nav-links.mobile-open dostaje position:fixed/display:flex tylko w jej
+ * obrębie. Poza nią .nav-links.mobile-open nadal pasuje do bazowej reguły
+ * .nav-links{display:flex}, więc otwarte menu przetrwałe z telefonu po
+ * zmianie orientacji/rozszerzeniu okna do szerokości desktopowej renderowało
+ * się jako drugi, zduplikowany rząd linków w normalnym przepływie strony
+ * (i podwajało kolejność Tab), zamiast zniknąć razem z hamburgerem.
+ */
+const MOBILE_NAV_BREAKPOINT_PX = 700;
+export function shouldCloseMobileNav(viewportWidth: number): boolean {
+  return viewportWidth > MOBILE_NAV_BREAKPOINT_PX;
+}
+
 export default function Nav() {
   const { lang, setLang, t } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -16,11 +31,19 @@ export default function Nav() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setMenuOpen(false);
     };
+    // Bez tego menu otwarte na telefonie zostawało "otwarte" w stanie po
+    // zmianie orientacji/rozszerzeniu okna poza breakpoint mobilny (patrz
+    // shouldCloseMobileNav) i renderowało się jako zduplikowany rząd linków.
+    const onResize = () => {
+      if (shouldCloseMobileNav(window.innerWidth)) setMenuOpen(false);
+    };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('resize', onResize);
     return () => {
       document.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', onResize);
     };
   }, [menuOpen]);
 
