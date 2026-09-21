@@ -14,7 +14,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_household_size_label' | 'cw_first_person_cost_label' | 'cw_additional_person_cost_label'
   | 'cw_existing_loan_installments_label' | 'cw_credit_card_limits_label' | 'cw_alimony_label'
   | 'cw_years_label' | 'cw_nominal_rate_label' | 'cw_rate_type_label'
-  | 'cw_rate_type_fixed' | 'cw_rate_type_variable'
+  | 'cw_rate_type_fixed' | 'cw_rate_type_variable' | 'cw_rate_type_buffer_hint'
   | 'cw_calculate_btn' | 'cw_reset_btn'
   | 'cw_result_recognized_income' | 'cw_result_household_cost' | 'cw_result_other_commitments'
   | 'cw_result_disposable_income' | 'cw_result_dsti_threshold' | 'cw_result_max_installment' | 'cw_result_dsti_limit'
@@ -54,6 +54,7 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_rate_type_label: 'Rodzaj oprocentowania',
   cw_rate_type_fixed: 'Okresowo stałe (bufor 2,5 p.p.)',
   cw_rate_type_variable: 'Zmienne (bufor 5 p.p.)',
+  cw_rate_type_buffer_hint: 'Rekomendacja S KNF wymaga minimalnego bufora 2,5 p.p. dla oprocentowania stałego przez cały okres; dla zmiennego bank musi przyjąć poziom "adekwatnie wyższy" bez wskazanej ustawowo liczby — 5 p.p. to przyjęta tu wartość orientacyjna, realne banki stosują własne warianty.',
   cw_calculate_btn: 'Oblicz',
   cw_reset_btn: 'Przywróć domyślne',
   cw_result_recognized_income: 'Uznany dochód',
@@ -124,6 +125,7 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_rate_type_label: 'Interest rate type',
   cw_rate_type_fixed: 'Periodically fixed (2.5 pp buffer)',
   cw_rate_type_variable: 'Variable (5 pp buffer)',
+  cw_rate_type_buffer_hint: 'KNF Recommendation S requires a minimum 2.5 pp buffer for rates fixed for the whole term; for variable rates the bank must use an "appropriately higher" level with no statutory number given — 5 pp here is an adopted reference value, real banks use their own variants.',
   cw_calculate_btn: 'Calculate',
   cw_reset_btn: 'Reset to defaults',
   cw_result_recognized_income: 'Recognized income',

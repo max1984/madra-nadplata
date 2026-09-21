@@ -367,6 +367,7 @@ export default function CreditworthinessCalculator({
               <option value="fixed">{t('cw_rate_type_fixed')}</option>
               <option value="variable">{t('cw_rate_type_variable')}</option>
             </select>
+            <div className="hint">{t('cw_rate_type_buffer_hint')}</div>
           </div>
 
           <div className="form-divider" />
