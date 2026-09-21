@@ -794,10 +794,10 @@ describe('duplicateScenario', () => {
     expect(next[1]!.name).toHaveLength(MAX_SCENARIO_NAME_LENGTH);
   });
 
-  it('falls back to the original name when the given new name is blank', () => {
+  it('falls back to the original name when the given new name is blank, deduplicated against the original itself', () => {
     const list = addScenario([], 'Oryginał', DEFAULT_INPUTS);
     const next = duplicateScenario(list, list[0]!.id, '   ');
-    expect(next[1]!.name).toBe('Oryginał');
+    expect(next[1]!.name).toBe('Oryginał (2)');
   });
 
   it('is a no-op when the id does not match any scenario', () => {

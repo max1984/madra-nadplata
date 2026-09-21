@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../lib/safeStorage';
+import { uniqueScenarioName } from '../lib/scenarioNames';
 import {
   computeCreditworthiness,
   type CreditworthinessInputs,
@@ -257,7 +258,7 @@ export function addCreditworthinessScenario(
 ): SavedCreditworthinessScenario[] {
   const scenario: SavedCreditworthinessScenario = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: clampCwScenarioName(name),
+    name: uniqueScenarioName(list.map((s) => s.name), clampCwScenarioName(name)),
     savedAt: Date.now(),
     inputs,
   };
@@ -275,7 +276,8 @@ export function renameCreditworthinessScenario(
 ): SavedCreditworthinessScenario[] {
   const trimmed = clampCwScenarioName(newName);
   if (!trimmed) return list;
-  return list.map((s) => (s.id === id ? { ...s, name: trimmed } : s));
+  const unique = uniqueScenarioName(list.filter((s) => s.id !== id).map((s) => s.name), trimmed);
+  return list.map((s) => (s.id === id ? { ...s, name: unique } : s));
 }
 
 /**
@@ -327,10 +329,12 @@ export function mergeImportedCwScenarios(
   existing: SavedCreditworthinessScenario[],
   imported: SavedCreditworthinessScenario[]
 ): SavedCreditworthinessScenario[] {
-  const reIded = imported.map((s) => ({
-    ...s,
-    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-  }));
+  const names = existing.map((s) => s.name);
+  const reIded = imported.map((s) => {
+    const name = uniqueScenarioName(names, s.name);
+    names.push(name);
+    return { ...s, id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, name };
+  });
   const next = [...existing, ...reIded];
   if (next.length <= MAX_CW_SCENARIOS) return next;
   const keep = new Set([...next].sort((a, b) => b.savedAt - a.savedAt).slice(0, MAX_CW_SCENARIOS));

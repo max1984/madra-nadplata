@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../lib/safeStorage';
+import { uniqueScenarioName } from '../lib/scenarioNames';
 import {
   calcEmploymentContract,
   calcMandateContract,
@@ -531,10 +532,12 @@ export function mergeImportedSalaryScenarios(
   existing: SavedSalaryScenario[],
   imported: SavedSalaryScenario[]
 ): SavedSalaryScenario[] {
-  const reIded = imported.map((s) => ({
-    ...s,
-    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-  }));
+  const names = existing.map((s) => s.name);
+  const reIded = imported.map((s) => {
+    const name = uniqueScenarioName(names, s.name);
+    names.push(name);
+    return { ...s, id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, name };
+  });
   const next = [...existing, ...reIded];
   if (next.length <= MAX_SALARY_SCENARIOS) return next;
   const keep = new Set([...next].sort((a, b) => b.savedAt - a.savedAt).slice(0, MAX_SALARY_SCENARIOS));
@@ -572,7 +575,7 @@ export function filterSalaryScenariosByName(list: SavedSalaryScenario[], query: 
 export function addSalaryScenario(list: SavedSalaryScenario[], name: string, inputs: SalaryInputs): SavedSalaryScenario[] {
   const scenario: SavedSalaryScenario = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: clampSalaryScenarioName(name),
+    name: uniqueScenarioName(list.map((s) => s.name), clampSalaryScenarioName(name)),
     savedAt: Date.now(),
     inputs,
   };
@@ -588,7 +591,8 @@ export function removeSalaryScenario(list: SavedSalaryScenario[], id: string): S
 export function renameSalaryScenario(list: SavedSalaryScenario[], id: string, newName: string): SavedSalaryScenario[] {
   const trimmed = clampSalaryScenarioName(newName);
   if (!trimmed) return list;
-  return list.map((s) => (s.id === id ? { ...s, name: trimmed } : s));
+  const unique = uniqueScenarioName(list.filter((s) => s.id !== id).map((s) => s.name), trimmed);
+  return list.map((s) => (s.id === id ? { ...s, name: unique } : s));
 }
 
 export function duplicateSalaryScenario(list: SavedSalaryScenario[], id: string, newName: string): SavedSalaryScenario[] {
@@ -596,7 +600,7 @@ export function duplicateSalaryScenario(list: SavedSalaryScenario[], id: string,
   if (!original) return list;
   const copy: SavedSalaryScenario = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: clampSalaryScenarioName(newName) || original.name,
+    name: uniqueScenarioName(list.map((s) => s.name), clampSalaryScenarioName(newName) || original.name),
     savedAt: Date.now(),
     inputs: original.inputs,
   };

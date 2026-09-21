@@ -399,10 +399,10 @@ describe('addSalaryScenario / removeSalaryScenario / renameSalaryScenario / dupl
     expect(next[0]!.name).toBe('Oryginał');
   });
 
-  it('duplicateSalaryScenario falls back to the original name when the given new name is blank', () => {
+  it('duplicateSalaryScenario falls back to the original name when the given new name is blank, deduplicated against the original itself', () => {
     const list = addSalaryScenario([], 'Oryginał', DEFAULT_SALARY_INPUTS);
     const next = duplicateSalaryScenario(list, list[0]!.id, '   ');
-    expect(next[1]!.name).toBe('Oryginał');
+    expect(next[1]!.name).toBe('Oryginał (2)');
   });
 
   it('duplicateSalaryScenario on a non-existent id returns the list unchanged', () => {

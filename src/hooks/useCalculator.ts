@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { parseLocaleNumber } from '../lib/format';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../lib/safeStorage';
+import { uniqueScenarioName } from '../lib/scenarioNames';
 import {
   calcStdPayment,
   buildSchedule,
@@ -285,10 +286,12 @@ export function scenariosToJSON(list: SavedScenario[]): string {
  * własne, nowsze scenariusze zamiast starszych zaimportowanych.
  */
 export function mergeImportedScenarios(existing: SavedScenario[], imported: SavedScenario[]): SavedScenario[] {
-  const reIded = imported.map((s) => ({
-    ...s,
-    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-  }));
+  const names = existing.map((s) => s.name);
+  const reIded = imported.map((s) => {
+    const name = uniqueScenarioName(names, s.name);
+    names.push(name); // kolejne importy w tej samej paczce też muszą się odróżniać między sobą
+    return { ...s, id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, name };
+  });
   const next = [...existing, ...reIded];
   if (next.length <= MAX_SCENARIOS) return next;
   const keep = new Set([...next].sort((a, b) => b.savedAt - a.savedAt).slice(0, MAX_SCENARIOS));
@@ -404,7 +407,7 @@ export function buildScenarioComparisonRows(scenarios: SavedScenario[]): Scenari
 export function addScenario(list: SavedScenario[], name: string, inputs: CalcInputs): SavedScenario[] {
   const scenario: SavedScenario = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: clampScenarioName(name),
+    name: uniqueScenarioName(list.map((s) => s.name), clampScenarioName(name)),
     savedAt: Date.now(),
     inputs,
   };
@@ -424,7 +427,9 @@ export function removeScenario(list: SavedScenario[], id: string): SavedScenario
 export function renameScenario(list: SavedScenario[], id: string, newName: string): SavedScenario[] {
   const trimmed = clampScenarioName(newName);
   if (!trimmed) return list;
-  return list.map((s) => (s.id === id ? { ...s, name: trimmed } : s));
+  const othersNames = list.filter((s) => s.id !== id).map((s) => s.name);
+  const unique = uniqueScenarioName(othersNames, trimmed);
+  return list.map((s) => (s.id === id ? { ...s, name: unique } : s));
 }
 
 /**
@@ -440,7 +445,7 @@ export function duplicateScenario(list: SavedScenario[], id: string, newName: st
   if (!original) return list;
   const copy: SavedScenario = {
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    name: clampScenarioName(newName) || original.name,
+    name: uniqueScenarioName(list.map((s) => s.name), clampScenarioName(newName) || original.name),
     savedAt: Date.now(),
     inputs: original.inputs,
   };
