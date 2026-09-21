@@ -7,6 +7,7 @@ const templates: Record<string, string> = {
   salary_share_summary_text_single: 'Netto: {net} (podatek {tax}). {url}',
   salary_share_summary_text_annual: 'Netto roczne: {totalNet} (podatek {totalTax}). {url}',
   salary_csv_col_month: 'Miesiąc',
+  salary_csv_col_revenue: 'Przychód',
   salary_result_gross: 'Brutto',
   salary_result_tax: 'Podatek',
   salary_result_net: 'Na rękę',
@@ -85,7 +86,7 @@ describe('formatAnnualScheduleCsv', () => {
     }
   );
 
-  it('reads monthlyRevenue instead of grossMonthly for B2B months (B2BResult has no grossMonthly field)', () => {
+  it('reads monthlyRevenue instead of grossMonthly for B2B months (B2BResult has no grossMonthly field), and uses the "Przychód" header instead of "Brutto"', () => {
     const state = {
       mode: 'annual',
       contractType: 'b2b',
@@ -95,7 +96,9 @@ describe('formatAnnualScheduleCsv', () => {
       jointTaxation: null,
     } as unknown as Extract<SalaryState, { mode: 'annual' }>;
     const csv = formatAnnualScheduleCsv(state, t, 'pl');
-    expect(csv.replace(/^﻿/, '').split('\n')[1]).toBe('1;15000,00;1500,00;11000,00');
+    const lines = csv.replace(/^﻿/, '').split('\n');
+    expect(lines[0]).toBe('Miesiąc;Przychód;Podatek;Na rękę');
+    expect(lines[1]).toBe('1;15000,00;1500,00;11000,00');
   });
 
   it('uses comma column separator and dot decimal separator for English locale, matching csvDec/Schedule.tsx conventions', () => {

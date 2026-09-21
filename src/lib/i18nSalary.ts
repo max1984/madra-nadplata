@@ -11,7 +11,7 @@ export type SalaryTranslationKey =
   | 'salary_tab_employment' | 'salary_tab_mandate' | 'salary_tab_specific_work' | 'salary_tab_b2b'
   | 'salary_gross_label' | 'salary_calculate_btn' | 'salary_reset_btn' | 'salary_footer_disclaimer'
   | 'salary_print' | 'salary_share_summary_text_single' | 'salary_share_summary_text_annual'
-  | 'salary_csv_col_month' | 'salary_csv_filename'
+  | 'salary_csv_col_month' | 'salary_csv_filename' | 'salary_csv_col_revenue'
   | 'salary_announcement_single' | 'salary_announcement_annual'
   | 'salary_advanced_toggle' | 'salary_annual_mode_toggle'
   | 'salary_month_1' | 'salary_month_2' | 'salary_month_3' | 'salary_month_4'
@@ -71,6 +71,7 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_share_summary_text_annual: 'Wynagrodzenie roczne na rękę: {totalNet} (podatek łącznie {totalTax}).\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
   salary_csv_col_month: 'Miesiąc',
   salary_csv_filename: 'rozliczenie-roczne',
+  salary_csv_col_revenue: 'Przychód',
   salary_announcement_single: 'Wyliczono wynagrodzenie: na rękę {net}, podatek {tax}.',
   salary_announcement_annual: 'Wyliczono rozliczenie roczne: łącznie na rękę {totalNet}, podatek {totalTax}.',
   salary_footer_disclaimer: 'Strona edukacyjna – nie stanowi porady podatkowej. Wyniki kalkulatora mają charakter poglądowy.<br />Przed podjęciem decyzji skonsultuj się z księgowym lub doradcą podatkowym.',
@@ -195,6 +196,7 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_share_summary_text_annual: 'Annual net salary: {totalNet} (total tax {totalTax}).\nCalculated with Mądra Nadpłata: {url}',
   salary_csv_col_month: 'Month',
   salary_csv_filename: 'annual-settlement',
+  salary_csv_col_revenue: 'Revenue',
   salary_announcement_single: 'Salary calculated: net pay {net}, tax {tax}.',
   salary_announcement_annual: 'Annual settlement calculated: total net pay {totalNet}, tax {totalTax}.',
   salary_footer_disclaimer: 'Educational website — does not constitute tax advice. Calculator results are for illustrative purposes only.<br />Before making a decision, consult an accountant or tax advisor.',

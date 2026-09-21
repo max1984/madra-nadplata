@@ -189,7 +189,11 @@ export function formatAnnualScheduleCsv(
   lang: Lang,
 ): string {
   const sep = lang === 'en' ? ',' : ';';
-  const headers = [t('salary_csv_col_month'), t('salary_result_gross'), t('salary_result_tax'), t('salary_result_net')];
+  // B2B nie ma "brutto" w sensie umowy o pracę — ta kolumna to przychód
+  // (revenue), więc nagłówek CSV odzwierciedla to samo rozróżnienie, co
+  // salary_b2b_revenue_label w formularzu.
+  const grossHeader = state.contractType === 'b2b' ? t('salary_csv_col_revenue') : t('salary_result_gross');
+  const headers = [t('salary_csv_col_month'), grossHeader, t('salary_result_tax'), t('salary_result_net')];
   const rows = state.result.months.map((m, i) => {
     const gross = 'grossMonthly' in m ? m.grossMonthly : m.monthlyRevenue;
     return [i + 1, csvDec(gross, lang), csvDec(m.tax, lang), csvDec(m.net, lang)].join(sep);
