@@ -13,12 +13,14 @@ export default defineConfig({
   base: '/',
   build: {
     rollupOptions: {
-      // Druga podstrona (kalkulator wynagrodzeń) jako osobny entry point —
-      // ta sama domena/hosting (GitHub Pages statycznie uploaduje cały
-      // dist/), ale zupełnie inny React root i inny stan, bez routera.
+      // Druga i trzecia podstrona (kalkulator wynagrodzeń, kalkulator
+      // zdolności kredytowej) jako osobne entry pointy — ta sama domena/
+      // hosting (GitHub Pages statycznie uploaduje cały dist/), ale
+      // zupełnie inny React root i inny stan każda, bez routera.
       input: {
         main: resolve(__dirname, 'index.html'),
         wynagrodzenia: resolve(__dirname, 'wynagrodzenia.html'),
+        creditworthiness: resolve(__dirname, 'zdolnosc-kredytowa.html'),
       },
       output: {
         manualChunks: {
