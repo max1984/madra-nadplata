@@ -210,10 +210,23 @@ export default function SalaryCalculator({
     }
     const labels = MONTH_KEYS.map((k) => t(k));
     const netValues = calcState.result.months.map((m) => m.net);
+    // Miesiące od przekroczenia progu 120 000 zł (32% zamiast 12% na nadwyżce)
+    // dostają inny kolor słupka — spadek netto w tych miesiącach nie jest
+    // przypadkiem, tylko bezpośrednim skutkiem wyższej zaliczki. Miesiąc
+    // przekroczenia limitu 30-krotności ZUS (mniej potrącanych składek od
+    // tego miesiąca) dostaje wyróżnioną ramkę zamiast koloru wypełnienia —
+    // dwa niezależne zdarzenia, które mogą wypaść w różnych miesiącach.
+    const crossedIdx = calcState.result.scaleThresholdCrossedMonth;
+    const zusIdx = calcState.result.zusLimitCrossedMonth;
+    const backgroundColor = netValues.map((_, i) =>
+      crossedIdx !== null && i >= crossedIdx - 1 ? CHART.bracketBar : CHART.overBar
+    );
+    const borderColor = netValues.map((_, i) => (zusIdx !== null && i === zusIdx - 1 ? CHART.zusLimitBorder : 'transparent'));
+    const borderWidth = netValues.map((_, i) => (zusIdx !== null && i === zusIdx - 1 ? 3 : 0));
     chart.current?.destroy();
     chart.current = new Chart(chartRef.current, {
       type: 'bar',
-      data: { labels, datasets: [{ label: t('salary_annual_chart_label'), data: netValues, backgroundColor: CHART.overBar }] },
+      data: { labels, datasets: [{ label: t('salary_annual_chart_label'), data: netValues, backgroundColor, borderColor, borderWidth }] },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -897,6 +910,22 @@ export default function SalaryCalculator({
                 <div style={{ height: 260, marginTop: 16 }}>
                   <canvas ref={chartRef} role="img" aria-label={t('salary_annual_chart_label')} />
                 </div>
+                {(calcState.result.scaleThresholdCrossedMonth !== null || calcState.result.zusLimitCrossedMonth !== null) && (
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, fontSize: '.8rem', color: 'var(--text2)' }}>
+                    {calcState.result.scaleThresholdCrossedMonth !== null && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--warn)', flexShrink: 0 }} />
+                        {t('salary_chart_legend_bracket')}
+                      </div>
+                    )}
+                    {calcState.result.zusLimitCrossedMonth !== null && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 3, border: '2.5px solid var(--accent)', flexShrink: 0 }} />
+                        {t('salary_chart_legend_zus')}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
 

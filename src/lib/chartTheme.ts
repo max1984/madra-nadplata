@@ -15,6 +15,10 @@ export const CHART = {
   /** Kapitał — neutralny, żeby nie konkurował z odsetkami. */
   capitalBase: 'rgba(100,116,139,.28)',
   capitalOver: 'rgba(13,59,102,.55)',
+  /** Miesiące po przekroczeniu progu 120 000 zł (wyższa zaliczka 32%) w wykresie rocznym wynagrodzeń. */
+  bracketBar: 'rgba(180,83,9,.55)',
+  /** Obramowanie miesiąca przekroczenia limitu 30-krotności ZUS w tym samym wykresie. */
+  zusLimitBorder: '#0d3b66',
   /** Elementy opisowe. */
   legend: '#475569',
   ticks: '#64748b',
