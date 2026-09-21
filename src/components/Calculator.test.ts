@@ -186,6 +186,21 @@ describe('buildScenarioComparisonCSV', () => {
     expect(dataLine.startsWith('"Wariant; z nadpłatą"')).toBe(true);
   });
 
+  it.each(['=SUM(A1:A9)', '+1+1', '-1+1', '@SUM(1,2)'])(
+    'regression: neutralizes a scenario name starting with "%s" with a leading apostrophe, so Excel/Sheets does not interpret it as a formula (CSV/formula injection)',
+    (name) => {
+      const csv = buildScenarioComparisonCSV([makeRow({ name })], t, 'pl');
+      const dataLine = csv.slice(1).split('\n')[1]!;
+      expect(dataLine.startsWith(`'${name}`)).toBe(true);
+    },
+  );
+
+  it('does not alter a scenario name that merely contains (not starts with) a formula-trigger character', () => {
+    const csv = buildScenarioComparisonCSV([makeRow({ name: 'Dom przy ul. Słoneczna=12' })], t, 'pl');
+    const dataLine = csv.slice(1).split('\n')[1]!;
+    expect(dataLine.startsWith('Dom przy ul. Słoneczna=12')).toBe(true);
+  });
+
   it('regression: escapes a double quote inside the scenario name instead of producing invalid CSV', () => {
     const csv = buildScenarioComparisonCSV([makeRow({ name: 'Mój "ulubiony"' })], t, 'pl');
     const dataLine = csv.slice(1).split('\n')[1]!;

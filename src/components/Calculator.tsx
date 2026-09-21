@@ -127,12 +127,14 @@ export function buildScenarioComparisonCSV(
   lang: Lang,
 ): string {
   const sep = lang === 'en' ? ',' : ';';
-  // Nazwa scenariusza to wolny tekst użytkownika — w przeciwieństwie do
-  // liczbowych kolumn może zawierać separator, cudzysłów albo nową linię,
-  // więc w razie potrzeby trzeba ją zacytować (standard CSV).
-  const csvField = (value: string) => /["\n]/.test(value) || value.includes(sep)
-    ? `"${value.replace(/"/g, '""')}"`
-    : value;
+  // Nazwa scenariusza to wolny tekst użytkownika, który Excel/Arkusze Google
+  // otwierają wprost jako komórki — nazwa zaczynająca się od =, +, - albo @
+  // jest tam interpretowana jako formuła (CSV/formula injection), więc trzeba
+  // ją zneutralizować wiodącym apostrofem, zanim w ogóle dojdzie do cytowania.
+  const csvField = (value: string) => {
+    const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
+    return /["\n]/.test(safe) || safe.includes(sep) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  };
   const headers = [
     t('scenario_compare_col_name'), t('scenario_compare_col_amount'), t('scenario_compare_col_rate'),
     t('scenario_compare_col_strategy'), t('scenario_compare_col_months'), t('scenario_compare_col_interest'),
