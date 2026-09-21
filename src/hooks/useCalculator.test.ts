@@ -550,6 +550,15 @@ describe('scenariosToJSON / parseScenariosJSON', () => {
     expect(parseScenariosJSON(JSON.stringify({ not: 'an array' }))).toEqual([]);
     expect(parseScenariosJSON(JSON.stringify([{ id: '1' }, 'garbage', null]))).toEqual([]);
   });
+
+  it('regression: drops a scenario whose name is empty or whitespace-only instead of importing an unlabeled row — addScenario/renameScenario already guarantee a non-empty trimmed name for scenarios created in the UI, but an import file is untrusted and a hand-edited "name": "" used to pass the shape check, producing a blank, confusing row in the saved-scenarios list', () => {
+    const valid = { id: '1', name: 'OK', savedAt: Date.now(), inputs: DEFAULT_INPUTS };
+    const blank = { id: '2', name: '', savedAt: Date.now(), inputs: DEFAULT_INPUTS };
+    const whitespace = { id: '3', name: '   ', savedAt: Date.now(), inputs: DEFAULT_INPUTS };
+    const parsed = parseScenariosJSON(JSON.stringify([valid, blank, whitespace]));
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]!.name).toBe('OK');
+  });
 });
 
 describe('mergeImportedScenarios', () => {

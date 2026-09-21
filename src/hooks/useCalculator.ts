@@ -219,10 +219,17 @@ export function parseScenariosJSON(raw: string): SavedScenario[] {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
+    // name musi być niepustym (po trim) stringiem — addScenario/renameScenario
+    // już to gwarantują dla scenariuszy tworzonych w UI (renameScenario odrzuca
+    // pustą nazwę, handleSaveScenario nie wywołuje zapisu bez niej), ale plik
+    // importu to zewnętrzne dane: ręcznie spreparowany "name": "" przechodził
+    // dotąd sprawdzenie kształtu i trafiał na listę jako scenariusz bez etykiety
+    // — niewidoczny, "pusty" wiersz w UI, mylący i trudny do skasowania/kliknięcia.
     return parsed.filter((s): s is SavedScenario =>
       typeof s === 'object' && s !== null &&
       typeof (s as SavedScenario).id === 'string' &&
       typeof (s as SavedScenario).name === 'string' &&
+      (s as SavedScenario).name.trim().length > 0 &&
       typeof (s as SavedScenario).savedAt === 'number' &&
       typeof (s as SavedScenario).inputs === 'object' && (s as SavedScenario).inputs !== null,
     );
