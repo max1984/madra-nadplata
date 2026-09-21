@@ -6,6 +6,7 @@ import AnimatedNumber from '../AnimatedNumber';
 import { barSegments } from '../../lib/resultBars';
 import { copyToClipboard } from '../../lib/clipboard';
 import { canUseNativeShare } from '../../lib/share';
+import { isCalculateShortcut } from '../../lib/keyboardShortcuts';
 import type { TranslationKey } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
 import {
@@ -160,6 +161,23 @@ export default function SalaryCalculator({
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
+
+  // Ctrl/Cmd+Enter przelicza formularz z dowolnego miejsca na stronie — jak
+  // w Calculator.tsx (kalkulator nadpłaty), którego wynagrodzenia/zdolność
+  // kredytowa nie miały wcale. Ref na onCalculate, żeby listener dodany raz
+  // (deps: []) zawsze wołał najświeższe domknięcie, nie to z pierwszego renderu.
+  const onCalculateRef = useRef(onCalculate);
+  useEffect(() => { onCalculateRef.current = onCalculate; }, [onCalculate]);
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isCalculateShortcut(e)) return;
+      e.preventDefault();
+      (document.activeElement as HTMLElement | null)?.blur();
+      setTimeout(() => onCalculateRef.current(), 0);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const [scenarioName, setScenarioName] = useState('');
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);

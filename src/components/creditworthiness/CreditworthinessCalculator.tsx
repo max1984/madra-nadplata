@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
 import { canUseNativeShare } from '../../lib/share';
+import { isCalculateShortcut } from '../../lib/keyboardShortcuts';
 import AnimatedNumber from '../AnimatedNumber';
 import { comparisonBars } from '../../lib/resultBars';
 import type { TranslationKey } from '../../lib/i18n';
@@ -151,6 +152,23 @@ export default function CreditworthinessCalculator({
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
+
+  // Ctrl/Cmd+Enter przelicza formularz z dowolnego miejsca na stronie — jak
+  // w Calculator.tsx (kalkulator nadpłaty). Ref na onCalculate, żeby listener
+  // dodany raz (deps: []) zawsze wołał najświeższe domknięcie.
+  const onCalculateRef = useRef(onCalculate);
+  useEffect(() => { onCalculateRef.current = onCalculate; }, [onCalculate]);
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isCalculateShortcut(e)) return;
+      e.preventDefault();
+      (document.activeElement as HTMLElement | null)?.blur();
+      setTimeout(() => onCalculateRef.current(), 0);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const [scenarioName, setScenarioName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);

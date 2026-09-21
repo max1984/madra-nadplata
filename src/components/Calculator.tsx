@@ -6,6 +6,7 @@ import { useLang } from '../contexts/LangContext';
 import { parseLocaleNumber, fmtMonthYear, csvDec } from '../lib/format';
 import { copyToClipboard } from '../lib/clipboard';
 import { canUseNativeShare } from '../lib/share';
+import { isCalculateShortcut } from '../lib/keyboardShortcuts';
 import AnimatedNumber from './AnimatedNumber';
 import { calcStdPayment, simulatePaymentHoliday, totalAppliedOverpay, refiBreakEvenMonth, halfPrincipalMonth, repaymentMultiple, dailyInterestCost, payoffDate } from '../lib/mortgage';
 import type { CalcInputs, CalcState, RefiData, SavedScenario, Strategy } from '../hooks/useCalculator';
@@ -47,16 +48,8 @@ export function formatCalcAnnouncement(
     .replace('{interest}', fmtC(withInterest));
 }
 
-/**
- * Ctrl/Cmd+Enter jako skrót do "Oblicz" — zwykły Enter w polu formularza
- * już commituje wartość (onBlur), więc podpięcie go pod przeliczenie
- * skasowałoby możliwość przejścia Tab-em między polami bez przeliczania
- * po każdym z osobna. Modyfikator odróżnia "zatwierdź to pole" od
- * "przelicz cały formularz".
- */
-export function isCalculateShortcut(e: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey'>): boolean {
-  return e.key === 'Enter' && (e.ctrlKey || e.metaKey);
-}
+// Przeniesione do ../lib/keyboardShortcuts.ts (wspólne dla wszystkich trzech kalkulatorów) — re-eksport dla zgodności z Calculator.test.ts.
+export { isCalculateShortcut };
 
 /**
  * Czytelne, tekstowe podsumowanie wyniku do wklejenia w wiadomości/czacie —

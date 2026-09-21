@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LangProvider } from '../../contexts/LangContext';
-import { useSalaryCalculator } from '../../hooks/useSalaryCalculator';
+import { useSalaryCalculator, DEFAULT_SALARY_INPUTS } from '../../hooks/useSalaryCalculator';
 import SalaryCalculator from './SalaryCalculator';
 
 afterEach(cleanup);
@@ -63,5 +63,50 @@ describe('SalaryCalculator copy link/summary buttons (render)', () => {
 
     expect(screen.getByRole('button', { name: /kopiuj link/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /kopiuj podsumowanie/i })).toBeInTheDocument();
+  });
+});
+
+describe('SalaryCalculator Ctrl+Enter shortcut (render)', () => {
+  // Minimalny harness z mockiem onCalculate zamiast prawdziwego hooka —
+  // useSalaryCalculator persystuje wynik w localStorage/URL po każdym
+  // przeliczeniu, więc kolejny test montujący prawdziwy hook od razu
+  // widziałby wynik z poprzedniego testu w tym pliku (fałszywy "przycisk
+  // już był"). Mock izoluje test do samego okablowania skrótu klawiszowego.
+  function renderWithMockCalculate(onCalculate: () => void) {
+    return render(
+      <LangProvider>
+        <SalaryCalculator
+          inputs={DEFAULT_SALARY_INPUTS}
+          setInputs={() => {}}
+          calcState={null}
+          calcError={null}
+          onCalculate={onCalculate}
+          onResetToDefaults={() => {}}
+          isStale={false}
+        />
+      </LangProvider>
+    );
+  }
+
+  it('regression: Ctrl+Enter calls onCalculate from anywhere on the page, matching the mortgage calculator — salary previously had no keyboard shortcut at all', async () => {
+    const onCalculate = vi.fn();
+    const user = userEvent.setup();
+    renderWithMockCalculate(onCalculate);
+
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    // Handler woła onCalculate przez setTimeout(…, 0) (patrz komentarz w
+    // SalaryCalculator.tsx), więc wywołanie ląduje w kolejce mikrotask/task
+    // po tym await — waitFor odpytuje zamiast zakładać synchroniczność.
+    await waitFor(() => expect(onCalculate).toHaveBeenCalledTimes(1));
+  });
+
+  it('plain Enter (no modifier) does not trigger onCalculate — that key is already used per-field to commit/blur a single input', async () => {
+    const onCalculate = vi.fn();
+    const user = userEvent.setup();
+    renderWithMockCalculate(onCalculate);
+
+    await user.keyboard('{Enter}');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onCalculate).not.toHaveBeenCalled();
   });
 });

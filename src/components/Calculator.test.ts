@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { overpayPresets, formatCalcAnnouncement, isCalculateShortcut, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape, shouldCancelDeleteConfirmOnEscape } from './Calculator';
+import { overpayPresets, formatCalcAnnouncement, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape, shouldCancelDeleteConfirmOnEscape } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -68,21 +68,6 @@ describe('formatCalcAnnouncement', () => {
 
   it('does not throw for an empty schedule', () => {
     expect(() => formatCalcAnnouncement({ rows: [] }, t, fmt)).not.toThrow();
-  });
-});
-
-describe('isCalculateShortcut', () => {
-  it('is true for Ctrl+Enter and Cmd+Enter (Windows/Linux vs. Mac)', () => {
-    expect(isCalculateShortcut({ key: 'Enter', ctrlKey: true, metaKey: false })).toBe(true);
-    expect(isCalculateShortcut({ key: 'Enter', ctrlKey: false, metaKey: true })).toBe(true);
-  });
-
-  it('regression: plain Enter (no modifier) is not the shortcut — that key is already used per-field to commit/blur a single input, and must keep doing only that', () => {
-    expect(isCalculateShortcut({ key: 'Enter', ctrlKey: false, metaKey: false })).toBe(false);
-  });
-
-  it('is false for Ctrl/Cmd with a different key', () => {
-    expect(isCalculateShortcut({ key: 'a', ctrlKey: true, metaKey: false })).toBe(false);
   });
 });
 

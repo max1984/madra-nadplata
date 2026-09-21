@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LangProvider } from '../../contexts/LangContext';
-import { useCreditworthinessCalculator } from '../../hooks/useCreditworthinessCalculator';
+import { useCreditworthinessCalculator, DEFAULT_CREDITWORTHINESS_INPUTS } from '../../hooks/useCreditworthinessCalculator';
 import CreditworthinessCalculator from './CreditworthinessCalculator';
 
 afterEach(cleanup);
@@ -51,5 +51,44 @@ describe('CreditworthinessCalculator copy link button (render)', () => {
 
     await user.click(screen.getByRole('button', { name: /oblicz/i }));
     expect(screen.getByRole('button', { name: /kopiuj link/i })).toBeInTheDocument();
+  });
+});
+
+describe('CreditworthinessCalculator Ctrl+Enter shortcut (render)', () => {
+  // Mock onCalculate zamiast prawdziwego hooka — izoluje test do samego
+  // okablowania skrótu klawiszowego, jak w SalaryCalculator.render.test.tsx.
+  function renderWithMockCalculate(onCalculate: () => void) {
+    return render(
+      <LangProvider>
+        <CreditworthinessCalculator
+          inputs={DEFAULT_CREDITWORTHINESS_INPUTS}
+          setInputs={() => {}}
+          calcState={null}
+          calcError={null}
+          onCalculate={onCalculate}
+          onResetToDefaults={() => {}}
+          isStale={false}
+        />
+      </LangProvider>
+    );
+  }
+
+  it('regression: Ctrl+Enter calls onCalculate from anywhere on the page, matching the mortgage calculator — creditworthiness previously had no keyboard shortcut at all', async () => {
+    const onCalculate = vi.fn();
+    const user = userEvent.setup();
+    renderWithMockCalculate(onCalculate);
+
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    await waitFor(() => expect(onCalculate).toHaveBeenCalledTimes(1));
+  });
+
+  it('plain Enter (no modifier) does not trigger onCalculate', async () => {
+    const onCalculate = vi.fn();
+    const user = userEvent.setup();
+    renderWithMockCalculate(onCalculate);
+
+    await user.keyboard('{Enter}');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(onCalculate).not.toHaveBeenCalled();
   });
 });
