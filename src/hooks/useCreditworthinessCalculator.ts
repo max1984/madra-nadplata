@@ -259,6 +259,16 @@ export function removeCreditworthinessScenario(list: SavedCreditworthinessScenar
   return list.filter((s) => s.id !== id);
 }
 
+/**
+ * addCreditworthinessScenario obcina listę do MAX_CW_SCENARIOS, cicho
+ * wypychając najstarszy wpis — jak willDropOldestSalaryScenario w
+ * useSalaryCalculator.ts, pozwala UI sprawdzić z wyprzedzeniem, czy zapis
+ * coś wypchnie, żeby pokazać ostrzeżenie zamiast ciszy.
+ */
+export function willDropOldestCwScenario(currentCount: number, addingCount: number): boolean {
+  return currentCount + addingCount > MAX_CW_SCENARIOS;
+}
+
 // ------------------------------------------------------------- hook ---
 
 export function useCreditworthinessCalculator() {
@@ -287,6 +297,7 @@ export function useCreditworthinessCalculator() {
   const [calcError, setCalcError] = useState<TranslationKey | null>(null);
   const [scenarios, setScenarios] = useState<SavedCreditworthinessScenario[]>(() => loadCreditworthinessScenarios());
   const [scenarioSaveError, setScenarioSaveError] = useState(false);
+  const [scenarioLimitReached, setScenarioLimitReached] = useState(false);
 
   const isStale =
     calcState !== null && lastCalculatedInputs !== null && JSON.stringify(inputs) !== JSON.stringify(lastCalculatedInputs);
@@ -329,6 +340,7 @@ export function useCreditworthinessCalculator() {
     setScenarios((prev) => {
       const next = addCreditworthinessScenario(prev, name, inputs);
       setScenarioSaveError(!persistCreditworthinessScenarios(next));
+      setScenarioLimitReached(willDropOldestCwScenario(prev.length, 1));
       return next;
     });
   }, [inputs]);
@@ -349,6 +361,7 @@ export function useCreditworthinessCalculator() {
     setScenarios((prev) => {
       const next = removeCreditworthinessScenario(prev, id);
       setScenarioSaveError(!persistCreditworthinessScenarios(next));
+      setScenarioLimitReached(false);
       return next;
     });
   }, []);
@@ -363,6 +376,7 @@ export function useCreditworthinessCalculator() {
     resetToDefaults,
     scenarios,
     scenarioSaveError,
+    scenarioLimitReached,
     saveCurrentAsScenario,
     loadScenario,
     deleteScenario,

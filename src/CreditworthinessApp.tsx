@@ -9,7 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 function CreditworthinessAppInner() {
   const {
     inputs, setInputs, calcState, calcError, calculate, isStale, resetToDefaults,
-    scenarios, scenarioSaveError, saveCurrentAsScenario, loadScenario, deleteScenario,
+    scenarios, scenarioSaveError, scenarioLimitReached, saveCurrentAsScenario, loadScenario, deleteScenario,
   } = useCreditworthinessCalculator();
 
   return (
@@ -25,6 +25,7 @@ function CreditworthinessAppInner() {
         isStale={isStale}
         scenarios={scenarios}
         scenarioSaveError={scenarioSaveError}
+        scenarioLimitReached={scenarioLimitReached}
         onSaveScenario={saveCurrentAsScenario}
         onLoadScenario={loadScenario}
         onDeleteScenario={deleteScenario}

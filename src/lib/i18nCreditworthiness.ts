@@ -22,7 +22,7 @@ export type CreditworthinessTranslationKey =
   | 'cw_copy_summary' | 'cw_share_summary_text' | 'cw_print'
   | 'cw_scenario_name_placeholder' | 'cw_scenario_save' | 'cw_scenario_save_storage_error'
   | 'cw_scenario_saved_title' | 'cw_scenario_load' | 'cw_scenario_delete'
-  | 'cw_scenario_delete_confirm' | 'cw_scenario_delete_cancel'
+  | 'cw_scenario_delete_confirm' | 'cw_scenario_delete_cancel' | 'cw_scenario_limit_reached'
   | 'error_cw_income' | 'error_cw_household_size' | 'error_cw_years' | 'error_cw_nominal_rate'
   | 'error_cw_income_recognition' | 'error_cw_out_of_range_field';
 
@@ -71,6 +71,7 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_delete: 'Usuń',
   cw_scenario_delete_confirm: 'Na pewno?',
   cw_scenario_delete_cancel: 'Anuluj',
+  cw_scenario_limit_reached: 'Limit 10 zapisanych scenariuszy osiągnięty — najstarszy został usunięty, żeby zrobić miejsce na nowy.',
   error_cw_income: 'Podaj poprawną kwotę dochodu netto',
   error_cw_household_size: 'Liczba osób w gospodarstwie musi wynosić co najmniej 1',
   error_cw_years: 'Okres kredytowania musi być między 1 a 40 lat',
@@ -124,6 +125,7 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_scenario_delete: 'Delete',
   cw_scenario_delete_confirm: 'Sure?',
   cw_scenario_delete_cancel: 'Cancel',
+  cw_scenario_limit_reached: 'Reached the 10 saved-scenario limit — the oldest one was removed to make room for this one.',
   error_cw_income: 'Enter a valid net income amount',
   error_cw_household_size: 'Household size must be at least 1',
   error_cw_years: 'Loan term must be between 1 and 40 years',

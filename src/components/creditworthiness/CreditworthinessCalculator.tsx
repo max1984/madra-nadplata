@@ -3,7 +3,12 @@ import { useLang } from '../../contexts/LangContext';
 import { copyToClipboard } from '../../lib/clipboard';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
-import { MAX_CW_SCENARIO_NAME_LENGTH, type SavedCreditworthinessScenario } from '../../hooks/useCreditworthinessCalculator';
+import { MAX_CW_SCENARIOS, MAX_CW_SCENARIO_NAME_LENGTH, type SavedCreditworthinessScenario } from '../../hooks/useCreditworthinessCalculator';
+
+/** Jak formatSalaryScenarioCount w SalaryCalculator.tsx. */
+function formatCwScenarioCount(count: number): string {
+  return `${count}/${MAX_CW_SCENARIOS}`;
+}
 
 /**
  * Jak formatResultsSummaryText w Calculator.tsx — czysty tekst wyniku do
@@ -36,6 +41,7 @@ interface Props {
   /** Zapisywanie scenariuszy — opcjonalne z bezpiecznymi domyślnymi, jak w SalaryCalculator.tsx. */
   scenarios?: SavedCreditworthinessScenario[];
   scenarioSaveError?: boolean;
+  scenarioLimitReached?: boolean;
   onSaveScenario?: (name: string) => void;
   onLoadScenario?: (id: string) => void;
   onDeleteScenario?: (id: string) => void;
@@ -78,7 +84,7 @@ export function buildMortgageLinkHref(maxLoanAmount: number): string {
 
 export default function CreditworthinessCalculator({
   inputs, setInputs, calcState, calcError, onCalculate, onResetToDefaults, isStale,
-  scenarios = [], scenarioSaveError = false,
+  scenarios = [], scenarioSaveError = false, scenarioLimitReached = false,
   onSaveScenario = () => {}, onLoadScenario = () => {}, onDeleteScenario = () => {},
 }: Props) {
   const { t, fmt, fmtC } = useLang();
@@ -331,11 +337,19 @@ export default function CreditworthinessCalculator({
                   {t('cw_scenario_save_storage_error')}
                 </div>
               )}
+              {!scenarioSaveError && scenarioLimitReached && (
+                <div className="scenario-limit-notice" role="status" style={{ color: 'var(--text3)', fontSize: '.85rem', marginTop: '6px' }}>
+                  {t('cw_scenario_limit_reached')}
+                </div>
+              )}
             </div>
             {scenarios.length > 0 && (
               <div className="scenario-list">
                 <div className="scenario-list-header">
-                  <div className="scenario-list-title">{t('cw_scenario_saved_title')}</div>
+                  <div className="scenario-list-title">
+                    {t('cw_scenario_saved_title')}
+                    <span className="scenario-count"> ({formatCwScenarioCount(scenarios.length)})</span>
+                  </div>
                 </div>
                 {scenarios.map((s) => {
                   const isConfirmingDelete = confirmDeleteId === s.id;

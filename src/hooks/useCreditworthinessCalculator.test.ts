@@ -13,6 +13,7 @@ import {
   loadCreditworthinessScenarios,
   persistCreditworthinessScenarios,
   parseCwScenariosJSON,
+  willDropOldestCwScenario,
   MAX_CW_SCENARIOS,
   MAX_CW_SCENARIO_NAME_LENGTH,
 } from './useCreditworthinessCalculator';
@@ -260,6 +261,24 @@ describe('addCreditworthinessScenario / removeCreditworthinessScenario', () => {
     const list = addCreditworthinessScenario([], 'A', DEFAULT_CREDITWORTHINESS_INPUTS);
     expect(removeCreditworthinessScenario(list, 'nonexistent')).toEqual(list);
   });
+});
+
+describe('willDropOldestCwScenario', () => {
+  it('returns false while the list still has room for the new entries', () => {
+    expect(willDropOldestCwScenario(0, 1)).toBe(false);
+    expect(willDropOldestCwScenario(MAX_CW_SCENARIOS - 1, 1)).toBe(false);
+  });
+
+  it(
+    'regression: returns true right at the MAX_CW_SCENARIOS boundary — addCreditworthinessScenario ' +
+      'silently drops the oldest entry once the list would exceed the cap, so a save that hits it used ' +
+      'to look identical in the UI to any other successful save, even though an older saved scenario ' +
+      'vanished with no warning',
+    () => {
+      expect(willDropOldestCwScenario(MAX_CW_SCENARIOS, 1)).toBe(true);
+      expect(willDropOldestCwScenario(MAX_CW_SCENARIOS - 1, 2)).toBe(true);
+    }
+  );
 });
 
 describe('parseCwScenariosJSON', () => {
