@@ -43,7 +43,13 @@ function isFiniteNonNegative(n: number): boolean {
  */
 export function validateCreditworthinessInputs(inputs: CreditworthinessInputs): TranslationKey | null {
   if (!isFiniteNonNegative(inputs.netIncome) || inputs.netIncome <= 0) return 'error_cw_income';
-  if (!Number.isFinite(inputs.householdSize) || inputs.householdSize < 1) return 'error_cw_household_size';
+  // Górna granica 20 zgodna z suwakiem w CreditworthinessCalculator.tsx — bez
+  // niej ręcznie spreparowany link (?household=999) przechodził walidację i
+  // dawał myląco zerowy wynik (koszty utrzymania astronomicznie wysokie),
+  // zamiast czytelnego błędu jak każde inne pole poza zakresem UI.
+  if (!Number.isFinite(inputs.householdSize) || inputs.householdSize < 1 || inputs.householdSize > 20) {
+    return 'error_cw_household_size';
+  }
   if (!Number.isFinite(inputs.years) || inputs.years < 1 || inputs.years > 40) return 'error_cw_years';
   if (!Number.isFinite(inputs.nominalRatePercent) || inputs.nominalRatePercent < 0 || inputs.nominalRatePercent > 30) {
     return 'error_cw_nominal_rate';

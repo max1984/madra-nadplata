@@ -32,6 +32,17 @@ describe('validateCreditworthinessInputs', () => {
     expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, householdSize: 0 })).toBe('error_cw_household_size');
   });
 
+  it(
+    'regression: rejects a householdSize above 20 instead of silently accepting it — the form field ' +
+      'clamps to 1-20 (CreditworthinessCalculator.tsx), but a hand-crafted URL/localStorage value like ' +
+      '?household=999 used to pass validation and produce a misleadingly-zero result (astronomical ' +
+      'household cost swallowing all income) instead of a clear error',
+    () => {
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, householdSize: 21 })).toBe('error_cw_household_size');
+      expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, householdSize: 20 })).toBeNull();
+    }
+  );
+
   it('rejects years outside 1-40', () => {
     expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, years: 0 })).toBe('error_cw_years');
     expect(validateCreditworthinessInputs({ ...DEFAULT_CREDITWORTHINESS_INPUTS, years: 41 })).toBe('error_cw_years');
