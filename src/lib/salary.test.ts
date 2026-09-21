@@ -5,6 +5,7 @@ import {
   calcSpecificWorkContract,
   calcB2BContract,
   computeAnnualSalarySchedule,
+  computeJointTaxation,
   grossFromHourlyRate,
   grossFromDailyRate,
   taxReducingAmount,
@@ -12,6 +13,7 @@ import {
   TAX_SCALE_THRESHOLD,
   ZUS_ANNUAL_BASE_LIMIT,
   RYCZALT_TIER_1_LIMIT,
+  ANNUAL_COPYRIGHT_KUP_LIMIT,
   type EmploymentInputs,
   type MandateInputs,
   type B2BInputs,
@@ -118,7 +120,7 @@ describe('calcEmploymentContract', () => {
       '(282 600 zł) when prior annual income already used most of it — ZUS_ANNUAL_BASE_LIMIT is the exact ' +
       'boundary, so a gross above the remaining room must not push the base past it',
     () => {
-      const ctx = { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: ZUS_ANNUAL_BASE_LIMIT - 1000, priorFlatRevenue: 0 };
+      const ctx = { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: ZUS_ANNUAL_BASE_LIMIT - 1000, priorFlatRevenue: 0, priorCopyrightCostsUsed: 0 };
       const r = calcEmploymentContract(employmentDefaults, ctx);
       expect(r.pensionBaseThisMonth).toBe(1000);
       // Powyżej limitu nie potrąca się już emerytalnej/rentowej (tylko chorobowa i zdrowotna liczą się od pełnego brutto).
@@ -180,11 +182,11 @@ describe('calcSpecificWorkContract', () => {
   it('the 120 000 zł scale threshold still applies via prior annual context (dzieło is not relief-exempt but is still taxed on the scale)', () => {
     const belowThreshold = calcSpecificWorkContract(
       { grossMonthly: 4000, kup: 'standard', reducingShare: 'none' },
-      { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0 }
+      { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0, priorCopyrightCostsUsed: 0 }
     );
     const acrossThreshold = calcSpecificWorkContract(
       { grossMonthly: 4000, kup: 'standard', reducingShare: 'none' },
-      { priorTaxableIncome: TAX_SCALE_THRESHOLD - 1000, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0 }
+      { priorTaxableIncome: TAX_SCALE_THRESHOLD - 1000, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0, priorCopyrightCostsUsed: 0 }
     );
     // Ten sam brutto, ale druga część nadwyżki jest opodatkowana 32% zamiast 12% — wyższy podatek.
     expect(acrossThreshold.tax).toBeGreaterThan(belowThreshold.tax);
@@ -239,11 +241,11 @@ describe('calcB2BContract', () => {
     () => {
       const belowTier = calcB2BContract(
         { ...b2bDefaults, taxForm: 'ryczalt', monthlyRevenue: 5000 },
-        { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0 }
+        { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0, priorCopyrightCostsUsed: 0 }
       );
       const crossingTier = calcB2BContract(
         { ...b2bDefaults, taxForm: 'ryczalt', monthlyRevenue: 5000 },
-        { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: RYCZALT_TIER_1_LIMIT - 1000 }
+        { priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: RYCZALT_TIER_1_LIMIT - 1000, priorCopyrightCostsUsed: 0 }
       );
       expect(crossingTier.healthInsurance).toBeGreaterThan(belowTier.healthInsurance);
     }
@@ -357,5 +359,81 @@ describe('computeAnnualSalarySchedule', () => {
     });
     const manualSum = Math.round(result.months.reduce((s, m) => s + m.net, 0) * 100) / 100;
     expect(result.totalNet).toBeCloseTo(manualSum, 2);
+  });
+});
+
+describe('calcEmploymentContract — copyright costs (50% koszty autorskie)', () => {
+  it('50% share on half the salary adds copyright KUP on top of the standard KUP, lowering tax vs no copyright share', () => {
+    const none = calcEmploymentContract({ ...employmentDefaults, copyrightSharePercent: 0 });
+    const half = calcEmploymentContract({ ...employmentDefaults, copyrightSharePercent: 50 });
+    // 50% udziału z 8000 zł brutto = 4000 zł objęte prawami, 50% z tego = 2000 zł kosztów autorskich.
+    expect(half.copyrightKup).toBeCloseTo(0.5 * 8000 * 0.5, 2);
+    expect(none.copyrightKup).toBe(0);
+    expect(half.tax).toBeLessThan(none.tax);
+    expect(half.net).toBeGreaterThan(none.net);
+  });
+
+  it(
+    'regression: caps copyright KUP at the remaining room under the annual 60 000 zł limit — a full ' +
+      '100% copyright share on a high salary must not exceed the room left after most of the annual ' +
+      'limit was already used earlier in the year',
+    () => {
+      const ctx = {
+        priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0,
+        priorCopyrightCostsUsed: ANNUAL_COPYRIGHT_KUP_LIMIT - 1000,
+      };
+      const r = calcEmploymentContract({ ...employmentDefaults, copyrightSharePercent: 100 }, ctx);
+      // Bez limitu 50% z 8000 = 4000 zł kosztów — ale w tym roku pozostało tylko 1000 zł miejsca.
+      expect(r.copyrightKup).toBe(1000);
+    }
+  );
+
+  it('zero or unset copyrightSharePercent yields zero copyright KUP, matching the pre-existing behaviour', () => {
+    const unset = calcEmploymentContract(employmentDefaults);
+    const explicitZero = calcEmploymentContract({ ...employmentDefaults, copyrightSharePercent: 0 });
+    expect(unset.copyrightKup).toBe(0);
+    expect(explicitZero.copyrightKup).toBe(0);
+    expect(unset.net).toBeCloseTo(explicitZero.net, 2);
+  });
+});
+
+describe('calcEmploymentContract — premia (bonusMonthly)', () => {
+  it('splits grossMonthly into baseGross + bonusGross, summing back to the same total', () => {
+    const r = calcEmploymentContract({ ...employmentDefaults, grossMonthly: 6000, bonusMonthly: 2000 });
+    expect(r.baseGross).toBe(6000);
+    expect(r.bonusGross).toBe(2000);
+    expect(r.grossMonthly).toBe(8000);
+  });
+
+  it('a bonus produces the exact same result as an equivalent plain increase in gross (same total taxed/contributed identically)', () => {
+    const withBonus = calcEmploymentContract({ ...employmentDefaults, grossMonthly: 6000, bonusMonthly: 2000 });
+    const plainGross = calcEmploymentContract({ ...employmentDefaults, grossMonthly: 8000 });
+    expect(withBonus.net).toBeCloseTo(plainGross.net, 2);
+    expect(withBonus.tax).toBeCloseTo(plainGross.tax, 2);
+    expect(withBonus.employeeSocialTotal).toBeCloseTo(plainGross.employeeSocialTotal, 2);
+  });
+});
+
+describe('computeJointTaxation', () => {
+  it('yields a positive tax saving when incomes are very unequal (one spouse earns much more)', () => {
+    const r = computeJointTaxation(200_000, 0, 3600);
+    expect(r.taxSavingsVsSeparate).toBeGreaterThan(0);
+  });
+
+  it('yields (near) zero saving when both spouses earn the same amount', () => {
+    const r = computeJointTaxation(100_000, 100_000, 3600);
+    expect(r.taxSavingsVsSeparate).toBeCloseTo(0, 0);
+  });
+
+  it('handles a spouse with zero income (joint tax still computed from the combined total)', () => {
+    const r = computeJointTaxation(150_000, 0, 3600);
+    expect(r.jointTax).toBeGreaterThan(0);
+    expect(r.spouseShareTax).toBeGreaterThanOrEqual(0);
+    expect(r.taxSavingsVsSeparate).toBeGreaterThan(0);
+  });
+
+  it('sanity check: ownShareTax + spouseShareTax equals jointTax (proportional split of the combined bill)', () => {
+    const r = computeJointTaxation(180_000, 60_000, 3600);
+    expect(r.ownShareTax + r.spouseShareTax).toBeCloseTo(r.jointTax, 2);
   });
 });

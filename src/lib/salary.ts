@@ -85,6 +85,7 @@ export interface AnnualContext {
   priorReliefUsed: number; // przychód objęty ulgą specjalną, narastająco — limit 85 528 zł
   priorPensionBase: number; // podstawa emerytalno-rentowa, narastająco — limit 30-krotności 282 600 zł
   priorFlatRevenue: number; // przychód (B2B ryczałt), narastająco — progi zdrowotnej 60k/300k
+  priorCopyrightCostsUsed: number; // 50% koszty autorskie (umowa o pracę), narastająco — roczny limit 60 000 zł
 }
 
 export const EMPTY_ANNUAL_CONTEXT: AnnualContext = {
@@ -92,7 +93,14 @@ export const EMPTY_ANNUAL_CONTEXT: AnnualContext = {
   priorReliefUsed: 0,
   priorPensionBase: 0,
   priorFlatRevenue: 0,
+  priorCopyrightCostsUsed: 0,
 };
+
+// Roczny limit 50%-owych kosztów autorskich = II próg skali × 50% (art. 22
+// ust. 9a ustawy o PIT) — nadwyżka ponad ten limit nie dostaje już żadnego
+// KUP autorskiego (nie spada do 20%, spada do 0 — standardowy KUP 250/300 zł
+// nalezy się niezależnie i osobno, patrz `calcEmploymentContract`).
+export const ANNUAL_COPYRIGHT_KUP_LIMIT = TAX_SCALE_THRESHOLD * 0.5; // 60 000
 
 export type SalaryContractType = 'employment' | 'mandate' | 'specific_work' | 'b2b';
 
@@ -190,15 +198,35 @@ function pensionDisabilityBase(fullBase: number, priorPensionBase: number): numb
 // ------------------------------------------------------- umowa o pracę ---
 
 export interface EmploymentInputs {
+  /** Podstawa (bez premii) — patrz `bonusMonthly`. */
   grossMonthly: number;
+  /**
+   * Premia brutto doliczana do `grossMonthly` przed wszystkimi obliczeniami —
+   * to nie jest osobny tytuł prawny, tylko dodatkowy składnik tego samego
+   * wynagrodzenia, opodatkowany/składkowany identycznie. Służy wyłącznie
+   * czytelnemu rozbiciu "podstawa + premia" w wyniku (`baseGross`/`bonusGross`)
+   * dla trybu jednomiesięcznego. W rozliczeniu rocznym (`computeAnnualSalarySchedule`)
+   * powinno zawsze zostać 0/undefined — tam premię w konkretnym miesiącu
+   * wpisuje się wprost jako wyższą wartość w `monthlyGrossValues[i]`, nie tutaj.
+   */
+  bonusMonthly?: number;
   kup: KupOption;
+  /**
+   * % wynagrodzenia (0-100) objęte przeniesieniem praw autorskich — dodatkowe
+   * 50% KUP naliczane RÓWNOLEGLE ze standardowym `kup` (250/300 zł), nie
+   * zamiast niego, do rocznego limitu `ANNUAL_COPYRIGHT_KUP_LIMIT` (60 000 zł).
+   */
+  copyrightSharePercent?: number;
   specialRelief: SpecialRelief;
   reducingShare: TaxReducingShare;
   ppk: PpkOption;
 }
 
 export interface EmploymentResult {
+  /** Suma `baseGross + bonusGross` — pełne wynagrodzenie brutto tego miesiąca. */
   grossMonthly: number;
+  baseGross: number;
+  bonusGross: number;
   pensionBaseThisMonth: number;
   employeePension: number;
   employeeDisability: number;
@@ -206,6 +234,7 @@ export interface EmploymentResult {
   employeeSocialTotal: number;
   healthInsurance: number;
   kup: number;
+  copyrightKup: number;
   reliefExempt: number;
   taxableIncomeThisMonth: number;
   tax: number;
@@ -224,7 +253,9 @@ export function calcEmploymentContract(
   inputs: EmploymentInputs,
   ctx: AnnualContext = EMPTY_ANNUAL_CONTEXT
 ): EmploymentResult {
-  const gross = nonNegative(inputs.grossMonthly);
+  const baseGross = nonNegative(inputs.grossMonthly);
+  const bonusGross = nonNegative(inputs.bonusMonthly ?? 0);
+  const gross = baseGross + bonusGross;
   const pensionBaseThisMonth = pensionDisabilityBase(gross, ctx.priorPensionBase);
 
   const employeePension = round2(pensionBaseThisMonth * EMPLOYEE_PENSION_RATE);
@@ -236,7 +267,17 @@ export function calcEmploymentContract(
   const healthInsurance = round2(healthBase * HEALTH_INSURANCE_RATE_EMPLOYEE);
 
   const kup = kupAmount(inputs.kup);
-  const incomeForTax = Math.max(0, gross - employeeSocialTotal - kup);
+
+  // 50% koszty autorskie: liczone od części wynagrodzenia objętej prawami
+  // (`copyrightSharePercent`), DODATKOWO do standardowego `kup` — nie w jego
+  // miejsce — do wyczerpania rocznego limitu 60 000 zł. Nadwyżka ponad limit
+  // dostaje 0 zł kosztów autorskich (nie spada do 20%).
+  const copyrightShare = clamp(inputs.copyrightSharePercent ?? 0, 0, 100) / 100;
+  const fullCopyrightKup = round2(0.5 * gross * copyrightShare);
+  const remainingCopyrightLimit = Math.max(0, ANNUAL_COPYRIGHT_KUP_LIMIT - ctx.priorCopyrightCostsUsed);
+  const copyrightKup = round2(Math.min(fullCopyrightKup, remainingCopyrightLimit));
+
+  const incomeForTax = Math.max(0, gross - employeeSocialTotal - kup - copyrightKup);
   const reducingAmount = taxReducingAmount(inputs.reducingShare);
   const { tax, reliefUsedThisMonth, taxableIncomeThisMonth } = applyIncomeTax(incomeForTax, {
     specialRelief: inputs.specialRelief,
@@ -266,6 +307,8 @@ export function calcEmploymentContract(
 
   return {
     grossMonthly: gross,
+    baseGross,
+    bonusGross,
     pensionBaseThisMonth,
     employeePension,
     employeeDisability,
@@ -273,6 +316,7 @@ export function calcEmploymentContract(
     employeeSocialTotal,
     healthInsurance,
     kup,
+    copyrightKup,
     reliefExempt: round2(reliefUsedThisMonth),
     taxableIncomeThisMonth: round2(taxableIncomeThisMonth),
     tax,
@@ -591,6 +635,7 @@ export function computeAnnualSalarySchedule(
     let taxableIncomeThisMonth = 0;
     let reliefUsedThisMonth = 0;
     let pensionBaseThisMonth = 0;
+    let copyrightCostsThisMonth = 0;
 
     if (contractType === 'employment') {
       const r = calcEmploymentContract({ ...options, grossMonthly: amount }, ctx);
@@ -598,6 +643,7 @@ export function computeAnnualSalarySchedule(
       taxableIncomeThisMonth = r.taxableIncomeThisMonth;
       reliefUsedThisMonth = r.reliefExempt;
       pensionBaseThisMonth = r.pensionBaseThisMonth;
+      copyrightCostsThisMonth = r.copyrightKup;
     } else if (contractType === 'mandate') {
       const r = calcMandateContract({ ...options, grossMonthly: amount }, ctx);
       result = r;
@@ -624,6 +670,7 @@ export function computeAnnualSalarySchedule(
       priorReliefUsed: ctx.priorReliefUsed + reliefUsedThisMonth,
       priorPensionBase: ctx.priorPensionBase + pensionBaseThisMonth,
       priorFlatRevenue: ctx.priorFlatRevenue + (contractType === 'b2b' ? (amount ?? 0) : 0),
+      priorCopyrightCostsUsed: ctx.priorCopyrightCostsUsed + copyrightCostsThisMonth,
     };
 
     if (scaleThresholdCrossedMonth === null && priorTaxable < TAX_SCALE_THRESHOLD && ctx.priorTaxableIncome >= TAX_SCALE_THRESHOLD) {
@@ -656,4 +703,57 @@ export function computeAnnualSalarySchedule(
     zusLimitCrossedMonth,
     reliefLimitCrossedMonth,
   };
+}
+
+// ------------------------------------------------- wspólne rozliczenie ---
+
+/** Podatek roczny wg skali 12%/32%, bez podziału na miesiące — tylko do `computeJointTaxation`. */
+function annualScaleTax(income: number, reducingAmountAnnual: number): number {
+  const inc = nonNegative(income);
+  const below = Math.min(inc, TAX_SCALE_THRESHOLD);
+  const above = inc - below;
+  const tax = below * TAX_SCALE_RATE_LOW + above * TAX_SCALE_RATE_HIGH;
+  return Math.max(0, round2(tax - reducingAmountAnnual));
+}
+
+export interface JointTaxationResult {
+  jointTax: number;
+  ownShareTax: number;
+  spouseShareTax: number;
+  taxSavingsVsSeparate: number; // dodatnie = wspólne rozliczenie się opłaca
+}
+
+/**
+ * Wspólne rozliczenie małżonków: podatek liczony od POŁOWY sumy dochodów
+ * obojga wg skali, wynik ×2 — klasyczny mechanizm PIT-37 (art. 6 ust. 2
+ * ustawy o PIT). Opłaca się, gdy dochody są nierówne (osoba o wyższym
+ * dochodzie "oddaje" część kwoty zmniejszającej podatek/niższego progu tej
+ * o niższym dochodzie); bez korzyści, gdy dochody są zbliżone.
+ *
+ * DOTYCZY TYLKO dochodów opodatkowanych skalą (umowa o pracę, zlecenie,
+ * dzieło, B2B na skali) — B2B liniowy/ryczałt/IP Box NIE kwalifikuje się do
+ * wspólnego rozliczenia (art. 6 ust. 8 ustawy o PIT wyłącza podatników
+ * rozliczających się inaczej niż na zasadach ogólnych). Ta funkcja tego nie
+ * sprawdza sama — to odpowiedzialność UI/hooka: nie pokazywać/nie pozwalać
+ * włączyć tej opcji dla formy opodatkowania, która się nie kwalifikuje.
+ */
+export function computeJointTaxation(
+  ownAnnualTaxableIncome: number,
+  spouseAnnualTaxableIncome: number,
+  reducingAmountAnnual: number
+): JointTaxationResult {
+  const own = nonNegative(ownAnnualTaxableIncome);
+  const spouse = nonNegative(spouseAnnualTaxableIncome);
+  const combined = own + spouse;
+
+  const jointTax = round2(annualScaleTax(combined / 2, reducingAmountAnnual) * 2);
+  const ownShareTax = combined > 0 ? round2(jointTax * (own / combined)) : 0;
+  const spouseShareTax = round2(jointTax - ownShareTax);
+
+  const separateTax = round2(
+    annualScaleTax(own, reducingAmountAnnual) + annualScaleTax(spouse, reducingAmountAnnual)
+  );
+  const taxSavingsVsSeparate = round2(separateTax - jointTax);
+
+  return { jointTax, ownShareTax, spouseShareTax, taxSavingsVsSeparate };
 }
