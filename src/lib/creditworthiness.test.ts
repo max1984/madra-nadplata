@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeCreditworthiness,
+  solveNetIncomeForLoanAmount,
   AVERAGE_NATIONAL_WAGE_GROSS_2026,
   AVERAGE_NATIONAL_WAGE_NET_2026,
   BUFFER_FIXED_RATE_PP,
@@ -185,4 +186,32 @@ describe('computeCreditworthiness', () => {
       expect(Math.abs(r.net - AVERAGE_NATIONAL_WAGE_NET_2026)).toBeLessThanOrEqual(2);
     }
   );
+});
+
+describe('solveNetIncomeForLoanAmount', () => {
+  const { netIncome: _netIncome, ...otherInputs } = BASE;
+
+  it(
+    'regression: round-trips — the solved netIncome, fed back through computeCreditworthiness, produces ' +
+      'maxLoanAmount within a rounding step (100 zł) of the requested target ("chcę pożyczyć X, ile muszę ' +
+      'zarabiać" was previously not answerable at all, only the forward direction existed)',
+    () => {
+      for (const targetLoan of [200_000, 450_000, 800_000]) {
+        const income = solveNetIncomeForLoanAmount(targetLoan, otherInputs);
+        const loan = computeCreditworthiness({ ...otherInputs, netIncome: income }).maxLoanAmount;
+        expect(Math.abs(loan - targetLoan)).toBeLessThanOrEqual(100);
+      }
+    }
+  );
+
+  it('returns 0 for a target loan amount of 0 or less, without an infinite loop', () => {
+    expect(solveNetIncomeForLoanAmount(0, otherInputs)).toBe(0);
+    expect(solveNetIncomeForLoanAmount(-1000, otherInputs)).toBe(0);
+  });
+
+  it('a higher target loan amount requires a higher solved income (monotonic, no jump-discontinuity glitch at the DSTI 40%/50% threshold)', () => {
+    const lower = solveNetIncomeForLoanAmount(200_000, otherInputs);
+    const higher = solveNetIncomeForLoanAmount(600_000, otherInputs);
+    expect(higher).toBeGreaterThan(lower);
+  });
 });

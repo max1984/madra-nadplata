@@ -201,3 +201,32 @@ export function computeCreditworthiness(inputs: CreditworthinessInputs): Creditw
     maxLoanAmount,
   };
 }
+
+/**
+ * "Chcę pożyczyć X — jaki dochód netto muszę wykazać?" — odwrotność
+ * computeCreditworthiness. Wyszukiwanie binarne, bezpieczne bo
+ * maxLoanAmount(netIncome) jest niemalejące względem netIncome: wyższy
+ * dochód nigdy nie obniża recognizedIncome/disposableIncome/DSTI progu
+ * (próg DSTI SKOKOWO rośnie z 40% na 50% po przekroczeniu przeciętnego
+ * wynagrodzenia — art. AVERAGE_NATIONAL_WAGE_NET_2026 — ale nigdy nie
+ * spada), więc bisekcja zbiega do najmniejszego dochodu dającego
+ * przynajmniej żądaną kwotę, nawet mimo tego nieciągłego skoku.
+ */
+export function solveNetIncomeForLoanAmount(
+  targetLoanAmount: number,
+  otherInputs: Omit<CreditworthinessInputs, 'netIncome'>
+): number {
+  const target = nonNegative(targetLoanAmount);
+  if (target === 0) return 0;
+  const loanForIncome = (income: number) => computeCreditworthiness({ ...otherInputs, netIncome: income }).maxLoanAmount;
+  let lo = 0;
+  let hi = Math.max(target, 1000);
+  for (let guard = 0; loanForIncome(hi) < target && guard < 40; guard++) {
+    hi *= 2;
+  }
+  for (let i = 0; i < 50; i++) {
+    const mid = (lo + hi) / 2;
+    if (loanForIncome(mid) < target) lo = mid; else hi = mid;
+  }
+  return round2(hi);
+}

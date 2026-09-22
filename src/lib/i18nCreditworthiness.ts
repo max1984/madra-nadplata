@@ -9,6 +9,7 @@ import type { Lang } from './i18n';
 export type CreditworthinessTranslationKey =
   | 'cw_nav_back' | 'cw_page_title' | 'cw_page_subtitle' | 'cw_footer_disclaimer'
   | 'cw_income_label' | 'cw_contract_type_label'
+  | 'cw_target_loan_label' | 'cw_target_loan_apply_btn' | 'cw_target_loan_hint'
   | 'cw_contract_employment' | 'cw_contract_b2b' | 'cw_contract_mandate_or_specific_work'
   | 'cw_income_recognition_label' | 'cw_income_recognition_hint'
   | 'cw_household_size_label' | 'cw_first_person_cost_label' | 'cw_additional_person_cost_label'
@@ -37,6 +38,9 @@ const plCw: Record<CreditworthinessTranslationKey, string> = {
   cw_page_subtitle: 'Orientacyjne oszacowanie maksymalnej kwoty kredytu hipotecznego wg metodologii Rekomendacji S KNF (DSTI, bufor ostrożnościowy, koszty utrzymania gospodarstwa domowego).',
   cw_footer_disclaimer: 'Strona edukacyjna – nie stanowi wiążącej decyzji kredytowej banku. Każdy bank stosuje własne normy kosztów utrzymania i interpretację Rekomendacji S.<br />Wyniki mają charakter orientacyjny — przed złożeniem wniosku skonsultuj się z doradcą kredytowym.',
   cw_income_label: 'Dochód netto (miesięcznie)',
+  cw_target_loan_label: 'Chcesz pożyczyć konkretną kwotę? Sprawdź wymagany dochód',
+  cw_target_loan_apply_btn: 'Zastosuj',
+  cw_target_loan_hint: 'Szacowany dochód netto, przy którym maksymalna kwota kredytu osiągnie wpisaną kwotę (przy pozostałych parametrach bez zmian).',
   cw_contract_type_label: 'Typ umowy',
   cw_contract_employment: 'Umowa o pracę',
   cw_contract_b2b: 'B2B',
@@ -109,6 +113,9 @@ const enCw: Record<CreditworthinessTranslationKey, string> = {
   cw_page_subtitle: 'An indicative estimate of the maximum mortgage amount, based on the KNF Recommendation S methodology (DSTI, precautionary buffer, household maintenance costs).',
   cw_footer_disclaimer: "Educational website – not a binding bank lending decision. Every bank applies its own household cost norms and interpretation of Recommendation S.<br />Results are indicative only — consult a mortgage advisor before applying.",
   cw_income_label: 'Net income (monthly)',
+  cw_target_loan_label: 'Want to borrow a specific amount? Check the income you need',
+  cw_target_loan_apply_btn: 'Apply',
+  cw_target_loan_hint: 'Estimated net income at which the maximum loan amount reaches the amount entered (all other settings unchanged).',
   cw_contract_type_label: 'Contract type',
   cw_contract_employment: 'Employment contract',
   cw_contract_b2b: 'B2B',

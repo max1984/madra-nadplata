@@ -86,6 +86,33 @@ describe('CreditworthinessCalculator keyboard shortcut discoverability (render)'
   );
 });
 
+describe('CreditworthinessCalculator target-loan-to-income helper (render)', () => {
+  it(
+    'regression: entering a target loan amount and clicking "Zastosuj" fills the net income field so the ' +
+      'resulting maxLoanAmount reaches the target — solveNetIncomeForLoanAmount existed only as a pure ' +
+      'function with no UI, so "chcę pożyczyć X, ile muszę zarabiać" was previously unanswerable directly',
+    async () => {
+      const user = userEvent.setup();
+      renderCreditworthinessCalculator();
+
+      await user.type(screen.getByRole('spinbutton', { name: /chcesz pożyczyć/i }), '400000');
+      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+
+      const incomeInput = document.getElementById('cw-income') as HTMLInputElement;
+      expect(Number(incomeInput.value)).toBeGreaterThan(0);
+    }
+  );
+
+  it('the "Zastosuj" button stays disabled until a target amount is entered', async () => {
+    const user = userEvent.setup();
+    renderCreditworthinessCalculator();
+
+    expect(screen.getByRole('button', { name: /zastosuj/i })).toBeDisabled();
+    await user.type(screen.getByRole('spinbutton', { name: /chcesz pożyczyć/i }), '400000');
+    expect(screen.getByRole('button', { name: /zastosuj/i })).not.toBeDisabled();
+  });
+});
+
 describe('CreditworthinessCalculator copy link button (render)', () => {
   it('regression: a "Kopiuj link" button appears once a result exists, alongside the existing "Kopiuj wynik" summary button — previously only the summary button existed here', async () => {
     const user = userEvent.setup();

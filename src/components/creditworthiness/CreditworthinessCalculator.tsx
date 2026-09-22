@@ -7,7 +7,7 @@ import AnimatedNumber from '../AnimatedNumber';
 import { comparisonBars } from '../../lib/resultBars';
 import type { TranslationKey } from '../../lib/i18n';
 import type { CreditworthinessContractType, CreditRateType, CreditworthinessInputs, CreditworthinessResult } from '../../lib/creditworthiness';
-import { MAX_LOAN_YEARS } from '../../lib/creditworthiness';
+import { MAX_LOAN_YEARS, solveNetIncomeForLoanAmount } from '../../lib/creditworthiness';
 import {
   MAX_CW_SCENARIOS, MAX_CW_SCENARIO_NAME_LENGTH, sortCwScenarios, filterCwScenariosByName, cwScenariosToJSON,
   type SavedCreditworthinessScenario, type CwScenarioSortKey,
@@ -166,6 +166,11 @@ export default function CreditworthinessCalculator({
 }: Props) {
   const { t, fmt, fmtC } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [targetLoanAmount, setTargetLoanAmount] = useState('');
+  // Wymusza remount pola #cw-income (defaultValue, niekontrolowane, jak inne
+  // pola liczbowe w tym formularzu) po zastosowaniu przeliczenia z docelowej
+  // kwoty kredytu — inaczej widoczna wartość zostałaby stara mimo zmiany stanu.
+  const [incomeFieldVersion, setIncomeFieldVersion] = useState(0);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
@@ -306,6 +311,7 @@ export default function CreditworthinessCalculator({
             <label htmlFor="cw-income">{t('cw_income_label')}</label>
             <div className="input-with-suffix">
               <input
+                key={incomeFieldVersion}
                 id="cw-income"
                 type="number"
                 defaultValue={inputs.netIncome}
@@ -316,6 +322,57 @@ export default function CreditworthinessCalculator({
               <span className="input-suffix">{t('currency')}</span>
             </div>
           </div>
+
+          {(() => {
+            const targetNum = parseFloat(targetLoanAmount);
+            const validTarget = Number.isFinite(targetNum) && targetNum > 0;
+            const computed = validTarget
+              ? solveNetIncomeForLoanAmount(targetNum, {
+                  contractType: inputs.contractType,
+                  incomeRecognitionRate: inputs.incomeRecognitionRate,
+                  householdSize: inputs.householdSize,
+                  firstPersonCost: inputs.firstPersonCost,
+                  additionalPersonCost: inputs.additionalPersonCost,
+                  existingLoanInstallments: inputs.existingLoanInstallments,
+                  creditCardLimits: inputs.creditCardLimits,
+                  alimony: inputs.alimony,
+                  years: inputs.years,
+                  nominalRatePercent: inputs.nominalRatePercent,
+                  rateType: inputs.rateType,
+                })
+              : null;
+            return (
+              <div className="form-group">
+                <label htmlFor="cw-target-loan">{t('cw_target_loan_label')}</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div className="input-with-suffix" style={{ maxWidth: 180 }}>
+                    <input
+                      id="cw-target-loan"
+                      type="number"
+                      min={0}
+                      step={10_000}
+                      value={targetLoanAmount}
+                      onChange={(e) => setTargetLoanAmount(e.target.value)}
+                    />
+                    <span className="input-suffix">{t('currency')}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="toolbar-btn"
+                    disabled={computed === null}
+                    onClick={() => {
+                      if (computed === null) return;
+                      setInputs({ netIncome: computed });
+                      setIncomeFieldVersion((v) => v + 1);
+                    }}
+                  >
+                    {t('cw_target_loan_apply_btn')} {computed !== null ? `(${fmtC(computed)})` : ''}
+                  </button>
+                </div>
+                <div className="hint">{t('cw_target_loan_hint')}</div>
+              </div>
+            );
+          })()}
 
           <div className="form-group" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {CONTRACT_TABS.map((tab) => (
