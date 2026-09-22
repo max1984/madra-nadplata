@@ -23,6 +23,7 @@ export type SalaryTranslationKey =
   | 'salary_annual_summary_title' | 'salary_annual_total_net' | 'salary_annual_total_tax'
   | 'salary_annual_total_social_health' | 'salary_annual_scale_crossed' | 'salary_annual_zus_crossed'
   | 'salary_chart_legend_bracket' | 'salary_chart_legend_zus'
+  | 'salary_annual_ryczalt_health_crossed' | 'salary_chart_legend_ryczalt_health'
   | 'salary_annual_relief_crossed' | 'salary_annual_chart_label'
   | 'salary_kup_standard' | 'salary_kup_elevated'
   | 'salary_mandate_kup_standard' | 'salary_mandate_kup_copyright'
@@ -97,6 +98,8 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_annual_scale_crossed: 'Próg 120 000 zł przekroczony w miesiącu',
   salary_annual_zus_crossed: 'Limit 30-krotności ZUS przekroczony w miesiącu',
   salary_chart_legend_bracket: 'Miesiące w 32% progu podatkowym',
+  salary_annual_ryczalt_health_crossed: 'Wyższy próg składki zdrowotnej (ryczałt) przekroczony w miesiącu',
+  salary_chart_legend_ryczalt_health: 'Miesiące z wyższą składką zdrowotną (próg 60 000/300 000 zł przychodu)',
   salary_chart_legend_zus: 'Miesiąc przekroczenia limitu ZUS (mniej potrąceń)',
   salary_annual_relief_crossed: 'Ulga wyczerpana w miesiącu',
   salary_annual_chart_label: 'Wynagrodzenie netto w kolejnych miesiącach',
@@ -226,6 +229,8 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_annual_scale_crossed: '120,000 zł threshold crossed in month',
   salary_annual_zus_crossed: '30x ZUS limit crossed in month',
   salary_chart_legend_bracket: 'Months in the 32% tax bracket',
+  salary_annual_ryczalt_health_crossed: 'Higher health insurance tier (flat-rate tax) crossed in month',
+  salary_chart_legend_ryczalt_health: 'Months with higher health insurance (60,000/300,000 zł revenue threshold)',
   salary_chart_legend_zus: 'Month the ZUS limit was crossed (fewer deductions)',
   salary_annual_relief_crossed: 'Relief exhausted in month',
   salary_annual_chart_label: 'Net pay across the months',

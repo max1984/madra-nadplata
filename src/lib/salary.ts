@@ -623,6 +623,16 @@ export interface AnnualScheduleResult<TResult> {
   scaleThresholdCrossedMonth: number | null; // 1-12, miesiąc w którym dochód przekroczył 120 000 zł narastająco
   zusLimitCrossedMonth: number | null; // miesiąc przekroczenia limitu 30-krotności
   reliefLimitCrossedMonth: number | null; // miesiąc wyczerpania ulgi specjalnej (85 528 zł)
+  /**
+   * B2B ryczałt: miesiąc, w którym narastający przychód (`priorFlatRevenue`)
+   * przekroczył próg 60 000 zł LUB 300 000 zł (pierwszy z dwóch, który
+   * faktycznie wystąpi w danym roku) — składka zdrowotna skokowo rośnie
+   * (ryczaltHealthInsurance: 498,35 → 830,58 → 1 495,04 zł/mies.), więc
+   * netto spada od tego miesiąca tak samo realnie jak przy wejściu w 32%
+   * próg podatkowy, tylko z innego powodu. `null` dla pozostałych typów
+   * umowy i form B2B innych niż ryczałt (tam ta składka jest stała).
+   */
+  ryczaltHealthTierCrossedMonth: number | null;
 }
 
 /**
@@ -666,6 +676,7 @@ export function computeAnnualSalarySchedule(
   let scaleThresholdCrossedMonth: number | null = null;
   let zusLimitCrossedMonth: number | null = null;
   let reliefLimitCrossedMonth: number | null = null;
+  let ryczaltHealthTierCrossedMonth: number | null = null;
 
   for (let i = 0; i < monthlyGrossValues.length; i++) {
     const amount = monthlyGrossValues[i] ?? 0;
@@ -702,6 +713,7 @@ export function computeAnnualSalarySchedule(
     const priorTaxable = ctx.priorTaxableIncome;
     const priorPension = ctx.priorPensionBase;
     const priorRelief = ctx.priorReliefUsed;
+    const priorFlatRevenue = ctx.priorFlatRevenue;
 
     ctx = {
       priorTaxableIncome: ctx.priorTaxableIncome + taxableIncomeThisMonth,
@@ -719,6 +731,14 @@ export function computeAnnualSalarySchedule(
     }
     if (reliefLimitCrossedMonth === null && priorRelief < YOUNG_RELIEF_LIMIT && ctx.priorReliefUsed >= YOUNG_RELIEF_LIMIT) {
       reliefLimitCrossedMonth = i + 1;
+    }
+    if (
+      ryczaltHealthTierCrossedMonth === null &&
+      contractType === 'b2b' &&
+      options.taxForm === 'ryczalt' &&
+      ryczaltHealthInsurance(ctx.priorFlatRevenue) !== ryczaltHealthInsurance(priorFlatRevenue)
+    ) {
+      ryczaltHealthTierCrossedMonth = i + 1;
     }
   }
 
@@ -740,6 +760,7 @@ export function computeAnnualSalarySchedule(
     scaleThresholdCrossedMonth,
     zusLimitCrossedMonth,
     reliefLimitCrossedMonth,
+    ryczaltHealthTierCrossedMonth,
   };
 }
 

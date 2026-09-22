@@ -384,7 +384,10 @@ describe('computeAnnualSalarySchedule', () => {
   );
 
   it(
-    'regression: B2B ryczałt health insurance tier rises across the year as cumulative revenue crosses 60 000 zł',
+    'regression: B2B ryczałt health insurance tier rises across the year as cumulative revenue crosses 60 000 zł, ' +
+      'and ryczaltHealthTierCrossedMonth records which month it happened in — this was previously untracked, ' +
+      'so the annual chart showed an unexplained net-pay drop for the exact same reason the scale threshold ' +
+      '(120 000 zł) and ZUS limit crossings were already annotated for employment/mandate',
     () => {
       const result = computeAnnualSalarySchedule('b2b', Array(12).fill(8000), {
         monthlyCosts: 0,
@@ -397,8 +400,44 @@ describe('computeAnnualSalarySchedule', () => {
       const firstMonthHealth = (result.months[0] as { healthInsurance: number }).healthInsurance;
       const lastMonthHealth = (result.months[11] as { healthInsurance: number }).healthInsurance;
       expect(lastMonthHealth).toBeGreaterThan(firstMonthHealth);
+      // 8000/miesiąc przekracza 60 000 zł narastająco w 8. miesiącu (8*8000=64000).
+      expect(result.ryczaltHealthTierCrossedMonth).toBe(8);
     }
   );
+
+  it('ryczaltHealthTierCrossedMonth stays null when cumulative revenue never crosses a tier', () => {
+    const result = computeAnnualSalarySchedule('b2b', Array(12).fill(3000), {
+      monthlyCosts: 0,
+      taxForm: 'ryczalt',
+      ryczaltRate: 0.12,
+      ipBoxSharePercent: 0,
+      zusVariant: 'ulga_na_start',
+      sicknessVoluntary: false,
+    });
+    expect(result.ryczaltHealthTierCrossedMonth).toBeNull();
+  });
+
+  it('ryczaltHealthTierCrossedMonth stays null for a B2B tax form other than ryczałt, even at high revenue', () => {
+    const result = computeAnnualSalarySchedule('b2b', Array(12).fill(30000), {
+      monthlyCosts: 0,
+      taxForm: 'liniowy',
+      ryczaltRate: 0.12,
+      ipBoxSharePercent: 0,
+      zusVariant: 'ulga_na_start',
+      sicknessVoluntary: false,
+    });
+    expect(result.ryczaltHealthTierCrossedMonth).toBeNull();
+  });
+
+  it('ryczaltHealthTierCrossedMonth stays null for non-B2B contract types', () => {
+    const result = computeAnnualSalarySchedule('employment', Array(12).fill(30000), {
+      kup: 'standard',
+      specialRelief: 'none',
+      reducingShare: 'full',
+      ppk: { mode: 'none' },
+    });
+    expect(result.ryczaltHealthTierCrossedMonth).toBeNull();
+  });
 
   it('totalNet equals the sum of each month\'s net pay', () => {
     const result = computeAnnualSalarySchedule('mandate', Array(12).fill(4000), {

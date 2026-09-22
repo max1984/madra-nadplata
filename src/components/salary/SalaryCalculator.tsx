@@ -390,16 +390,27 @@ export default function SalaryCalculator({
     // dwa niezależne zdarzenia, które mogą wypaść w różnych miesiącach.
     const crossedIdx = calcState.result.scaleThresholdCrossedMonth;
     const zusIdx = calcState.result.zusLimitCrossedMonth;
+    // B2B ryczałt nie ma progu 120 000 zł (scaleThresholdCrossedMonth jest tu
+    // zawsze null — ryczałt to podatek płaski od przychodu), ale ma własny,
+    // analogiczny skok: składka zdrowotna rośnie skokowo po przekroczeniu
+    // 60 000/300 000 zł przychodu narastająco. Oba pola są wzajemnie
+    // wykluczające się (żaden typ umowy nie ustawia obu naraz), więc dzielą
+    // ten sam wizualny język "od tego miesiąca netto jest niższe z realnego,
+    // wytłumaczalnego powodu" zamiast dodawać osobny, rzadko widziany kolor.
+    const elevatedIdx = crossedIdx ?? calcState.result.ryczaltHealthTierCrossedMonth;
     // Jeśli aktywne jest oświadczenie art. 32 ust. 1a pkt 2 (flatRateDeclared),
     // zaliczka zostaje płaska 12% mimo przekroczenia 120 000 zł — kolorowanie
     // słupków "próg 32%" byłoby wtedy mylące, bo realnie tego progu nie widać
-    // w zaliczce (tylko ewentualnie w rocznym rozliczeniu).
+    // w zaliczce (tylko ewentualnie w rocznym rozliczeniu). Nie dotyczy
+    // ryczaltHealthTierCrossedMonth — to nie jest zaliczka na PIT, więc
+    // deklaracja PIT-2 nic tu nie zmienia.
     const flatRateActive =
+      crossedIdx !== null &&
       inputs.jointTaxation.enabled &&
       inputs.jointTaxation.flatRateDeclared &&
       (inputs.contractType === 'employment' || inputs.contractType === 'mandate');
     const backgroundColor = netValues.map((_, i) =>
-      !flatRateActive && crossedIdx !== null && i >= crossedIdx - 1 ? CHART.bracketBar : CHART.overBar
+      !flatRateActive && elevatedIdx !== null && i >= elevatedIdx - 1 ? CHART.bracketBar : CHART.overBar
     );
     const borderColor = netValues.map((_, i) => (zusIdx !== null && i === zusIdx - 1 ? CHART.zusLimitBorder : 'transparent'));
     const borderWidth = netValues.map((_, i) => (zusIdx !== null && i === zusIdx - 1 ? 3 : 0));
@@ -1174,11 +1185,14 @@ export default function SalaryCalculator({
                   {calcState.result.reliefLimitCrossedMonth !== null && (
                     <div>{t('salary_annual_relief_crossed')}: <strong>{calcState.result.reliefLimitCrossedMonth}</strong></div>
                   )}
+                  {calcState.result.ryczaltHealthTierCrossedMonth !== null && (
+                    <div>{t('salary_annual_ryczalt_health_crossed')}: <strong>{calcState.result.ryczaltHealthTierCrossedMonth}</strong></div>
+                  )}
                 </div>
                 <div style={{ height: 260, marginTop: 16 }}>
                   <canvas ref={chartRef} role="img" aria-label={t('salary_annual_chart_label')} />
                 </div>
-                {(calcState.result.scaleThresholdCrossedMonth !== null || calcState.result.zusLimitCrossedMonth !== null) && (
+                {(calcState.result.scaleThresholdCrossedMonth !== null || calcState.result.zusLimitCrossedMonth !== null || calcState.result.ryczaltHealthTierCrossedMonth !== null) && (
                   <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, fontSize: '.8rem', color: 'var(--text2)' }}>
                     {calcState.result.scaleThresholdCrossedMonth !== null &&
                       !(inputs.jointTaxation.enabled && inputs.jointTaxation.flatRateDeclared &&
@@ -1186,6 +1200,12 @@ export default function SalaryCalculator({
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--warn)', flexShrink: 0 }} />
                         {t('salary_chart_legend_bracket')}
+                      </div>
+                    )}
+                    {calcState.result.ryczaltHealthTierCrossedMonth !== null && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--warn)', flexShrink: 0 }} />
+                        {t('salary_chart_legend_ryczalt_health')}
                       </div>
                     )}
                     {calcState.result.zusLimitCrossedMonth !== null && (
