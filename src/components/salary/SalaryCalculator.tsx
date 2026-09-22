@@ -874,6 +874,9 @@ export default function SalaryCalculator({
                         />
                         <span className="input-suffix">%</span>
                       </div>
+                      {(inputs.employment.copyrightSharePercent ?? 0) > 0 && (
+                        <div className="hint">{t('salary_copyright_annual_limit_hint')}</div>
+                      )}
                     </div>
                   </>
                 )}
@@ -890,6 +893,7 @@ export default function SalaryCalculator({
                         <option value="standard">{t('salary_mandate_kup_standard')}</option>
                         <option value="copyright">{t('salary_mandate_kup_copyright')}</option>
                       </select>
+                      {inputs.mandate.kup === 'copyright' && <div className="hint">{t('salary_copyright_annual_limit_hint')}</div>}
                     </div>
                     <div className="form-group">
                       <label htmlFor="mnd-relief">{t('salary_relief_label')}</label>
@@ -953,6 +957,7 @@ export default function SalaryCalculator({
                         <option value="standard">{t('salary_mandate_kup_standard')}</option>
                         <option value="copyright">{t('salary_mandate_kup_copyright')}</option>
                       </select>
+                      {inputs.specificWork.kup === 'copyright' && <div className="hint">{t('salary_copyright_annual_limit_hint')}</div>}
                     </div>
                     <div className="form-group">
                       <label htmlFor="sw-pit2">{t('salary_pit2_label')}</label>

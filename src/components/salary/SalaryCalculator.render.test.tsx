@@ -113,6 +113,24 @@ describe('SalaryCalculator custom PPK rate inputs (render)', () => {
   });
 });
 
+describe('SalaryCalculator copyright KUP annual limit hint (render)', () => {
+  it(
+    'regression: selecting copyright (50%) KUP on a mandate contract shows a hint about the 60 000 zł annual ' +
+      'limit — this was the flip side of a real bug (calcMandateContract previously ignored this limit entirely, ' +
+      'fixed separately); the hint makes the limit visible before the user hits it',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+      await user.click(screen.getByRole('button', { name: /^umowa zlecenie$/i }));
+      await user.click(screen.getByRole('button', { name: /opcje zaawansowane/i }));
+
+      expect(screen.queryByText(/roczny limit 60 000 zł/i)).not.toBeInTheDocument();
+      await user.selectOptions(document.getElementById('mnd-kup') as HTMLSelectElement, 'copyright');
+      expect(screen.getByText(/roczny limit 60 000 zł/i)).toBeInTheDocument();
+    }
+  );
+});
+
 describe('SalaryCalculator Mały ZUS Plus base clamping (render)', () => {
   it(
     'regression: a malyZusPlusBase value outside the statutory range [1441.80, 5652.20] is clamped on blur ' +

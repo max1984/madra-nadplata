@@ -26,6 +26,7 @@ export type SalaryTranslationKey =
   | 'salary_chart_legend_bracket' | 'salary_chart_legend_zus'
   | 'salary_annual_ryczalt_health_crossed' | 'salary_chart_legend_ryczalt_health'
   | 'salary_annual_copyright_limit_crossed' | 'salary_chart_legend_copyright_limit'
+  | 'salary_copyright_annual_limit_hint'
   | 'salary_chart_legend_relief'
   | 'salary_annual_relief_crossed' | 'salary_annual_chart_label'
   | 'salary_kup_standard' | 'salary_kup_elevated'
@@ -107,6 +108,7 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_annual_ryczalt_health_crossed: 'Wyższy próg składki zdrowotnej (ryczałt) przekroczony w miesiącu',
   salary_chart_legend_ryczalt_health: 'Miesiące z wyższą składką zdrowotną (próg 60 000/300 000 zł przychodu)',
   salary_annual_copyright_limit_crossed: 'Roczny limit 50% kosztów autorskich (60 000 zł) wyczerpany w miesiącu',
+  salary_copyright_annual_limit_hint: '50% koszty autorskie mają roczny limit 60 000 zł (art. 22 ust. 9a ustawy o PIT) — po jego wyczerpaniu nadwyżka nie dostaje już żadnego KUP.',
   salary_chart_legend_copyright_limit: 'Miesiące po wyczerpaniu limitu 50% kosztów autorskich',
   salary_chart_legend_relief: 'Miesiące po wyczerpaniu limitu ulgi specjalnej (85 528 zł)',
   salary_chart_legend_zus: 'Miesiąc przekroczenia limitu ZUS (mniej potrąceń)',
@@ -244,6 +246,7 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_annual_ryczalt_health_crossed: 'Higher health insurance tier (flat-rate tax) crossed in month',
   salary_chart_legend_ryczalt_health: 'Months with higher health insurance (60,000/300,000 zł revenue threshold)',
   salary_annual_copyright_limit_crossed: 'Annual 50% copyright cost limit (60,000 zł) exhausted in month',
+  salary_copyright_annual_limit_hint: '50% copyright costs have an annual limit of 60,000 zł (Art. 22(9a) of the PIT Act) — anything above that gets no further KUP.',
   salary_chart_legend_copyright_limit: 'Months after the 50% copyright cost limit is exhausted',
   salary_chart_legend_relief: 'Months after the special relief limit (85,528 zł) is exhausted',
   salary_chart_legend_zus: 'Month the ZUS limit was crossed (fewer deductions)',
