@@ -727,6 +727,67 @@ export default function SalaryCalculator({
                         <option value="custom">{t('salary_ppk_custom')}</option>
                       </select>
                     </div>
+                    {inputs.employment.ppk.mode === 'custom' && (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor="emp-ppk-employee-rate">{t('salary_ppk_custom_employee_label')}</label>
+                          <div className="input-with-suffix">
+                            <input
+                              id="emp-ppk-employee-rate"
+                              type="number"
+                              defaultValue={inputs.employment.ppk.employeeRate * 100}
+                              min={0.5}
+                              max={4}
+                              step={0.1}
+                              onBlur={(e) => {
+                                const raw = parseFloat(e.target.value);
+                                const ppk = inputs.employment.ppk;
+                                const current = ppk.mode === 'custom' ? ppk.employeeRate * 100 : 2;
+                                const v = Number.isFinite(raw) ? Math.max(0.5, Math.min(4, raw)) : current;
+                                e.target.value = String(v);
+                                setInputs({
+                                  employment: {
+                                    ...inputs.employment,
+                                    ppk: { mode: 'custom', employeeRate: v / 100, employerRate: ppk.mode === 'custom' ? ppk.employerRate : 0.015 },
+                                  },
+                                });
+                              }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                            />
+                            <span className="input-suffix">%</span>
+                          </div>
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="emp-ppk-employer-rate">{t('salary_ppk_custom_employer_label')}</label>
+                          <div className="input-with-suffix">
+                            <input
+                              id="emp-ppk-employer-rate"
+                              type="number"
+                              defaultValue={inputs.employment.ppk.employerRate * 100}
+                              min={1.5}
+                              max={4}
+                              step={0.1}
+                              onBlur={(e) => {
+                                const raw = parseFloat(e.target.value);
+                                const ppk = inputs.employment.ppk;
+                                const current = ppk.mode === 'custom' ? ppk.employerRate * 100 : 1.5;
+                                const v = Number.isFinite(raw) ? Math.max(1.5, Math.min(4, raw)) : current;
+                                e.target.value = String(v);
+                                setInputs({
+                                  employment: {
+                                    ...inputs.employment,
+                                    ppk: { mode: 'custom', employeeRate: ppk.mode === 'custom' ? ppk.employeeRate : 0.02, employerRate: v / 100 },
+                                  },
+                                });
+                              }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                            />
+                            <span className="input-suffix">%</span>
+                          </div>
+                        </div>
+                        <div className="hint">{t('salary_ppk_custom_hint')}</div>
+                      </>
+                    )}
                     <div className="form-group">
                       <label htmlFor="emp-bonus">{t('salary_bonus_label')}</label>
                       <div className="input-with-suffix">

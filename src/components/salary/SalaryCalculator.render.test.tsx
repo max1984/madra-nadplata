@@ -68,6 +68,51 @@ describe('SalaryCalculator keyboard shortcut discoverability (render)', () => {
   );
 });
 
+describe('SalaryCalculator custom PPK rate inputs (render)', () => {
+  it(
+    'regression: selecting "Niestandardowo" PPK reveals employee/employer rate inputs — previously the dropdown ' +
+      'had a "custom" option but no way to actually enter custom rates, so it silently produced the exact same ' +
+      '2%/1.5% result as "Standardowo" (ppkRates() already supported custom rates, the UI just never exposed them)',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+      await user.click(screen.getByRole('button', { name: /opcje zaawansowane/i }));
+
+      expect(document.getElementById('emp-ppk-employee-rate')).not.toBeInTheDocument();
+      await user.selectOptions(document.getElementById('emp-ppk') as HTMLSelectElement, 'custom');
+
+      const employeeInput = document.getElementById('emp-ppk-employee-rate') as HTMLInputElement;
+      const employerInput = document.getElementById('emp-ppk-employer-rate') as HTMLInputElement;
+      expect(employeeInput).toBeInTheDocument();
+      expect(employerInput).toBeInTheDocument();
+    }
+  );
+
+  it('clamps the employee rate to [0.5, 4] and the employer rate to [1.5, 4] on blur, matching ppkRates()', async () => {
+    const user = userEvent.setup();
+    renderSalaryCalculator();
+    await user.click(screen.getByRole('button', { name: /opcje zaawansowane/i }));
+    await user.selectOptions(document.getElementById('emp-ppk') as HTMLSelectElement, 'custom');
+
+    const employeeInput = document.getElementById('emp-ppk-employee-rate') as HTMLInputElement;
+    await user.clear(employeeInput);
+    await user.type(employeeInput, '10');
+    await user.tab();
+    expect(Number(employeeInput.value)).toBe(4);
+
+    await user.clear(employeeInput);
+    await user.type(employeeInput, '0.1');
+    await user.tab();
+    expect(Number(employeeInput.value)).toBe(0.5);
+
+    const employerInput = document.getElementById('emp-ppk-employer-rate') as HTMLInputElement;
+    await user.clear(employerInput);
+    await user.type(employerInput, '0.2');
+    await user.tab();
+    expect(Number(employerInput.value)).toBe(1.5);
+  });
+});
+
 describe('SalaryCalculator Mały ZUS Plus base clamping (render)', () => {
   it(
     'regression: a malyZusPlusBase value outside the statutory range [1441.80, 5652.20] is clamped on blur ' +

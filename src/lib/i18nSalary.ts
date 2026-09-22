@@ -30,6 +30,7 @@ export type SalaryTranslationKey =
   | 'salary_relief_family4plus' | 'salary_relief_working_pensioner' | 'salary_relief_label'
   | 'salary_pit2_full' | 'salary_pit2_half' | 'salary_pit2_third' | 'salary_pit2_none' | 'salary_pit2_label'
   | 'salary_ppk_none' | 'salary_ppk_standard' | 'salary_ppk_custom' | 'salary_ppk_label'
+  | 'salary_ppk_custom_employee_label' | 'salary_ppk_custom_employer_label' | 'salary_ppk_custom_hint'
   | 'salary_bonus_label' | 'salary_copyright_share_label'
   | 'salary_student_toggle' | 'salary_sickness_toggle'
   | 'salary_b2b_revenue_label' | 'salary_b2b_costs_label' | 'salary_b2b_form_label'
@@ -118,6 +119,9 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_ppk_standard: 'Standardowo (2% / 1,5%)',
   salary_ppk_custom: 'Niestandardowo',
   salary_ppk_label: 'PPK',
+  salary_ppk_custom_employee_label: 'Stawka wpłaty pracownika (łącznie)',
+  salary_ppk_custom_employer_label: 'Stawka wpłaty pracodawcy (łącznie)',
+  salary_ppk_custom_hint: 'Łączna stawka (podstawowa + ewentualna dodatkowa) w ustawowych widełkach: 0,5–4% po stronie pracownika, 1,5–4% po stronie pracodawcy.',
   salary_bonus_label: 'Premia (brutto)',
   salary_copyright_share_label: '% wynagrodzenia objęte prawami autorskimi',
   salary_student_toggle: 'Student/uczeń do 26 lat (zwolnienie z ZUS i zdrowotnej)',
@@ -244,6 +248,9 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_ppk_standard: 'Standard (2% / 1.5%)',
   salary_ppk_custom: 'Custom',
   salary_ppk_label: 'PPK',
+  salary_ppk_custom_employee_label: 'Employee contribution rate (total)',
+  salary_ppk_custom_employer_label: 'Employer contribution rate (total)',
+  salary_ppk_custom_hint: 'Total rate (basic + any additional contribution) within the statutory range: 0.5–4% for the employee, 1.5–4% for the employer.',
   salary_bonus_label: 'Bonus (gross)',
   salary_copyright_share_label: '% of salary covered by copyright transfer',
   salary_student_toggle: 'Student under 26 (exempt from ZUS and health insurance)',
