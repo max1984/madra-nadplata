@@ -350,6 +350,7 @@ export default function CreditworthinessCalculator({
                       id="cw-target-loan"
                       type="number"
                       min={0}
+                      max={10_000_000}
                       step={10_000}
                       value={targetLoanAmount}
                       onChange={(e) => setTargetLoanAmount(e.target.value)}

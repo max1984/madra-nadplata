@@ -679,6 +679,7 @@ export default function SalaryCalculator({
                             id="salary-target-net"
                             type="number"
                             min={0}
+                            max={1_000_000}
                             step={100}
                             value={targetNet}
                             onChange={(e) => setTargetNet(e.target.value)}
