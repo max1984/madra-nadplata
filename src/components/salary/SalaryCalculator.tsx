@@ -17,6 +17,8 @@ import {
   grossFromDailyRate,
   solveEmploymentGrossForNet,
   solveMandateGrossForNet,
+  solveSpecificWorkGrossForNet,
+  solveB2BRevenueForNet,
   MIN_WAGE_HOURLY,
 } from '../../lib/salary';
 import { csvDec, csvFilename } from '../../lib/format';
@@ -657,14 +659,17 @@ export default function SalaryCalculator({
                     </div>
                   );
                 })()}
-                {(inputs.contractType === 'employment' || inputs.contractType === 'mandate') && (() => {
+                {(() => {
                   const netNum = parseFloat(targetNet);
                   const validNet = Number.isFinite(netNum) && netNum > 0;
-                  const computed = validNet
-                    ? inputs.contractType === 'employment'
-                      ? solveEmploymentGrossForNet(netNum, inputs.employment)
-                      : solveMandateGrossForNet(netNum, inputs.mandate)
-                    : null;
+                  const computed = !validNet ? null : (() => {
+                    switch (inputs.contractType) {
+                      case 'employment': return solveEmploymentGrossForNet(netNum, inputs.employment);
+                      case 'mandate': return solveMandateGrossForNet(netNum, inputs.mandate);
+                      case 'specific_work': return solveSpecificWorkGrossForNet(netNum, inputs.specificWork);
+                      case 'b2b': return solveB2BRevenueForNet(netNum, inputs.b2b);
+                    }
+                  })();
                   return (
                     <div className="form-group">
                       <label htmlFor="salary-target-net">{t('salary_target_net_label')}</label>

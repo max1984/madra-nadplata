@@ -175,7 +175,9 @@ describe('SalaryCalculator daily-rate helper (render)', () => {
 
       await user.type(screen.getByRole('spinbutton', { name: /stawka dzienna/i }), '300');
       await user.type(screen.getByRole('spinbutton', { name: /liczba dni/i }), '21');
-      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+      // Zakładka dzieło pokazuje też widget kwoty docelowej — stawka dzienna
+      // renderuje się jako pierwsza z nich.
+      await user.click(screen.getAllByRole('button', { name: /zastosuj/i })[0]!);
 
       const amountInput = document.getElementById('salary-amount') as HTMLInputElement;
       expect(Number(amountInput.value)).toBe(6300);
@@ -201,7 +203,9 @@ describe('SalaryCalculator daily-rate helper (render)', () => {
 
       await user.type(screen.getByRole('spinbutton', { name: /stawka dzienna/i }), '800');
       await user.type(screen.getByRole('spinbutton', { name: /liczba dni/i }), '18');
-      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+      // Zakładka B2B pokazuje też widget kwoty docelowej — stawka dzienna
+      // renderuje się jako pierwsza z nich.
+      await user.click(screen.getAllByRole('button', { name: /zastosuj/i })[0]!);
 
       const amountInput = document.getElementById('salary-amount') as HTMLInputElement;
       expect(Number(amountInput.value)).toBe(14400);
@@ -233,15 +237,34 @@ describe('SalaryCalculator target-net-to-gross helper (render)', () => {
     expect(screen.getByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i })).toBeInTheDocument();
   });
 
-  it('does not appear for dzieło or B2B, where "net pay" is not a well-defined single figure the same way', async () => {
-    const user = userEvent.setup();
-    renderSalaryCalculator();
-    await user.click(screen.getByRole('button', { name: /umowa o dzieło/i }));
-    expect(screen.queryByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i })).not.toBeInTheDocument();
+  it(
+    'also applies to dzieło (solveSpecificWorkGrossForNet) and B2B revenue (solveB2BRevenueForNet) — net is ' +
+      'still a well-defined, monotonic function of the primary amount for both, just via a different tax path',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
 
-    await user.click(screen.getByRole('button', { name: /^b2b$/i }));
-    expect(screen.queryByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i })).not.toBeInTheDocument();
-  });
+      // Zakładki dzieło i B2B pokazują też widget stawki dziennej — każdy ma
+      // własny przycisk "Zastosuj"; ten od kwoty docelowej renderuje się jako
+      // ostatni z nich w kolejności DOM.
+      const lastApplyBtn = () => {
+        const buttons = screen.getAllByRole('button', { name: /zastosuj/i });
+        return buttons[buttons.length - 1]!;
+      };
+
+      await user.click(screen.getByRole('button', { name: /umowa o dzieło/i }));
+      await user.type(screen.getByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i }), '4000');
+      await user.click(lastApplyBtn());
+      const swAmount = document.getElementById('salary-amount') as HTMLInputElement;
+      expect(Number(swAmount.value)).toBeGreaterThan(4000);
+
+      await user.click(screen.getByRole('button', { name: /^b2b$/i }));
+      await user.type(screen.getByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i }), '6000');
+      await user.click(lastApplyBtn());
+      const b2bAmount = document.getElementById('salary-amount') as HTMLInputElement;
+      expect(Number(b2bAmount.value)).toBeGreaterThan(6000);
+    }
+  );
 });
 
 describe('SalaryCalculator copyright KUP annual limit hint (render)', () => {

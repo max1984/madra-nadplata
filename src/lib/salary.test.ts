@@ -10,6 +10,8 @@ import {
   grossFromDailyRate,
   solveEmploymentGrossForNet,
   solveMandateGrossForNet,
+  solveSpecificWorkGrossForNet,
+  solveB2BRevenueForNet,
   taxReducingAmount,
   kupAmount,
   TAX_SCALE_THRESHOLD,
@@ -349,6 +351,18 @@ describe('calcSpecificWorkContract', () => {
   });
 });
 
+describe('solveSpecificWorkGrossForNet', () => {
+  const otherInputs = { kup: 'standard' as const, reducingShare: 'full' as const };
+
+  it('regression: round-trips — the solved gross, fed back through calcSpecificWorkContract, produces net within 1 zł of the target', () => {
+    for (const targetNet of [2000, 4000, 9000, 20000]) {
+      const gross = solveSpecificWorkGrossForNet(targetNet, otherInputs);
+      const net = calcSpecificWorkContract({ ...otherInputs, grossMonthly: gross }).net;
+      expect(Math.abs(net - targetNet)).toBeLessThan(1);
+    }
+  });
+});
+
 describe('calcB2BContract', () => {
   it(
     'regression: supports the full set of 10 real ryczałt ewidencjonowany rates (2%/3%/5,5%/8,5%/10%/12%/12,5%/14%/15%/17%) ' +
@@ -424,6 +438,25 @@ describe('calcB2BContract', () => {
     const half = calcB2BContract({ ...b2bDefaults, zusVariant: 'maly_zus_plus', malyZusPlusBase: 2826.10 });
     const full = calcB2BContract({ ...b2bDefaults, zusVariant: 'maly_zus_plus', malyZusPlusBase: 5652.20 });
     expect(full.socialContributions).toBeCloseTo(half.socialContributions * 2, 1);
+  });
+});
+
+describe('solveB2BRevenueForNet', () => {
+  const { monthlyRevenue: _monthlyRevenue, ...otherInputs } = b2bDefaults;
+
+  it('regression: round-trips — the solved revenue, fed back through calcB2BContract, produces net within 1 zł of the target (monthlyCosts held fixed)', () => {
+    for (const targetNet of [3000, 6000, 15000]) {
+      const revenue = solveB2BRevenueForNet(targetNet, otherInputs);
+      const net = calcB2BContract({ ...otherInputs, monthlyRevenue: revenue }).net;
+      expect(Math.abs(net - targetNet)).toBeLessThan(1);
+    }
+  });
+
+  it('round-trips for ryczałt too (flat tax on full revenue, no cost deduction)', () => {
+    const ryczaltInputs = { ...otherInputs, taxForm: 'ryczalt' as const, ryczaltRate: 0.12 as const };
+    const revenue = solveB2BRevenueForNet(8000, ryczaltInputs);
+    const net = calcB2BContract({ ...ryczaltInputs, monthlyRevenue: revenue }).net;
+    expect(Math.abs(net - 8000)).toBeLessThan(1);
   });
 });
 

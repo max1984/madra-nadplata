@@ -546,6 +546,14 @@ export function calcSpecificWorkContract(
   };
 }
 
+/** "Chcę mieć na rękę X — ile musi wynosić brutto?" dla umowy o dzieło, jeden miesiąc. */
+export function solveSpecificWorkGrossForNet(
+  targetNet: number,
+  otherInputs: Omit<SpecificWorkInputs, 'grossMonthly'>
+): number {
+  return solveGrossForTargetNet(targetNet, (g) => calcSpecificWorkContract({ ...otherInputs, grossMonthly: g }).net);
+}
+
 // --------------------------------------------------------------- B2B ---
 
 export interface B2BInputs {
@@ -660,6 +668,18 @@ export function calcB2BContract(inputs: B2BInputs, ctx: AnnualContext = EMPTY_AN
   const healthInsurance = Math.max(round2(income * HEALTH_INSURANCE_RATE_LINIOWY), HEALTH_INSURANCE_MIN_SKALA_LINIOWY);
   const net = round2(revenue - costs - socialContributions - healthInsurance - tax);
   return { monthlyRevenue: revenue, monthlyCosts: costs, income, socialContributions, pensionBaseThisMonth, healthInsurance, tax, net };
+}
+
+/**
+ * "Chcę mieć na rękę X — jaki musi być przychód?" dla B2B, jeden miesiąc.
+ * `monthlyCosts` pozostaje ustalone (rozwiązujemy tylko przychód) — koszty
+ * firmowe są niezależnym wyborem użytkownika, nie funkcją przychodu.
+ */
+export function solveB2BRevenueForNet(
+  targetNet: number,
+  otherInputs: Omit<B2BInputs, 'monthlyRevenue'>
+): number {
+  return solveGrossForTargetNet(targetNet, (revenue) => calcB2BContract({ ...otherInputs, monthlyRevenue: revenue }).net);
 }
 
 // ------------------------------------------------------ roczne rozliczenie ---
