@@ -27,7 +27,7 @@ import {
   type SavedSalaryScenario,
 } from './useSalaryCalculator';
 import { LANGS } from '../lib/i18n';
-import { RYCZALT_RATES } from '../lib/salary';
+import { RYCZALT_RATES, B2B_PREFERENTIAL_ZUS_PENSION_BASE, B2B_FULL_ZUS_PENSION_BASE } from '../lib/salary';
 
 class FakeStorage {
   private store = new Map<string, string>();
@@ -212,6 +212,30 @@ describe('validateSalaryInputs', () => {
     expect(validateSalaryInputs(withB2B({ zusVariant: 'maly_zus_plus', malyZusPlusBase: 0 }))).toBe('error_salary_maly_zus_base');
     expect(validateSalaryInputs(withB2B({ zusVariant: 'pelny', malyZusPlusBase: undefined }))).toBeNull();
   });
+
+  it(
+    'regression: rejects a malyZusPlusBase outside the statutory range [B2B_PREFERENTIAL_ZUS_PENSION_BASE, ' +
+      'B2B_FULL_ZUS_PENSION_BASE] — previously only base <= 0 was rejected, so e.g. 100 zł (below the legal ' +
+      'minimum of 30% of the minimum wage) or 50000 zł (far above the legal maximum of 60% of the forecast ' +
+      'average wage) were silently accepted and fed into a ZUS calculation nobody could actually declare',
+    () => {
+      expect(
+        validateSalaryInputs(withB2B({ zusVariant: 'maly_zus_plus', malyZusPlusBase: B2B_PREFERENTIAL_ZUS_PENSION_BASE - 1 }))
+      ).toBe('error_salary_maly_zus_base');
+      expect(
+        validateSalaryInputs(withB2B({ zusVariant: 'maly_zus_plus', malyZusPlusBase: B2B_FULL_ZUS_PENSION_BASE + 1 }))
+      ).toBe('error_salary_maly_zus_base');
+      expect(
+        validateSalaryInputs(withB2B({ zusVariant: 'maly_zus_plus', malyZusPlusBase: B2B_PREFERENTIAL_ZUS_PENSION_BASE }))
+      ).toBeNull();
+      expect(
+        validateSalaryInputs(withB2B({ zusVariant: 'maly_zus_plus', malyZusPlusBase: B2B_FULL_ZUS_PENSION_BASE }))
+      ).toBeNull();
+      expect(
+        validateSalaryInputs(withB2B({ zusVariant: 'maly_zus_plus', malyZusPlusBase: 3000 }))
+      ).toBeNull();
+    }
+  );
 
   it('rejects an annualMonthlyValues array with the wrong length', () => {
     const inputs: SalaryInputs = { ...DEFAULT_SALARY_INPUTS, annualMode: true, annualMonthlyValues: [1000, 2000] };

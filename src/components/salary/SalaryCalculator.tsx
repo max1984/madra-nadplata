@@ -9,7 +9,11 @@ import { canUseNativeShare } from '../../lib/share';
 import { isCalculateShortcut } from '../../lib/keyboardShortcuts';
 import type { TranslationKey, Lang } from '../../lib/i18n';
 import type { SalaryContractType } from '../../lib/salary';
-import { RYCZALT_RATES } from '../../lib/salary';
+import {
+  RYCZALT_RATES,
+  B2B_PREFERENTIAL_ZUS_PENSION_BASE as MALY_ZUS_BASE_MIN,
+  B2B_FULL_ZUS_PENSION_BASE as MALY_ZUS_BASE_MAX,
+} from '../../lib/salary';
 import { csvDec, csvFilename } from '../../lib/format';
 import {
   qualifiesForJointTaxation,
@@ -624,11 +628,15 @@ export default function SalaryCalculator({
                     id="b2b-maly-zus-base"
                     type="number"
                     defaultValue={inputs.b2b.malyZusPlusBase ?? 0}
-                    min={0}
+                    min={MALY_ZUS_BASE_MIN}
+                    max={MALY_ZUS_BASE_MAX}
                     step={50}
                     onBlur={(e) => {
                       const raw = parseFloat(e.target.value);
-                      const v = Number.isFinite(raw) && raw >= 0 ? raw : (inputs.b2b.malyZusPlusBase ?? 0);
+                      const fallback = inputs.b2b.malyZusPlusBase ?? MALY_ZUS_BASE_MIN;
+                      const v = Number.isFinite(raw)
+                        ? Math.min(MALY_ZUS_BASE_MAX, Math.max(MALY_ZUS_BASE_MIN, raw))
+                        : fallback;
                       e.target.value = String(v);
                       setInputs({ b2b: { ...inputs.b2b, malyZusPlusBase: v } });
                     }}
@@ -636,6 +644,7 @@ export default function SalaryCalculator({
                   />
                   <span className="input-suffix">{t('currency')}</span>
                 </div>
+                <div className="hint">{t('salary_b2b_maly_zus_base_hint')}</div>
               </div>
             )}
 

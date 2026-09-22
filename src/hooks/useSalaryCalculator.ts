@@ -29,6 +29,8 @@ import {
   type B2BTaxForm,
   type B2BZusVariant,
   RYCZALT_RATES,
+  B2B_PREFERENTIAL_ZUS_PENSION_BASE,
+  B2B_FULL_ZUS_PENSION_BASE,
 } from '../lib/salary';
 
 // ------------------------------------------------------------- stan ---
@@ -221,8 +223,18 @@ export function validateSalaryInputs(inputs: SalaryInputs): TranslationKey | nul
         if (!Number.isFinite(p) || p < 0 || p > 100) return 'error_salary_ipbox_share';
       }
       if (inputs.b2b.zusVariant === 'maly_zus_plus') {
+        // Ustawowe widełki podstawy Małego ZUS Plus: 30% minimalnego
+        // wynagrodzenia (B2B_PREFERENTIAL_ZUS_PENSION_BASE) do 60% prognozowanego
+        // przeciętnego wynagrodzenia (B2B_FULL_ZUS_PENSION_BASE) — te same stałe,
+        // z których liczą się warianty "preferencyjny" i "pełny", więc podstawa
+        // spoza tego zakresu odpowiada podstawie prawnie niemożliwej do zadeklarowania.
         const base = inputs.b2b.malyZusPlusBase;
-        if (base === undefined || !Number.isFinite(base) || base <= 0) return 'error_salary_maly_zus_base';
+        if (
+          base === undefined ||
+          !Number.isFinite(base) ||
+          base < B2B_PREFERENTIAL_ZUS_PENSION_BASE ||
+          base > B2B_FULL_ZUS_PENSION_BASE
+        ) return 'error_salary_maly_zus_base';
       }
       break;
   }

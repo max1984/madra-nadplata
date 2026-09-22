@@ -68,6 +68,32 @@ describe('SalaryCalculator keyboard shortcut discoverability (render)', () => {
   );
 });
 
+describe('SalaryCalculator Mały ZUS Plus base clamping (render)', () => {
+  it(
+    'regression: a malyZusPlusBase value outside the statutory range [1441.80, 5652.20] is clamped on blur ' +
+      'instead of accepted verbatim — previously only base <= 0 was rejected, so e.g. 50000 zł (far above the ' +
+      'legal maximum) was silently accepted and fed into the ZUS calculation',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+
+      await user.click(screen.getByRole('button', { name: /^b2b$/i }));
+      await user.selectOptions(document.getElementById('b2b-zus') as HTMLSelectElement, 'maly_zus_plus');
+
+      const input = document.getElementById('b2b-maly-zus-base') as HTMLInputElement;
+      await user.clear(input);
+      await user.type(input, '50000');
+      await user.tab();
+      expect(Number(input.value)).toBe(5652.2);
+
+      await user.clear(input);
+      await user.type(input, '100');
+      await user.tab();
+      expect(Number(input.value)).toBe(1441.8);
+    }
+  );
+});
+
 describe('SalaryCalculator auto-scroll to results (render)', () => {
   it(
     'regression: scrolls the results section into view after the first successful calculation, matching the ' +

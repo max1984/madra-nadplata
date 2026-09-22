@@ -37,7 +37,7 @@ export type SalaryTranslationKey =
   | 'salary_b2b_liniowy_health_hint'
   | 'salary_b2b_ryczalt_rate_label' | 'salary_b2b_ipbox_share_label'
   | 'salary_b2b_zus_label' | 'salary_b2b_zus_ulga_na_start' | 'salary_b2b_zus_preferencyjny'
-  | 'salary_b2b_zus_maly_zus_plus' | 'salary_b2b_zus_pelny' | 'salary_b2b_maly_zus_base_label'
+  | 'salary_b2b_zus_maly_zus_plus' | 'salary_b2b_zus_pelny' | 'salary_b2b_maly_zus_base_label' | 'salary_b2b_maly_zus_base_hint'
   | 'salary_joint_taxation_toggle' | 'salary_joint_spouse_income_label' | 'salary_joint_savings_positive'
   | 'salary_joint_savings_negative' | 'salary_joint_not_eligible'
   | 'salary_joint_flat_rate_toggle' | 'salary_joint_flat_rate_hint'
@@ -138,6 +138,7 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_b2b_zus_maly_zus_plus: 'Mały ZUS Plus',
   salary_b2b_zus_pelny: 'Pełny ZUS',
   salary_b2b_maly_zus_base_label: 'Podstawa składek (Mały ZUS Plus)',
+  salary_b2b_maly_zus_base_hint: 'Ustawowe widełki: od 1441,80 zł (30% minimalnego wynagrodzenia) do 5652,20 zł (60% prognozowanego przeciętnego wynagrodzenia).',
   salary_joint_taxation_toggle: 'Wspólne rozliczenie z małżonkiem',
   salary_joint_spouse_income_label: 'Roczny dochód małżonka (po odliczeniach)',
   salary_joint_savings_positive: 'Wspólne rozliczenie oszczędza',
@@ -151,7 +152,7 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   error_salary_revenue: 'Podaj poprawną kwotę przychodu',
   error_salary_costs: 'Podaj poprawną kwotę kosztów firmowych',
   error_salary_ipbox_share: 'Udział dochodu z IP musi być między 0 i 100%',
-  error_salary_maly_zus_base: 'Podaj poprawną podstawę składek dla Małego ZUS Plus',
+  error_salary_maly_zus_base: 'Podstawa Małego ZUS Plus musi mieścić się w widełkach 1441,80 zł – 5652,20 zł',
   error_salary_annual_length: 'Rozliczenie roczne wymaga 12 wartości miesięcznych',
   error_salary_annual_value: 'Każda wartość miesięczna musi być poprawną, nieujemną kwotą',
   error_salary_spouse_income: 'Podaj poprawny roczny dochód małżonka',
@@ -263,6 +264,7 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_b2b_zus_maly_zus_plus: 'Small ZUS Plus',
   salary_b2b_zus_pelny: 'Full ZUS',
   salary_b2b_maly_zus_base_label: 'Contribution base (Small ZUS Plus)',
+  salary_b2b_maly_zus_base_hint: 'Statutory range: from 1441.80 zł (30% of the minimum wage) to 5652.20 zł (60% of the forecast average wage).',
   salary_joint_taxation_toggle: 'Joint taxation with spouse',
   salary_joint_spouse_income_label: "Spouse's annual taxable income",
   salary_joint_savings_positive: 'Joint taxation saves',
@@ -276,7 +278,7 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   error_salary_revenue: 'Enter a valid revenue amount',
   error_salary_costs: 'Enter a valid business costs amount',
   error_salary_ipbox_share: 'IP income share must be between 0 and 100%',
-  error_salary_maly_zus_base: 'Enter a valid contribution base for Small ZUS Plus',
+  error_salary_maly_zus_base: 'The Small ZUS Plus contribution base must be between 1441.80 zł and 5652.20 zł',
   error_salary_annual_length: 'Annual reconciliation requires 12 monthly values',
   error_salary_annual_value: 'Every monthly value must be a valid, non-negative amount',
   error_salary_spouse_income: "Enter a valid spouse's annual income",
