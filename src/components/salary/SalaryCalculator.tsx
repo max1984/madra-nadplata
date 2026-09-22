@@ -218,6 +218,18 @@ export default function SalaryCalculator({
     () => calcState ? formatSalaryAnnouncement(calcState, t, fmtC) : '',
     [calcState, t, fmtC],
   );
+  // Jak resultsRef/scrollIntoView w Calculator.tsx — kalkulator kredytu
+  // przewija do wyniku po pierwszym udanym przeliczeniu, ale wynagrodzenia
+  // i zdolność kredytowa tego nie robiły, mimo tego samego długiego
+  // formularza nad wynikiem (użytkownik musiał sam przewinąć w dół).
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const prevCalcState = useRef(calcState);
+  useEffect(() => {
+    if (!prevCalcState.current && calcState && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    prevCalcState.current = calcState;
+  }, [calcState]);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chart = useRef<Chart | null>(null);
 
@@ -1062,7 +1074,7 @@ export default function SalaryCalculator({
         </div>
 
         {calcState && (
-          <div className="calc-results" style={{ marginTop: 24 }}>
+          <div className="calc-results" style={{ marginTop: 24 }} ref={resultsRef}>
             {isStale && <div className="hint">{t('calc_stale')}</div>}
 
             {calcState.mode === 'single' ? (

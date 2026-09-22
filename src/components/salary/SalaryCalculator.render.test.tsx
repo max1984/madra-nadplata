@@ -6,7 +6,19 @@ import { LangProvider } from '../../contexts/LangContext';
 import { useSalaryCalculator, DEFAULT_SALARY_INPUTS } from '../../hooks/useSalaryCalculator';
 import SalaryCalculator from './SalaryCalculator';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // useSalaryCalculator() seeds its initial calcState from the URL query
+  // string, falling back to localStorage (persistSalaryInputs, called on
+  // every "Oblicz") when the URL is empty — both survive across tests in
+  // this file (cleanup() only unmounts React; jsdom's location/history and
+  // the in-memory localStorage polyfill from src/test/setup.ts are shared
+  // module-level state for the whole file). Without resetting both, a test
+  // that calculates a result leaks its inputs into the next test's fresh
+  // mount, which then starts with a populated calcState instead of null.
+  window.history.replaceState(null, '', '/');
+  localStorage.clear();
+});
 
 function Harness() {
   const {
@@ -52,6 +64,24 @@ describe('SalaryCalculator keyboard shortcut discoverability (render)', () => {
       renderSalaryCalculator();
       const btn = screen.getByRole('button', { name: /oblicz/i });
       expect(btn.getAttribute('title')).toMatch(/ctrl/i);
+    }
+  );
+});
+
+describe('SalaryCalculator auto-scroll to results (render)', () => {
+  it(
+    'regression: scrolls the results section into view after the first successful calculation, matching the ' +
+      'mortgage calculator (Calculator.tsx) — salary previously left the user to scroll down manually past the ' +
+      'whole form to see the result',
+    async () => {
+      const scrollSpy = vi.spyOn(window.HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {});
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+      expect(scrollSpy).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: /oblicz/i }));
+      expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      scrollSpy.mockRestore();
     }
   );
 });
