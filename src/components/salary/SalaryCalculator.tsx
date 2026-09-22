@@ -14,6 +14,7 @@ import {
   B2B_PREFERENTIAL_ZUS_PENSION_BASE as MALY_ZUS_BASE_MIN,
   B2B_FULL_ZUS_PENSION_BASE as MALY_ZUS_BASE_MAX,
   grossFromHourlyRate,
+  grossFromDailyRate,
   MIN_WAGE_HOURLY,
 } from '../../lib/salary';
 import { csvDec, csvFilename } from '../../lib/format';
@@ -262,6 +263,8 @@ export default function SalaryCalculator({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hourlyRate, setHourlyRate] = useState('');
   const [hoursPerMonth, setHoursPerMonth] = useState('');
+  const [dailyRate, setDailyRate] = useState('');
+  const [daysPerMonth, setDaysPerMonth] = useState('');
   // Wymusza remount pola #salary-amount (defaultValue, nie value — jak reszta
   // pól liczbowych w tym formularzu) po zastosowaniu przeliczenia ze stawki
   // godzinowej, bo inaczej widoczna wartość zostałaby stara mimo zmiany stanu.
@@ -598,6 +601,54 @@ export default function SalaryCalculator({
                       {validRate && rateNum < MIN_WAGE_HOURLY && (
                         <div className="hint">{t('salary_hourly_rate_below_min_hint')}</div>
                       )}
+                    </div>
+                  );
+                })()}
+                {inputs.contractType === 'specific_work' && (() => {
+                  const rateNum = parseFloat(dailyRate);
+                  const daysNum = parseFloat(daysPerMonth);
+                  const validRate = Number.isFinite(rateNum) && rateNum > 0;
+                  const validDays = Number.isFinite(daysNum) && daysNum > 0;
+                  const computed = validRate && validDays ? grossFromDailyRate(rateNum, daysNum) : null;
+                  return (
+                    <div className="form-group">
+                      <label>{t('salary_daily_rate_label')}</label>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div className="input-with-suffix" style={{ maxWidth: 140 }}>
+                          <input
+                            type="number"
+                            aria-label={t('salary_daily_rate_field_label')}
+                            min={0}
+                            step={10}
+                            value={dailyRate}
+                            onChange={(e) => setDailyRate(e.target.value)}
+                          />
+                          <span className="input-suffix">{t('salary_daily_rate_suffix')}</span>
+                        </div>
+                        <div className="input-with-suffix" style={{ maxWidth: 140 }}>
+                          <input
+                            type="number"
+                            aria-label={t('salary_daily_days_field_label')}
+                            min={0}
+                            step={1}
+                            value={daysPerMonth}
+                            onChange={(e) => setDaysPerMonth(e.target.value)}
+                          />
+                          <span className="input-suffix">{t('salary_daily_days_suffix')}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="toolbar-btn"
+                          disabled={computed === null}
+                          onClick={() => {
+                            if (computed === null) return;
+                            setInputs(setPrimaryAmount(inputs, computed));
+                            setAmountFieldVersion((v) => v + 1);
+                          }}
+                        >
+                          {t('salary_hourly_apply_btn')} {computed !== null ? `(${fmt(computed)} ${t('currency')})` : ''}
+                        </button>
+                      </div>
                     </div>
                   );
                 })()}

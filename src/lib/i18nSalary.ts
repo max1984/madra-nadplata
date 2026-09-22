@@ -30,6 +30,8 @@ export type SalaryTranslationKey =
   | 'salary_hourly_rate_label' | 'salary_hourly_rate_suffix' | 'salary_hourly_hours_label'
   | 'salary_hourly_hours_suffix' | 'salary_hourly_apply_btn' | 'salary_hourly_rate_below_min_hint'
   | 'salary_hourly_rate_field_label' | 'salary_hourly_hours_field_label'
+  | 'salary_daily_rate_label' | 'salary_daily_rate_suffix' | 'salary_daily_days_suffix'
+  | 'salary_daily_rate_field_label' | 'salary_daily_days_field_label'
   | 'salary_chart_legend_relief'
   | 'salary_annual_relief_crossed' | 'salary_annual_chart_label'
   | 'salary_kup_standard' | 'salary_kup_elevated'
@@ -120,6 +122,11 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_hourly_rate_below_min_hint: 'Ta stawka jest niższa niż minimalna stawka godzinowa na zleceniu (31,40 zł/h w 2026 r.).',
   salary_hourly_rate_field_label: 'Stawka godzinowa',
   salary_hourly_hours_field_label: 'Liczba godzin',
+  salary_daily_rate_label: 'Masz stawkę dzienną? Przelicz na kwotę miesięczną',
+  salary_daily_rate_suffix: 'zł/dzień',
+  salary_daily_days_suffix: 'dni',
+  salary_daily_rate_field_label: 'Stawka dzienna',
+  salary_daily_days_field_label: 'Liczba dni',
   salary_chart_legend_copyright_limit: 'Miesiące po wyczerpaniu limitu 50% kosztów autorskich',
   salary_chart_legend_relief: 'Miesiące po wyczerpaniu limitu ulgi specjalnej (85 528 zł)',
   salary_chart_legend_zus: 'Miesiąc przekroczenia limitu ZUS (mniej potrąceń)',
@@ -266,6 +273,11 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_hourly_rate_below_min_hint: 'This rate is below the statutory minimum hourly rate for mandate contracts (31.40 zł/h in 2026).',
   salary_hourly_rate_field_label: 'Hourly rate',
   salary_hourly_hours_field_label: 'Number of hours',
+  salary_daily_rate_label: 'Have a daily rate? Convert it to a monthly amount',
+  salary_daily_rate_suffix: 'zł/day',
+  salary_daily_days_suffix: 'days',
+  salary_daily_rate_field_label: 'Daily rate',
+  salary_daily_days_field_label: 'Number of days',
   salary_chart_legend_copyright_limit: 'Months after the 50% copyright cost limit is exhausted',
   salary_chart_legend_relief: 'Months after the special relief limit (85,528 zł) is exhausted',
   salary_chart_legend_zus: 'Month the ZUS limit was crossed (fewer deductions)',

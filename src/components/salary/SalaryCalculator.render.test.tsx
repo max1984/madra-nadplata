@@ -160,6 +160,31 @@ describe('SalaryCalculator hourly-rate helper (render)', () => {
   });
 });
 
+describe('SalaryCalculator daily-rate helper (render)', () => {
+  it(
+    'regression: entering a daily rate and days/month and clicking "Zastosuj" fills the monthly gross field on ' +
+      'the dzieło tab — grossFromDailyRate existed in salary.ts since the calculator\'s first commit but was ' +
+      'never wired into any UI, so this conversion was previously impossible to use',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+      await user.click(screen.getByRole('button', { name: /umowa o dzieło/i }));
+
+      await user.type(screen.getByRole('spinbutton', { name: /stawka dzienna/i }), '300');
+      await user.type(screen.getByRole('spinbutton', { name: /liczba dni/i }), '21');
+      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+
+      const amountInput = document.getElementById('salary-amount') as HTMLInputElement;
+      expect(Number(amountInput.value)).toBe(6300);
+    }
+  );
+
+  it('the daily-rate helper does not appear for other contract types (employment, mandate, B2B)', () => {
+    renderSalaryCalculator();
+    expect(screen.queryByRole('spinbutton', { name: /stawka dzienna/i })).not.toBeInTheDocument();
+  });
+});
+
 describe('SalaryCalculator copyright KUP annual limit hint (render)', () => {
   it(
     'regression: selecting copyright (50%) KUP on a mandate contract shows a hint about the 60 000 zł annual ' +
