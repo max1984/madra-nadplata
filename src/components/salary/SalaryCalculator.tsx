@@ -579,6 +579,7 @@ export default function SalaryCalculator({
                             type="number"
                             aria-label={t('salary_hourly_hours_field_label')}
                             min={0}
+                            max={300}
                             step={1}
                             value={hoursPerMonth}
                             onChange={(e) => setHoursPerMonth(e.target.value)}
@@ -630,6 +631,7 @@ export default function SalaryCalculator({
                             type="number"
                             aria-label={t('salary_daily_days_field_label')}
                             min={0}
+                            max={31}
                             step={1}
                             value={daysPerMonth}
                             onChange={(e) => setDaysPerMonth(e.target.value)}
