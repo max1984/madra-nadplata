@@ -604,7 +604,7 @@ export default function SalaryCalculator({
                     </div>
                   );
                 })()}
-                {inputs.contractType === 'specific_work' && (() => {
+                {(inputs.contractType === 'specific_work' || inputs.contractType === 'b2b') && (() => {
                   const rateNum = parseFloat(dailyRate);
                   const daysNum = parseFloat(daysPerMonth);
                   const validRate = Number.isFinite(rateNum) && rateNum > 0;

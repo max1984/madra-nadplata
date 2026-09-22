@@ -179,10 +179,31 @@ describe('SalaryCalculator daily-rate helper (render)', () => {
     }
   );
 
-  it('the daily-rate helper does not appear for other contract types (employment, mandate, B2B)', () => {
+  it('the daily-rate helper does not appear for employment or mandate contracts', async () => {
+    const user = userEvent.setup();
     renderSalaryCalculator();
     expect(screen.queryByRole('spinbutton', { name: /stawka dzienna/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^umowa zlecenie$/i }));
+    expect(screen.queryByRole('spinbutton', { name: /stawka dzienna/i })).not.toBeInTheDocument();
   });
+
+  it(
+    'the daily-rate helper also applies to B2B (revenue field), since day-rate billing is common for ' +
+      'freelance/contract work invoiced through a JDG',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+      await user.click(screen.getByRole('button', { name: /^b2b$/i }));
+
+      await user.type(screen.getByRole('spinbutton', { name: /stawka dzienna/i }), '800');
+      await user.type(screen.getByRole('spinbutton', { name: /liczba dni/i }), '18');
+      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+
+      const amountInput = document.getElementById('salary-amount') as HTMLInputElement;
+      expect(Number(amountInput.value)).toBe(14400);
+    }
+  );
 });
 
 describe('SalaryCalculator copyright KUP annual limit hint (render)', () => {
