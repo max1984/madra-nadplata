@@ -113,6 +113,53 @@ describe('SalaryCalculator custom PPK rate inputs (render)', () => {
   });
 });
 
+describe('SalaryCalculator hourly-rate helper (render)', () => {
+  it(
+    'regression: entering an hourly rate and hours/month and clicking "Zastosuj" fills the monthly gross field ' +
+      'on the mandate tab — grossFromHourlyRate and MIN_WAGE_HOURLY existed in salary.ts since the calculator\'s ' +
+      'first commit but were never wired into any UI, so this conversion was previously impossible to use',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+      await user.click(screen.getByRole('button', { name: /^umowa zlecenie$/i }));
+
+      await user.type(screen.getByRole('spinbutton', { name: /stawka godzinowa/i }), '50');
+      await user.type(screen.getByRole('spinbutton', { name: /liczba godzin/i }), '160');
+      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+
+      const amountInput = document.getElementById('salary-amount') as HTMLInputElement;
+      expect(Number(amountInput.value)).toBe(8000);
+    }
+  );
+
+  it('warns when the entered hourly rate is below the statutory minimum (31.40 zł/h in 2026)', async () => {
+    const user = userEvent.setup();
+    renderSalaryCalculator();
+    await user.click(screen.getByRole('button', { name: /^umowa zlecenie$/i }));
+
+    expect(screen.queryByText(/minimalna stawka godzinowa/i)).not.toBeInTheDocument();
+    await user.type(screen.getByRole('spinbutton', { name: /stawka godzinowa/i }), '20');
+    expect(screen.getByText(/minimalna stawka godzinowa/i)).toBeInTheDocument();
+  });
+
+  it('the "Zastosuj" button stays disabled until both rate and hours are entered', async () => {
+    const user = userEvent.setup();
+    renderSalaryCalculator();
+    await user.click(screen.getByRole('button', { name: /^umowa zlecenie$/i }));
+
+    expect(screen.getByRole('button', { name: /zastosuj/i })).toBeDisabled();
+    await user.type(screen.getByRole('spinbutton', { name: /stawka godzinowa/i }), '50');
+    expect(screen.getByRole('button', { name: /zastosuj/i })).toBeDisabled();
+    await user.type(screen.getByRole('spinbutton', { name: /liczba godzin/i }), '160');
+    expect(screen.getByRole('button', { name: /zastosuj/i })).not.toBeDisabled();
+  });
+
+  it('the hourly-rate helper does not appear for other contract types (employment, dzieło, B2B)', async () => {
+    renderSalaryCalculator();
+    expect(screen.queryByRole('spinbutton', { name: /stawka godzinowa/i })).not.toBeInTheDocument();
+  });
+});
+
 describe('SalaryCalculator copyright KUP annual limit hint (render)', () => {
   it(
     'regression: selecting copyright (50%) KUP on a mandate contract shows a hint about the 60 000 zł annual ' +

@@ -13,6 +13,8 @@ import {
   RYCZALT_RATES,
   B2B_PREFERENTIAL_ZUS_PENSION_BASE as MALY_ZUS_BASE_MIN,
   B2B_FULL_ZUS_PENSION_BASE as MALY_ZUS_BASE_MAX,
+  grossFromHourlyRate,
+  MIN_WAGE_HOURLY,
 } from '../../lib/salary';
 import { csvDec, csvFilename } from '../../lib/format';
 import {
@@ -258,6 +260,12 @@ export default function SalaryCalculator({
 }: Props) {
   const { t, fmt, fmtC, lang } = useLang();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [hourlyRate, setHourlyRate] = useState('');
+  const [hoursPerMonth, setHoursPerMonth] = useState('');
+  // Wymusza remount pola #salary-amount (defaultValue, nie value — jak reszta
+  // pól liczbowych w tym formularzu) po zastosowaniu przeliczenia ze stawki
+  // godzinowej, bo inaczej widoczna wartość zostałaby stara mimo zmiany stanu.
+  const [amountFieldVersion, setAmountFieldVersion] = useState(0);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
@@ -517,30 +525,83 @@ export default function SalaryCalculator({
             <span>{t('salary_annual_mode_toggle')}</span>
           </label>
 
-          <div key={`${inputs.contractType}-${inputs.annualMode}`}>
+          <div key={`${inputs.contractType}-${inputs.annualMode}-${amountFieldVersion}`}>
             {!inputs.annualMode ? (
-              <div className="form-group">
-                <label htmlFor="salary-amount">
-                  {inputs.contractType === 'b2b' ? t('salary_b2b_revenue_label') : t('salary_gross_label')}
-                </label>
-                <div className="input-with-suffix">
-                  <input
-                    id="salary-amount"
-                    type="number"
-                    defaultValue={primaryAmount(inputs)}
-                    min={0}
-                    step={100}
-                    onBlur={(e) => {
-                      const raw = parseFloat(e.target.value);
-                      const v = Number.isFinite(raw) && raw >= 0 ? raw : primaryAmount(inputs);
-                      e.target.value = String(v);
-                      setInputs(setPrimaryAmount(inputs, v));
-                    }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                  />
-                  <span className="input-suffix">{t('currency')}</span>
+              <>
+                <div className="form-group">
+                  <label htmlFor="salary-amount">
+                    {inputs.contractType === 'b2b' ? t('salary_b2b_revenue_label') : t('salary_gross_label')}
+                  </label>
+                  <div className="input-with-suffix">
+                    <input
+                      id="salary-amount"
+                      type="number"
+                      defaultValue={primaryAmount(inputs)}
+                      min={0}
+                      step={100}
+                      onBlur={(e) => {
+                        const raw = parseFloat(e.target.value);
+                        const v = Number.isFinite(raw) && raw >= 0 ? raw : primaryAmount(inputs);
+                        e.target.value = String(v);
+                        setInputs(setPrimaryAmount(inputs, v));
+                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    />
+                    <span className="input-suffix">{t('currency')}</span>
+                  </div>
                 </div>
-              </div>
+                {inputs.contractType === 'mandate' && (() => {
+                  const rateNum = parseFloat(hourlyRate);
+                  const hoursNum = parseFloat(hoursPerMonth);
+                  const validRate = Number.isFinite(rateNum) && rateNum > 0;
+                  const validHours = Number.isFinite(hoursNum) && hoursNum > 0;
+                  const computed = validRate && validHours ? grossFromHourlyRate(rateNum, hoursNum) : null;
+                  return (
+                    <div className="form-group">
+                      <label>{t('salary_hourly_rate_label')}</label>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div className="input-with-suffix" style={{ maxWidth: 140 }}>
+                          <input
+                            type="number"
+                            aria-label={t('salary_hourly_rate_field_label')}
+                            min={0}
+                            step={0.1}
+                            value={hourlyRate}
+                            onChange={(e) => setHourlyRate(e.target.value)}
+                          />
+                          <span className="input-suffix">{t('salary_hourly_rate_suffix')}</span>
+                        </div>
+                        <div className="input-with-suffix" style={{ maxWidth: 140 }}>
+                          <input
+                            type="number"
+                            aria-label={t('salary_hourly_hours_field_label')}
+                            min={0}
+                            step={1}
+                            value={hoursPerMonth}
+                            onChange={(e) => setHoursPerMonth(e.target.value)}
+                          />
+                          <span className="input-suffix">{t('salary_hourly_hours_suffix')}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="toolbar-btn"
+                          disabled={computed === null}
+                          onClick={() => {
+                            if (computed === null) return;
+                            setInputs(setPrimaryAmount(inputs, computed));
+                            setAmountFieldVersion((v) => v + 1);
+                          }}
+                        >
+                          {t('salary_hourly_apply_btn')} {computed !== null ? `(${fmt(computed)} ${t('currency')})` : ''}
+                        </button>
+                      </div>
+                      {validRate && rateNum < MIN_WAGE_HOURLY && (
+                        <div className="hint">{t('salary_hourly_rate_below_min_hint')}</div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </>
             ) : (
               <div className="form-group">
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
