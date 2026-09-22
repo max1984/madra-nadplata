@@ -8,6 +8,8 @@ import {
   computeJointTaxation,
   grossFromHourlyRate,
   grossFromDailyRate,
+  solveEmploymentGrossForNet,
+  solveMandateGrossForNet,
   taxReducingAmount,
   kupAmount,
   TAX_SCALE_THRESHOLD,
@@ -165,6 +167,40 @@ describe('calcEmploymentContract', () => {
   });
 });
 
+describe('solveEmploymentGrossForNet', () => {
+  const otherInputs = {
+    kup: 'standard' as const,
+    specialRelief: 'none' as const,
+    reducingShare: 'full' as const,
+    ppk: { mode: 'none' as const },
+  };
+
+  it(
+    'regression: round-trips — the solved gross, fed back through calcEmploymentContract, produces net ' +
+      'within 1 zł of the requested target ("chcę mieć na rękę X ile musi być brutto" was previously not ' +
+      'possible at all, only the forward direction (brutto → netto) existed)',
+    () => {
+      for (const targetNet of [3000, 5500, 9000, 15000, 25000]) {
+        const gross = solveEmploymentGrossForNet(targetNet, otherInputs);
+        const net = calcEmploymentContract({ ...otherInputs, grossMonthly: gross }).net;
+        expect(Math.abs(net - targetNet)).toBeLessThan(1);
+      }
+    }
+  );
+
+  it('returns 0 for a target net of 0 or less, without an infinite loop', () => {
+    expect(solveEmploymentGrossForNet(0, otherInputs)).toBe(0);
+    expect(solveEmploymentGrossForNet(-500, otherInputs)).toBe(0);
+  });
+
+  it('the solved gross correctly crosses the 32% bracket for a high target net (progressive tax, not flat)', () => {
+    const gross = solveEmploymentGrossForNet(30000, otherInputs);
+    const net = calcEmploymentContract({ ...otherInputs, grossMonthly: gross }).net;
+    expect(Math.abs(net - 30000)).toBeLessThan(1);
+    expect(gross).toBeGreaterThan(30000); // brutto zawsze wyższe niż netto
+  });
+});
+
 describe('calcMandateContract', () => {
   it('student under 26 pays zero ZUS and zero health insurance, only tax on income after KUP', () => {
     const r = calcMandateContract({ ...mandateDefaults, isStudentUnder26: true });
@@ -242,6 +278,30 @@ describe('calcMandateContract', () => {
     const progressive = calcMandateContract(mandateDefaults, ctx);
     const flat = calcMandateContract({ ...mandateDefaults, flatRateDeclared: true }, ctx);
     expect(flat.tax).toBeLessThan(progressive.tax);
+  });
+});
+
+describe('solveMandateGrossForNet', () => {
+  const otherInputs = {
+    kup: 'standard' as const,
+    specialRelief: 'none' as const,
+    reducingShare: 'full' as const,
+    isStudentUnder26: false,
+    sicknessVoluntary: true,
+  };
+
+  it('regression: round-trips — the solved gross, fed back through calcMandateContract, produces net within 1 zł of the target', () => {
+    for (const targetNet of [2500, 4000, 8000, 18000]) {
+      const gross = solveMandateGrossForNet(targetNet, otherInputs);
+      const net = calcMandateContract({ ...otherInputs, grossMonthly: gross }).net;
+      expect(Math.abs(net - targetNet)).toBeLessThan(1);
+    }
+  });
+
+  it('the student-under-26 exemption (no ZUS/health) yields a lower required gross for the same target net', () => {
+    const withZus = solveMandateGrossForNet(5000, otherInputs);
+    const student = solveMandateGrossForNet(5000, { ...otherInputs, isStudentUnder26: true });
+    expect(student).toBeLessThan(withZus);
   });
 });
 

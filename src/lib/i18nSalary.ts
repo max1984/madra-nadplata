@@ -32,6 +32,7 @@ export type SalaryTranslationKey =
   | 'salary_hourly_rate_field_label' | 'salary_hourly_hours_field_label'
   | 'salary_daily_rate_label' | 'salary_daily_rate_suffix' | 'salary_daily_days_suffix'
   | 'salary_daily_rate_field_label' | 'salary_daily_days_field_label'
+  | 'salary_target_net_label' | 'salary_target_net_hint'
   | 'salary_chart_legend_relief'
   | 'salary_annual_relief_crossed' | 'salary_annual_chart_label'
   | 'salary_kup_standard' | 'salary_kup_elevated'
@@ -127,6 +128,8 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_daily_days_suffix: 'dni',
   salary_daily_rate_field_label: 'Stawka dzienna',
   salary_daily_days_field_label: 'Liczba dni',
+  salary_target_net_label: 'Chcesz mieć konkretną kwotę na rękę? Przelicz na brutto',
+  salary_target_net_hint: 'Szacowane brutto, przy którym wynagrodzenie na rękę osiągnie wpisaną kwotę (przy pozostałych parametrach bez zmian).',
   salary_chart_legend_copyright_limit: 'Miesiące po wyczerpaniu limitu 50% kosztów autorskich',
   salary_chart_legend_relief: 'Miesiące po wyczerpaniu limitu ulgi specjalnej (85 528 zł)',
   salary_chart_legend_zus: 'Miesiąc przekroczenia limitu ZUS (mniej potrąceń)',
@@ -278,6 +281,8 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_daily_days_suffix: 'days',
   salary_daily_rate_field_label: 'Daily rate',
   salary_daily_days_field_label: 'Number of days',
+  salary_target_net_label: 'Want a specific take-home amount? Convert it to gross',
+  salary_target_net_hint: 'Estimated gross salary at which take-home pay reaches the amount entered (all other settings unchanged).',
   salary_chart_legend_copyright_limit: 'Months after the 50% copyright cost limit is exhausted',
   salary_chart_legend_relief: 'Months after the special relief limit (85,528 zł) is exhausted',
   salary_chart_legend_zus: 'Month the ZUS limit was crossed (fewer deductions)',

@@ -125,7 +125,9 @@ describe('SalaryCalculator hourly-rate helper (render)', () => {
 
       await user.type(screen.getByRole('spinbutton', { name: /stawka godzinowa/i }), '50');
       await user.type(screen.getByRole('spinbutton', { name: /liczba godzin/i }), '160');
-      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+      // Mandate tab also shows the "chcę mieć na rękę" widget, which has its own
+      // "Zastosuj" button — the hourly-rate one renders first in DOM order.
+      await user.click(screen.getAllByRole('button', { name: /zastosuj/i })[0]!);
 
       const amountInput = document.getElementById('salary-amount') as HTMLInputElement;
       expect(Number(amountInput.value)).toBe(8000);
@@ -146,12 +148,13 @@ describe('SalaryCalculator hourly-rate helper (render)', () => {
     const user = userEvent.setup();
     renderSalaryCalculator();
     await user.click(screen.getByRole('button', { name: /^umowa zlecenie$/i }));
+    const hourlyApplyBtn = () => screen.getAllByRole('button', { name: /zastosuj/i })[0]!;
 
-    expect(screen.getByRole('button', { name: /zastosuj/i })).toBeDisabled();
+    expect(hourlyApplyBtn()).toBeDisabled();
     await user.type(screen.getByRole('spinbutton', { name: /stawka godzinowa/i }), '50');
-    expect(screen.getByRole('button', { name: /zastosuj/i })).toBeDisabled();
+    expect(hourlyApplyBtn()).toBeDisabled();
     await user.type(screen.getByRole('spinbutton', { name: /liczba godzin/i }), '160');
-    expect(screen.getByRole('button', { name: /zastosuj/i })).not.toBeDisabled();
+    expect(hourlyApplyBtn()).not.toBeDisabled();
   });
 
   it('the hourly-rate helper does not appear for other contract types (employment, dzieło, B2B)', async () => {
@@ -204,6 +207,41 @@ describe('SalaryCalculator daily-rate helper (render)', () => {
       expect(Number(amountInput.value)).toBe(14400);
     }
   );
+});
+
+describe('SalaryCalculator target-net-to-gross helper (render)', () => {
+  it(
+    'regression: entering a target take-home amount and clicking "Zastosuj" fills the monthly gross field on ' +
+      'the employment tab so the resulting net matches the target — solveEmploymentGrossForNet existed only ' +
+      'as a pure function with no UI, so "chcę mieć na rękę X" was previously impossible to answer directly',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+
+      await user.type(screen.getByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i }), '5000');
+      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+
+      const amountInput = document.getElementById('salary-amount') as HTMLInputElement;
+      expect(Number(amountInput.value)).toBeGreaterThan(5000);
+    }
+  );
+
+  it('also appears on the mandate tab, alongside the hourly-rate helper', async () => {
+    const user = userEvent.setup();
+    renderSalaryCalculator();
+    await user.click(screen.getByRole('button', { name: /^umowa zlecenie$/i }));
+    expect(screen.getByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i })).toBeInTheDocument();
+  });
+
+  it('does not appear for dzieło or B2B, where "net pay" is not a well-defined single figure the same way', async () => {
+    const user = userEvent.setup();
+    renderSalaryCalculator();
+    await user.click(screen.getByRole('button', { name: /umowa o dzieło/i }));
+    expect(screen.queryByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^b2b$/i }));
+    expect(screen.queryByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i })).not.toBeInTheDocument();
+  });
 });
 
 describe('SalaryCalculator copyright KUP annual limit hint (render)', () => {

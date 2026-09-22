@@ -219,6 +219,29 @@ function pensionDisabilityBase(fullBase: number, priorPensionBase: number): numb
   return Math.min(nonNegative(fullBase), room);
 }
 
+/**
+ * Wyszukiwanie binarne brutto dającego zadane netto — ten sam wzorzec
+ * algorytmiczny co solveOverpayForTarget w mortgage.ts. Bezpieczne, bo
+ * `netForGross` jest ściśle rosnące względem brutto: krańcowe obciążenie
+ * (ZUS + zdrowotna + PIT) na każdym etapie jest zawsze mniejsze niż 100%,
+ * więc wyższe brutto zawsze daje wyższe (nigdy niższe) netto — nie ma
+ * ryzyka utknięcia w lokalnym ekstremum czy rozbieżności wyszukiwania.
+ */
+function solveGrossForTargetNet(targetNet: number, netForGross: (gross: number) => number): number {
+  const target = nonNegative(targetNet);
+  if (target === 0) return 0;
+  let lo = 0;
+  let hi = Math.max(target * 2, 1000);
+  for (let guard = 0; netForGross(hi) < target && guard < 40; guard++) {
+    hi *= 2;
+  }
+  for (let i = 0; i < 50; i++) {
+    const mid = (lo + hi) / 2;
+    if (netForGross(mid) < target) lo = mid; else hi = mid;
+  }
+  return round2(hi);
+}
+
 // ------------------------------------------------------- umowa o pracę ---
 
 export interface EmploymentInputs {
@@ -359,6 +382,14 @@ export function calcEmploymentContract(
   };
 }
 
+/** "Chcę mieć na rękę X — ile musi wynosić brutto?" dla umowy o pracę, jeden miesiąc. */
+export function solveEmploymentGrossForNet(
+  targetNet: number,
+  otherInputs: Omit<EmploymentInputs, 'grossMonthly'>
+): number {
+  return solveGrossForTargetNet(targetNet, (g) => calcEmploymentContract({ ...otherInputs, grossMonthly: g }).net);
+}
+
 // --------------------------------------------------------- zlecenie ---
 
 export interface MandateInputs {
@@ -461,6 +492,14 @@ export function calcMandateContract(
     tax,
     net,
   };
+}
+
+/** "Chcę mieć na rękę X — ile musi wynosić brutto?" dla umowy zlecenia, jeden miesiąc. */
+export function solveMandateGrossForNet(
+  targetNet: number,
+  otherInputs: Omit<MandateInputs, 'grossMonthly'>
+): number {
+  return solveGrossForTargetNet(targetNet, (g) => calcMandateContract({ ...otherInputs, grossMonthly: g }).net);
 }
 
 // ------------------------------------------------------------- dzieło ---

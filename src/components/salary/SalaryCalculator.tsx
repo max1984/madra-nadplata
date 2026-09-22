@@ -15,6 +15,8 @@ import {
   B2B_FULL_ZUS_PENSION_BASE as MALY_ZUS_BASE_MAX,
   grossFromHourlyRate,
   grossFromDailyRate,
+  solveEmploymentGrossForNet,
+  solveMandateGrossForNet,
   MIN_WAGE_HOURLY,
 } from '../../lib/salary';
 import { csvDec, csvFilename } from '../../lib/format';
@@ -265,6 +267,7 @@ export default function SalaryCalculator({
   const [hoursPerMonth, setHoursPerMonth] = useState('');
   const [dailyRate, setDailyRate] = useState('');
   const [daysPerMonth, setDaysPerMonth] = useState('');
+  const [targetNet, setTargetNet] = useState('');
   // Wymusza remount pola #salary-amount (defaultValue, nie value — jak reszta
   // pól liczbowych w tym formularzu) po zastosowaniu przeliczenia ze stawki
   // godzinowej, bo inaczej widoczna wartość zostałaby stara mimo zmiany stanu.
@@ -651,6 +654,46 @@ export default function SalaryCalculator({
                           {t('salary_hourly_apply_btn')} {computed !== null ? `(${fmt(computed)} ${t('currency')})` : ''}
                         </button>
                       </div>
+                    </div>
+                  );
+                })()}
+                {(inputs.contractType === 'employment' || inputs.contractType === 'mandate') && (() => {
+                  const netNum = parseFloat(targetNet);
+                  const validNet = Number.isFinite(netNum) && netNum > 0;
+                  const computed = validNet
+                    ? inputs.contractType === 'employment'
+                      ? solveEmploymentGrossForNet(netNum, inputs.employment)
+                      : solveMandateGrossForNet(netNum, inputs.mandate)
+                    : null;
+                  return (
+                    <div className="form-group">
+                      <label htmlFor="salary-target-net">{t('salary_target_net_label')}</label>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div className="input-with-suffix" style={{ maxWidth: 160 }}>
+                          <input
+                            id="salary-target-net"
+                            type="number"
+                            min={0}
+                            step={100}
+                            value={targetNet}
+                            onChange={(e) => setTargetNet(e.target.value)}
+                          />
+                          <span className="input-suffix">{t('currency')}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="toolbar-btn"
+                          disabled={computed === null}
+                          onClick={() => {
+                            if (computed === null) return;
+                            setInputs(setPrimaryAmount(inputs, computed));
+                            setAmountFieldVersion((v) => v + 1);
+                          }}
+                        >
+                          {t('salary_hourly_apply_btn')} {computed !== null ? `(${fmt(computed)} ${t('currency')})` : ''}
+                        </button>
+                      </div>
+                      <div className="hint">{t('salary_target_net_hint')}</div>
                     </div>
                   );
                 })()}
