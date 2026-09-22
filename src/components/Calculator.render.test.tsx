@@ -6,7 +6,20 @@ import { LangProvider } from '../contexts/LangContext';
 import { useCalculator } from '../hooks/useCalculator';
 import Calculator from './Calculator';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // useCalculator() seeds its initial calcState from the URL query string,
+  // falling back to localStorage (persistInputs, called on every "Oblicz")
+  // when the URL is empty — both survive across tests in this file
+  // (cleanup() only unmounts React; jsdom's location/history and the
+  // in-memory localStorage polyfill from src/test/setup.ts are shared
+  // module-level state for the whole file). Same class of leak fixed in
+  // SalaryCalculator.render.test.tsx / CreditworthinessCalculator.render.test.tsx —
+  // applied here too so a future test that calculates doesn't silently
+  // poison the next one's initial state.
+  window.history.replaceState(null, '', '/');
+  localStorage.clear();
+});
 
 // Mirrors how App.tsx wires useCalculator() into <Calculator> — a thin
 // harness so the render tests exercise the REAL onBlur-clamping logic
