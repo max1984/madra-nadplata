@@ -394,23 +394,28 @@ export default function SalaryCalculator({
     // zaliczka zostaje płaska 12% mimo przekroczenia 120 000 zł — kolorowanie
     // słupków "próg 32%" byłoby wtedy mylące, bo realnie tego progu nie widać
     // w zaliczce (tylko ewentualnie w rocznym rozliczeniu). Nie dotyczy
-    // pozostałych dwóch progów (copyrightLimitCrossedMonth, ryczaltHealthTierCrossedMonth)
-    // — to nie są zaliczki na PIT wg skali, więc deklaracja PIT-2 nic tu nie zmienia.
+    // pozostałych trzech progów (copyrightLimitCrossedMonth,
+    // reliefLimitCrossedMonth, ryczaltHealthTierCrossedMonth) — applyIncomeTax
+    // liczy podatek (nawet płaski 12%) od taxableIncomeThisMonth, które już
+    // uwzględnia wyczerpanie ulgi/kosztów autorskich, więc te dwa progi są
+    // widoczne w zaliczce niezależnie od oświadczenia PIT-2.
     const flatRateActive =
       crossedIdx !== null &&
       inputs.jointTaxation.enabled &&
       inputs.jointTaxation.flatRateDeclared &&
       (inputs.contractType === 'employment' || inputs.contractType === 'mandate');
-    // Trzy niezależne, realne powody spadku netto w trakcie roku — próg
-    // 120 000 zł (skala), wyczerpanie rocznego limitu 50% kosztów autorskich
-    // (tylko umowa o pracę, może wystąpić RAZEM ze skalą w innym miesiącu),
-    // i próg 60 000/300 000 zł przychodu ryczałtu (tylko B2B ryczałt,
-    // wzajemnie wykluczający się z pozostałymi dwoma). Bierzemy najwcześniejszy
-    // z tych, które faktycznie wystąpiły — od tego miesiąca słupki dostają
+    // Cztery niezależne, realne powody spadku netto w trakcie roku — próg
+    // 120 000 zł (skala), wyczerpanie rocznego limitu ulgi specjalnej
+    // (85 528 zł) i limitu 50% kosztów autorskich (oba tylko umowa o
+    // pracę/zlecenie, mogą wystąpić RAZEM ze skalą w innym miesiącu), i próg
+    // 60 000/300 000 zł przychodu ryczałtu (tylko B2B ryczałt, wzajemnie
+    // wykluczający się z pozostałymi trzema). Bierzemy najwcześniejszy z
+    // tych, które faktycznie wystąpiły — od tego miesiąca słupki dostają
     // ten sam kolor, niezależnie od tego, KTÓRY próg go wywołał.
     const elevatedCandidates = [
       flatRateActive ? null : crossedIdx,
       calcState.result.copyrightLimitCrossedMonth,
+      calcState.result.reliefLimitCrossedMonth,
       calcState.result.ryczaltHealthTierCrossedMonth,
     ].filter((v): v is number => v !== null);
     const elevatedIdx = elevatedCandidates.length > 0 ? Math.min(...elevatedCandidates) : null;
@@ -1200,7 +1205,7 @@ export default function SalaryCalculator({
                 <div style={{ height: 260, marginTop: 16 }}>
                   <canvas ref={chartRef} role="img" aria-label={t('salary_annual_chart_label')} />
                 </div>
-                {(calcState.result.scaleThresholdCrossedMonth !== null || calcState.result.zusLimitCrossedMonth !== null || calcState.result.ryczaltHealthTierCrossedMonth !== null || calcState.result.copyrightLimitCrossedMonth !== null) && (
+                {(calcState.result.scaleThresholdCrossedMonth !== null || calcState.result.zusLimitCrossedMonth !== null || calcState.result.ryczaltHealthTierCrossedMonth !== null || calcState.result.copyrightLimitCrossedMonth !== null || calcState.result.reliefLimitCrossedMonth !== null) && (
                   <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, fontSize: '.8rem', color: 'var(--text2)' }}>
                     {calcState.result.scaleThresholdCrossedMonth !== null &&
                       !(inputs.jointTaxation.enabled && inputs.jointTaxation.flatRateDeclared &&
@@ -1220,6 +1225,12 @@ export default function SalaryCalculator({
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--warn)', flexShrink: 0 }} />
                         {t('salary_chart_legend_copyright_limit')}
+                      </div>
+                    )}
+                    {calcState.result.reliefLimitCrossedMonth !== null && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 3, background: 'var(--warn)', flexShrink: 0 }} />
+                        {t('salary_chart_legend_relief')}
                       </div>
                     )}
                     {calcState.result.zusLimitCrossedMonth !== null && (
