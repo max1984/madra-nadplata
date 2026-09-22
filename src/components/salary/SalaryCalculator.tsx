@@ -222,16 +222,27 @@ export function formatAnnualScheduleCsv(
   state: Extract<SalaryState, { mode: 'annual' }>,
   t: (key: TranslationKey) => string,
   lang: Lang,
+  scaleExcluded: boolean,
 ): string {
   const sep = lang === 'en' ? ',' : ';';
   // B2B nie ma "brutto" w sensie umowy o pracę — ta kolumna to przychód
   // (revenue), więc nagłówek CSV odzwierciedla to samo rozróżnienie, co
   // salary_b2b_revenue_label w formularzu.
   const grossHeader = state.contractType === 'b2b' ? t('salary_csv_col_revenue') : t('salary_result_gross');
-  const headers = [t('salary_csv_col_month'), grossHeader, t('salary_result_tax'), t('salary_result_net')];
+  const headers = [t('salary_csv_col_month'), grossHeader, t('salary_result_tax'), t('salary_result_net'), t('salary_csv_col_notes')];
+  // Ten sam próg co kolorowanie słupków na wykresie (earliestElevatedMonth) —
+  // eksport CSV i wykres muszą się zgadzać, inaczej dokładne liczby w
+  // arkuszu wyglądałyby na niewytłumaczony spadek netto dokładnie tak samo,
+  // jak wykres bez adnotacji przed tą serią poprawek.
+  const elevatedIdx = earliestElevatedMonth(state.result, scaleExcluded);
+  const zusIdx = state.result.zusLimitCrossedMonth;
   const rows = state.result.months.map((m, i) => {
     const gross = 'grossMonthly' in m ? m.grossMonthly : m.monthlyRevenue;
-    return [i + 1, csvDec(gross, lang), csvDec(m.tax, lang), csvDec(m.net, lang)].join(sep);
+    const notes = [
+      elevatedIdx !== null && i + 1 >= elevatedIdx ? t('salary_csv_note_elevated') : null,
+      zusIdx !== null && i + 1 === zusIdx ? t('salary_csv_note_zus') : null,
+    ].filter((v): v is string => v !== null).join(' / ');
+    return [i + 1, csvDec(gross, lang), csvDec(m.tax, lang), csvDec(m.net, lang), notes].join(sep);
   });
   // BOM na początku — jak w Schedule.tsx exportCSV, żeby Excel na Windows
   // nie połamał polskich znaków w nagłówkach kolumn.
@@ -389,7 +400,12 @@ export default function SalaryCalculator({
 
   const handleExportCsv = () => {
     if (!calcState || calcState.mode !== 'annual') return;
-    const csv = formatAnnualScheduleCsv(calcState, t, lang);
+    const flatRateActive =
+      calcState.result.scaleThresholdCrossedMonth !== null &&
+      inputs.jointTaxation.enabled &&
+      inputs.jointTaxation.flatRateDeclared &&
+      (inputs.contractType === 'employment' || inputs.contractType === 'mandate');
+    const csv = formatAnnualScheduleCsv(calcState, t, lang, flatRateActive);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

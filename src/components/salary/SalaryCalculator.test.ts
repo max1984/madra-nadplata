@@ -8,6 +8,9 @@ const templates: Record<string, string> = {
   salary_share_summary_text_annual: 'Netto roczne: {totalNet} (podatek {totalTax}). {url}',
   salary_csv_col_month: 'Miesiąc',
   salary_csv_col_revenue: 'Przychód',
+  salary_csv_col_notes: 'Uwagi',
+  salary_csv_note_elevated: 'wyższe obciążenie',
+  salary_csv_note_zus: 'niższe składki ZUS',
   salary_result_gross: 'Brutto',
   salary_result_tax: 'Podatek',
   salary_result_net: 'Na rękę',
@@ -75,14 +78,19 @@ describe('formatAnnualScheduleCsv', () => {
             { grossMonthly: 10000, tax: 800, net: 7500 },
             { grossMonthly: 12000, tax: 1000, net: 8900 },
           ],
+          scaleThresholdCrossedMonth: null,
+          copyrightLimitCrossedMonth: null,
+          reliefLimitCrossedMonth: null,
+          ryczaltHealthTierCrossedMonth: null,
+          zusLimitCrossedMonth: null,
         },
         jointTaxation: null,
       } as unknown as Extract<SalaryState, { mode: 'annual' }>;
-      const csv = formatAnnualScheduleCsv(state, t, 'pl');
+      const csv = formatAnnualScheduleCsv(state, t, 'pl', false);
       const lines = csv.replace(/^﻿/, '').split('\n');
-      expect(lines[0]).toBe('Miesiąc;Brutto;Podatek;Na rękę');
-      expect(lines[1]).toBe('1;10000,00;800,00;7500,00');
-      expect(lines[2]).toBe('2;12000,00;1000,00;8900,00');
+      expect(lines[0]).toBe('Miesiąc;Brutto;Podatek;Na rękę;Uwagi');
+      expect(lines[1]).toBe('1;10000,00;800,00;7500,00;');
+      expect(lines[2]).toBe('2;12000,00;1000,00;8900,00;');
     }
   );
 
@@ -92,26 +100,87 @@ describe('formatAnnualScheduleCsv', () => {
       contractType: 'b2b',
       result: {
         months: [{ monthlyRevenue: 15000, tax: 1500, net: 11000 }],
+        scaleThresholdCrossedMonth: null,
+        copyrightLimitCrossedMonth: null,
+        reliefLimitCrossedMonth: null,
+        ryczaltHealthTierCrossedMonth: null,
+        zusLimitCrossedMonth: null,
       },
       jointTaxation: null,
     } as unknown as Extract<SalaryState, { mode: 'annual' }>;
-    const csv = formatAnnualScheduleCsv(state, t, 'pl');
+    const csv = formatAnnualScheduleCsv(state, t, 'pl', false);
     const lines = csv.replace(/^﻿/, '').split('\n');
-    expect(lines[0]).toBe('Miesiąc;Przychód;Podatek;Na rękę');
-    expect(lines[1]).toBe('1;15000,00;1500,00;11000,00');
+    expect(lines[0]).toBe('Miesiąc;Przychód;Podatek;Na rękę;Uwagi');
+    expect(lines[1]).toBe('1;15000,00;1500,00;11000,00;');
   });
 
   it('uses comma column separator and dot decimal separator for English locale, matching csvDec/Schedule.tsx conventions', () => {
     const state = {
       mode: 'annual',
       contractType: 'employment',
-      result: { months: [{ grossMonthly: 10000, tax: 800, net: 7500 }] },
+      result: {
+        months: [{ grossMonthly: 10000, tax: 800, net: 7500 }],
+        scaleThresholdCrossedMonth: null,
+        copyrightLimitCrossedMonth: null,
+        reliefLimitCrossedMonth: null,
+        ryczaltHealthTierCrossedMonth: null,
+        zusLimitCrossedMonth: null,
+      },
       jointTaxation: null,
     } as unknown as Extract<SalaryState, { mode: 'annual' }>;
-    const csv = formatAnnualScheduleCsv(state, t, 'en');
+    const csv = formatAnnualScheduleCsv(state, t, 'en', false);
     const lines = csv.replace(/^﻿/, '').split('\n');
-    expect(lines[0]).toBe('Miesiąc,Brutto,Podatek,Na rękę');
-    expect(lines[1]).toBe('1,10000.00,800.00,7500.00');
+    expect(lines[0]).toBe('Miesiąc,Brutto,Podatek,Na rękę,Uwagi');
+    expect(lines[1]).toBe('1,10000.00,800.00,7500.00,');
+  });
+
+  it(
+    'regression: marks months from the earliest elevated threshold onward with a "wyższe obciążenie" note, and ' +
+      'the ZUS-limit month specifically with "niższe składki ZUS" — a plain CSV of numbers looked exactly like ' +
+      'an unexplained net-pay change without this, the same problem the chart annotations were added to fix',
+    () => {
+      const state = {
+        mode: 'annual',
+        contractType: 'employment',
+        result: {
+          months: [
+            { grossMonthly: 10000, tax: 800, net: 9200 },
+            { grossMonthly: 10000, tax: 800, net: 9200 },
+            { grossMonthly: 10000, tax: 1200, net: 8800 },
+          ],
+          scaleThresholdCrossedMonth: 3,
+          copyrightLimitCrossedMonth: null,
+          reliefLimitCrossedMonth: null,
+          ryczaltHealthTierCrossedMonth: null,
+          zusLimitCrossedMonth: 2,
+        },
+        jointTaxation: null,
+      } as unknown as Extract<SalaryState, { mode: 'annual' }>;
+      const csv = formatAnnualScheduleCsv(state, t, 'pl', false);
+      const lines = csv.replace(/^﻿/, '').split('\n');
+      expect(lines[1]!.endsWith(';')).toBe(true);
+      expect(lines[2]!.endsWith(';niższe składki ZUS')).toBe(true);
+      expect(lines[3]!.endsWith(';wyższe obciążenie')).toBe(true);
+    }
+  );
+
+  it('scaleExcluded=true (flatRateDeclared) omits the "wyższe obciążenie" note for the scale threshold alone', () => {
+    const state = {
+      mode: 'annual',
+      contractType: 'employment',
+      result: {
+        months: [{ grossMonthly: 10000, tax: 800, net: 9200 }],
+        scaleThresholdCrossedMonth: 1,
+        copyrightLimitCrossedMonth: null,
+        reliefLimitCrossedMonth: null,
+        ryczaltHealthTierCrossedMonth: null,
+        zusLimitCrossedMonth: null,
+      },
+      jointTaxation: null,
+    } as unknown as Extract<SalaryState, { mode: 'annual' }>;
+    const csv = formatAnnualScheduleCsv(state, t, 'pl', true);
+    const lines = csv.replace(/^﻿/, '').split('\n');
+    expect(lines[1]!.endsWith(';')).toBe(true);
   });
 });
 
