@@ -24,6 +24,7 @@ export type SalaryTranslationKey =
   | 'salary_annual_total_social_health' | 'salary_annual_scale_crossed' | 'salary_annual_zus_crossed'
   | 'salary_chart_legend_bracket' | 'salary_chart_legend_zus'
   | 'salary_annual_ryczalt_health_crossed' | 'salary_chart_legend_ryczalt_health'
+  | 'salary_annual_copyright_limit_crossed' | 'salary_chart_legend_copyright_limit'
   | 'salary_annual_relief_crossed' | 'salary_annual_chart_label'
   | 'salary_kup_standard' | 'salary_kup_elevated'
   | 'salary_mandate_kup_standard' | 'salary_mandate_kup_copyright'
@@ -100,6 +101,8 @@ const plSalary: Record<SalaryTranslationKey, string> = {
   salary_chart_legend_bracket: 'Miesiące w 32% progu podatkowym',
   salary_annual_ryczalt_health_crossed: 'Wyższy próg składki zdrowotnej (ryczałt) przekroczony w miesiącu',
   salary_chart_legend_ryczalt_health: 'Miesiące z wyższą składką zdrowotną (próg 60 000/300 000 zł przychodu)',
+  salary_annual_copyright_limit_crossed: 'Roczny limit 50% kosztów autorskich (60 000 zł) wyczerpany w miesiącu',
+  salary_chart_legend_copyright_limit: 'Miesiące po wyczerpaniu limitu 50% kosztów autorskich',
   salary_chart_legend_zus: 'Miesiąc przekroczenia limitu ZUS (mniej potrąceń)',
   salary_annual_relief_crossed: 'Ulga wyczerpana w miesiącu',
   salary_annual_chart_label: 'Wynagrodzenie netto w kolejnych miesiącach',
@@ -231,6 +234,8 @@ const enSalary: Record<SalaryTranslationKey, string> = {
   salary_chart_legend_bracket: 'Months in the 32% tax bracket',
   salary_annual_ryczalt_health_crossed: 'Higher health insurance tier (flat-rate tax) crossed in month',
   salary_chart_legend_ryczalt_health: 'Months with higher health insurance (60,000/300,000 zł revenue threshold)',
+  salary_annual_copyright_limit_crossed: 'Annual 50% copyright cost limit (60,000 zł) exhausted in month',
+  salary_chart_legend_copyright_limit: 'Months after the 50% copyright cost limit is exhausted',
   salary_chart_legend_zus: 'Month the ZUS limit was crossed (fewer deductions)',
   salary_annual_relief_crossed: 'Relief exhausted in month',
   salary_annual_chart_label: 'Net pay across the months',

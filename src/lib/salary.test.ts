@@ -439,6 +439,54 @@ describe('computeAnnualSalarySchedule', () => {
     expect(result.ryczaltHealthTierCrossedMonth).toBeNull();
   });
 
+  it(
+    'regression: copyrightLimitCrossedMonth records the month the annual 50% copyright-cost limit ' +
+      '(60 000 zł) is exhausted — previously untracked, so an employee with a high copyright share saw an ' +
+      'unexplained net-pay drop on the annual chart with no annotation, the same class of bug as the ' +
+      '120 000 zł threshold and the ZUS limit',
+    () => {
+      const result = computeAnnualSalarySchedule('employment', Array(12).fill(15000), {
+        kup: 'standard',
+        copyrightSharePercent: 100,
+        specialRelief: 'none',
+        reducingShare: 'full',
+        ppk: { mode: 'none' },
+      });
+      // 0.5 * 15000 * 100% = 7500 zł/miesiąc kosztów autorskich; 60 000 / 7500 = 8 miesięcy.
+      expect(result.copyrightLimitCrossedMonth).toBe(8);
+    }
+  );
+
+  it('copyrightLimitCrossedMonth stays null when copyrightSharePercent is 0 or unset, even at high income', () => {
+    const unset = computeAnnualSalarySchedule('employment', Array(12).fill(30000), {
+      kup: 'standard',
+      specialRelief: 'none',
+      reducingShare: 'full',
+      ppk: { mode: 'none' },
+    });
+    const explicitZero = computeAnnualSalarySchedule('employment', Array(12).fill(30000), {
+      kup: 'standard',
+      copyrightSharePercent: 0,
+      specialRelief: 'none',
+      reducingShare: 'full',
+      ppk: { mode: 'none' },
+    });
+    expect(unset.copyrightLimitCrossedMonth).toBeNull();
+    expect(explicitZero.copyrightLimitCrossedMonth).toBeNull();
+  });
+
+  it('copyrightLimitCrossedMonth stays null for non-employment contract types', () => {
+    const result = computeAnnualSalarySchedule('b2b', Array(12).fill(30000), {
+      monthlyCosts: 0,
+      taxForm: 'skala',
+      ryczaltRate: 0.12,
+      ipBoxSharePercent: 0,
+      zusVariant: 'pelny',
+      sicknessVoluntary: false,
+    });
+    expect(result.copyrightLimitCrossedMonth).toBeNull();
+  });
+
   it('totalNet equals the sum of each month\'s net pay', () => {
     const result = computeAnnualSalarySchedule('mandate', Array(12).fill(4000), {
       kup: 'standard',

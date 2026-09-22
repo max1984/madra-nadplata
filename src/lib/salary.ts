@@ -633,6 +633,17 @@ export interface AnnualScheduleResult<TResult> {
    * umowy i form B2B innych niż ryczałt (tam ta składka jest stała).
    */
   ryczaltHealthTierCrossedMonth: number | null;
+  /**
+   * Umowa o pracę z prawami autorskimi: miesiąc, w którym narastające 50%
+   * koszty autorskie (`priorCopyrightCostsUsed`) wyczerpały roczny limit
+   * `ANNUAL_COPYRIGHT_KUP_LIMIT` (60 000 zł) — od tego miesiąca
+   * `copyrightKup` spada do 0, więc dochód do opodatkowania (a przez to
+   * podatek) skokowo rośnie, obniżając netto z tego samego, realnego
+   * powodu co przekroczenie progu 120 000 zł czy limitu ZUS. `null` dla
+   * pozostałych typów umowy oraz gdy `copyrightSharePercent` nie jest
+   * ustawiony (limit nigdy się wtedy nie wyczerpuje).
+   */
+  copyrightLimitCrossedMonth: number | null;
 }
 
 /**
@@ -677,6 +688,7 @@ export function computeAnnualSalarySchedule(
   let zusLimitCrossedMonth: number | null = null;
   let reliefLimitCrossedMonth: number | null = null;
   let ryczaltHealthTierCrossedMonth: number | null = null;
+  let copyrightLimitCrossedMonth: number | null = null;
 
   for (let i = 0; i < monthlyGrossValues.length; i++) {
     const amount = monthlyGrossValues[i] ?? 0;
@@ -714,6 +726,7 @@ export function computeAnnualSalarySchedule(
     const priorPension = ctx.priorPensionBase;
     const priorRelief = ctx.priorReliefUsed;
     const priorFlatRevenue = ctx.priorFlatRevenue;
+    const priorCopyrightCostsUsed = ctx.priorCopyrightCostsUsed;
 
     ctx = {
       priorTaxableIncome: ctx.priorTaxableIncome + taxableIncomeThisMonth,
@@ -731,6 +744,13 @@ export function computeAnnualSalarySchedule(
     }
     if (reliefLimitCrossedMonth === null && priorRelief < YOUNG_RELIEF_LIMIT && ctx.priorReliefUsed >= YOUNG_RELIEF_LIMIT) {
       reliefLimitCrossedMonth = i + 1;
+    }
+    if (
+      copyrightLimitCrossedMonth === null &&
+      priorCopyrightCostsUsed < ANNUAL_COPYRIGHT_KUP_LIMIT &&
+      ctx.priorCopyrightCostsUsed >= ANNUAL_COPYRIGHT_KUP_LIMIT
+    ) {
+      copyrightLimitCrossedMonth = i + 1;
     }
     if (
       ryczaltHealthTierCrossedMonth === null &&
@@ -761,6 +781,7 @@ export function computeAnnualSalarySchedule(
     zusLimitCrossedMonth,
     reliefLimitCrossedMonth,
     ryczaltHealthTierCrossedMonth,
+    copyrightLimitCrossedMonth,
   };
 }
 
