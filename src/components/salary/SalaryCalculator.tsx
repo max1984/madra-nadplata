@@ -274,6 +274,18 @@ export default function SalaryCalculator({
   // pól liczbowych w tym formularzu) po zastosowaniu przeliczenia ze stawki
   // godzinowej, bo inaczej widoczna wartość zostałaby stara mimo zmiany stanu.
   const [amountFieldVersion, setAmountFieldVersion] = useState(0);
+  // Przycisk "Zastosuj" w widgetach przeliczników pokazuje wyliczoną kwotę w
+  // swoim tekście — widoczne dla użytkownika myszki, ale dla czytnika ekranu
+  // to tylko etykieta przycisku PRZED kliknięciem, nie potwierdzenie PO. Bez
+  // osobnego ogłoszenia użytkownik czytnika ekranu nie miałby jak się
+  // dowiedzieć, że kwota rzeczywiście została zastosowana, poza ręcznym
+  // przejściem do pola #salary-amount.
+  const [widgetAppliedMessage, setWidgetAppliedMessage] = useState('');
+  const applyWidgetAmount = (computed: number) => {
+    setInputs(setPrimaryAmount(inputs, computed));
+    setAmountFieldVersion((v) => v + 1);
+    setWidgetAppliedMessage(t('salary_widget_applied_announcement').replace('{amount}', `${fmt(computed)} ${t('currency')}`));
+  };
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
@@ -597,8 +609,7 @@ export default function SalaryCalculator({
                           disabled={computed === null}
                           onClick={() => {
                             if (computed === null) return;
-                            setInputs(setPrimaryAmount(inputs, computed));
-                            setAmountFieldVersion((v) => v + 1);
+                            applyWidgetAmount(computed);
                           }}
                         >
                           {t('salary_hourly_apply_btn')} {computed !== null ? `(${fmt(computed)} ${t('currency')})` : ''}
@@ -649,8 +660,7 @@ export default function SalaryCalculator({
                           disabled={computed === null}
                           onClick={() => {
                             if (computed === null) return;
-                            setInputs(setPrimaryAmount(inputs, computed));
-                            setAmountFieldVersion((v) => v + 1);
+                            applyWidgetAmount(computed);
                           }}
                         >
                           {t('salary_hourly_apply_btn')} {computed !== null ? `(${fmt(computed)} ${t('currency')})` : ''}
@@ -692,8 +702,7 @@ export default function SalaryCalculator({
                           disabled={computed === null}
                           onClick={() => {
                             if (computed === null) return;
-                            setInputs(setPrimaryAmount(inputs, computed));
-                            setAmountFieldVersion((v) => v + 1);
+                            applyWidgetAmount(computed);
                           }}
                         >
                           {t('salary_hourly_apply_btn')} {computed !== null ? `(${fmt(computed)} ${t('currency')})` : ''}
@@ -703,6 +712,7 @@ export default function SalaryCalculator({
                     </div>
                   );
                 })()}
+                <div role="status" aria-live="polite" className="sr-only">{widgetAppliedMessage}</div>
               </>
             ) : (
               <div className="form-group">

@@ -111,6 +111,24 @@ describe('CreditworthinessCalculator target-loan-to-income helper (render)', () 
     await user.type(screen.getByRole('spinbutton', { name: /chcesz pożyczyć/i }), '400000');
     expect(screen.getByRole('button', { name: /zastosuj/i })).not.toBeDisabled();
   });
+
+  it(
+    'regression: clicking "Zastosuj" announces the applied income for screen reader users — the button text ' +
+      'already showed a live preview before clicking, but nothing confirmed afterward that it was applied',
+    async () => {
+      const user = userEvent.setup();
+      renderCreditworthinessCalculator();
+
+      await user.type(screen.getByRole('spinbutton', { name: /chcesz pożyczyć/i }), '400000');
+      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+
+      // Ten sam komponent ma już drugi region role="status" dla ogłoszenia
+      // wyniku obliczeń — sprawdzamy, że KTÓRYŚ z regionów status zawiera
+      // nowe ogłoszenie, nie konkretny jeden z nich.
+      const statusRegions = screen.getAllByRole('status');
+      expect(statusRegions.some((el) => /zastosowano przeliczony dochód/i.test(el.textContent ?? ''))).toBe(true);
+    }
+  );
 });
 
 describe('CreditworthinessCalculator copy link button (render)', () => {

@@ -267,6 +267,27 @@ describe('SalaryCalculator target-net-to-gross helper (render)', () => {
   );
 });
 
+describe('SalaryCalculator widget-applied aria-live announcement (render)', () => {
+  it(
+    'regression: clicking "Zastosuj" in a converter widget announces the applied amount for screen reader ' +
+      'users — the button text already showed a live preview of the amount before clicking, but nothing ' +
+      'confirmed afterward that it was actually applied, short of manually navigating to the amount field',
+    async () => {
+      const user = userEvent.setup();
+      renderSalaryCalculator();
+
+      await user.type(screen.getByRole('spinbutton', { name: /chcesz mieć konkretną kwotę/i }), '5000');
+      await user.click(screen.getByRole('button', { name: /zastosuj/i }));
+
+      // Ten sam komponent ma już drugi region role="status" dla ogłoszenia
+      // wyniku obliczeń (formatSalaryAnnouncement) — sprawdzamy, że KTÓRYŚ
+      // z regionów status zawiera nowe ogłoszenie, nie konkretny jeden z nich.
+      const statusRegions = screen.getAllByRole('status');
+      expect(statusRegions.some((el) => /zastosowano przeliczoną kwotę/i.test(el.textContent ?? ''))).toBe(true);
+    }
+  );
+});
+
 describe('SalaryCalculator copyright KUP annual limit hint (render)', () => {
   it(
     'regression: selecting copyright (50%) KUP on a mandate contract shows a hint about the 60 000 zł annual ' +

@@ -171,6 +171,10 @@ export default function CreditworthinessCalculator({
   // pola liczbowe w tym formularzu) po zastosowaniu przeliczenia z docelowej
   // kwoty kredytu — inaczej widoczna wartość zostałaby stara mimo zmiany stanu.
   const [incomeFieldVersion, setIncomeFieldVersion] = useState(0);
+  // Jak w SalaryCalculator.tsx — bez tego ogłoszenia czytnik ekranu nie ma
+  // jak się dowiedzieć, że kliknięcie "Zastosuj" faktycznie zmieniło pole
+  // dochodu, poza ręcznym przejściem do niego.
+  const [widgetAppliedMessage, setWidgetAppliedMessage] = useState('');
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const canShare = useMemo(() => canUseNativeShare(typeof navigator === 'undefined' ? null : navigator), []);
@@ -365,6 +369,7 @@ export default function CreditworthinessCalculator({
                       if (computed === null) return;
                       setInputs({ netIncome: computed });
                       setIncomeFieldVersion((v) => v + 1);
+                      setWidgetAppliedMessage(t('cw_widget_applied_announcement').replace('{amount}', fmtC(computed)));
                     }}
                   >
                     {t('cw_target_loan_apply_btn')} {computed !== null ? `(${fmtC(computed)})` : ''}
@@ -374,6 +379,7 @@ export default function CreditworthinessCalculator({
               </div>
             );
           })()}
+          <div role="status" aria-live="polite" className="sr-only">{widgetAppliedMessage}</div>
 
           <div className="form-group" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {CONTRACT_TABS.map((tab) => (
