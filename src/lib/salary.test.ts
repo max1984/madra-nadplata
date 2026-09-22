@@ -210,6 +210,15 @@ describe('calcMandateContract', () => {
     expect(r.kup).toBe(0);
   });
 
+  it(
+    'the 60 000 zł cap also applies to a single isolated month with no prior annual context — a single ' +
+      'huge one-off copyright payment cannot exceed the annual limit either, even outside annual mode',
+    () => {
+      const r = calcMandateContract({ ...mandateDefaults, kup: 'copyright', grossMonthly: 500_000 });
+      expect(r.kup).toBe(ANNUAL_COPYRIGHT_KUP_LIMIT);
+    }
+  );
+
   it('the annual copyright limit does not affect standard (20%) KUP, which has no such cap', () => {
     const ctxAtLimit = {
       priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0,
