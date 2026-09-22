@@ -189,11 +189,12 @@ export function formatSalaryAnnouncement(
 
 /**
  * Cztery niezależne, realne powody spadku netto w trakcie roku — próg
- * 120 000 zł (skala), wyczerpanie rocznego limitu ulgi specjalnej
- * (85 528 zł) i limitu 50% kosztów autorskich (oba tylko umowa o
- * pracę/zlecenie, mogą wystąpić RAZEM ze skalą w innym miesiącu), i próg
- * 60 000/300 000 zł przychodu ryczałtu (tylko B2B ryczałt, wzajemnie
- * wykluczający się z pozostałymi trzema). Zwraca najwcześniejszy z tych,
+ * 120 000 zł (skala, tylko umowa o pracę/zlecenie), wyczerpanie rocznego
+ * limitu ulgi specjalnej (85 528 zł, tylko umowa o pracę/zlecenie) i
+ * limitu 50% kosztów autorskich (umowa o pracę, zlecenie LUB dzieło —
+ * może wystąpić RAZEM ze skalą w innym miesiącu), i próg 60 000/300 000 zł
+ * przychodu ryczałtu (tylko B2B ryczałt, wzajemnie wykluczający się z
+ * pozostałymi trzema). Zwraca najwcześniejszy z tych,
  * które faktycznie wystąpiły — od tego miesiąca słupki na wykresie dostają
  * ten sam kolor, niezależnie od tego, KTÓRY próg go wywołał.
  *

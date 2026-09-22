@@ -186,6 +186,40 @@ describe('calcMandateContract', () => {
     expect(copyright.tax).toBeLessThan(standard.tax);
   });
 
+  it(
+    'regression: caps copyright KUP at the remaining room under the annual 60 000 zł limit, same as ' +
+      'calcEmploymentContract — previously kup:\'copyright\' on a zlecenie gave unlimited 50% KUP every ' +
+      'month regardless of how much was already used earlier in the year, understating tax for high earners',
+    () => {
+      const ctx = {
+        priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0,
+        priorCopyrightCostsUsed: ANNUAL_COPYRIGHT_KUP_LIMIT - 500,
+      };
+      const r = calcMandateContract({ ...mandateDefaults, kup: 'copyright', grossMonthly: 10000 }, ctx);
+      // Bez limitu: (10000 - employeeSocialTotal) * 50% > 500 zł — ale w tym roku zostało tylko 500 zł miejsca.
+      expect(r.kup).toBe(500);
+    }
+  );
+
+  it('copyright KUP caps at 0 (not a negative number) once the annual limit is fully exhausted', () => {
+    const ctx = {
+      priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0,
+      priorCopyrightCostsUsed: ANNUAL_COPYRIGHT_KUP_LIMIT,
+    };
+    const r = calcMandateContract({ ...mandateDefaults, kup: 'copyright' }, ctx);
+    expect(r.kup).toBe(0);
+  });
+
+  it('the annual copyright limit does not affect standard (20%) KUP, which has no such cap', () => {
+    const ctxAtLimit = {
+      priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0,
+      priorCopyrightCostsUsed: ANNUAL_COPYRIGHT_KUP_LIMIT,
+    };
+    const withLimitUsed = calcMandateContract({ ...mandateDefaults, kup: 'standard' }, ctxAtLimit);
+    const fresh = calcMandateContract({ ...mandateDefaults, kup: 'standard' });
+    expect(withLimitUsed.kup).toBe(fresh.kup);
+  });
+
   it('sickness insurance is voluntary — disabling it raises net pay slightly', () => {
     const withSickness = calcMandateContract({ ...mandateDefaults, sicknessVoluntary: true });
     const withoutSickness = calcMandateContract({ ...mandateDefaults, sicknessVoluntary: false });
@@ -216,6 +250,21 @@ describe('calcSpecificWorkContract', () => {
     expect(copyright.taxableIncomeThisMonth).toBeLessThan(standard.taxableIncomeThisMonth);
     expect(copyright.net).toBeGreaterThan(standard.net);
   });
+
+  it(
+    'regression: caps copyright KUP at the remaining room under the annual 60 000 zł limit, same as ' +
+      'calcEmploymentContract/calcMandateContract — previously kup:\'copyright\' on a dzieło gave unlimited ' +
+      '50% KUP every month regardless of prior usage in the year',
+    () => {
+      const ctx = {
+        priorTaxableIncome: 0, priorReliefUsed: 0, priorPensionBase: 0, priorFlatRevenue: 0,
+        priorCopyrightCostsUsed: ANNUAL_COPYRIGHT_KUP_LIMIT - 200,
+      };
+      const r = calcSpecificWorkContract({ grossMonthly: 10000, kup: 'copyright', reducingShare: 'full' }, ctx);
+      // Bez limitu: 10000 * 50% = 5000 zł — ale w tym roku zostało tylko 200 zł miejsca.
+      expect(r.kup).toBe(200);
+    }
+  );
 
   it('the 120 000 zł scale threshold still applies via prior annual context (dzieło is not relief-exempt but is still taxed on the scale)', () => {
     const belowThreshold = calcSpecificWorkContract(
@@ -475,7 +524,7 @@ describe('computeAnnualSalarySchedule', () => {
     expect(explicitZero.copyrightLimitCrossedMonth).toBeNull();
   });
 
-  it('copyrightLimitCrossedMonth stays null for non-employment contract types', () => {
+  it('copyrightLimitCrossedMonth stays null for B2B, which has no KUP concept at all', () => {
     const result = computeAnnualSalarySchedule('b2b', Array(12).fill(30000), {
       monthlyCosts: 0,
       taxForm: 'skala',
@@ -485,6 +534,47 @@ describe('computeAnnualSalarySchedule', () => {
       sicknessVoluntary: false,
     });
     expect(result.copyrightLimitCrossedMonth).toBeNull();
+  });
+
+  it(
+    'regression: copyrightLimitCrossedMonth also tracks kup:\'copyright\' on a mandate (zlecenie) contract ' +
+      'across the year — previously computeAnnualSalarySchedule only fed calcEmploymentContract\'s copyrightKup ' +
+      'into priorCopyrightCostsUsed, so calcMandateContract never saw the accumulated usage and applied ' +
+      'unlimited 50% KUP every month all year, regardless of the 60 000 zł annual cap',
+    () => {
+      const result = computeAnnualSalarySchedule('mandate', Array(12).fill(15000), {
+        kup: 'copyright',
+        specialRelief: 'none',
+        reducingShare: 'full',
+        isStudentUnder26: false,
+        sicknessVoluntary: false,
+      });
+      expect(result.copyrightLimitCrossedMonth).not.toBeNull();
+      // Po wyczerpaniu limitu net powinno spaść (wyższy dochód do opodatkowania).
+      const crossMonth = result.copyrightLimitCrossedMonth!;
+      if (crossMonth < 12) {
+        expect(result.months[crossMonth]!.tax).toBeGreaterThan(result.months[0]!.tax);
+      }
+    }
+  );
+
+  it('copyrightLimitCrossedMonth stays null for a mandate contract using standard (20%) KUP, even at high income', () => {
+    const result = computeAnnualSalarySchedule('mandate', Array(12).fill(30000), {
+      kup: 'standard',
+      specialRelief: 'none',
+      reducingShare: 'full',
+      isStudentUnder26: false,
+      sicknessVoluntary: false,
+    });
+    expect(result.copyrightLimitCrossedMonth).toBeNull();
+  });
+
+  it('copyrightLimitCrossedMonth also tracks kup:\'copyright\' on a specific_work (dzieło) contract across the year', () => {
+    const result = computeAnnualSalarySchedule('specific_work', Array(12).fill(15000), {
+      kup: 'copyright',
+      reducingShare: 'full',
+    });
+    expect(result.copyrightLimitCrossedMonth).not.toBeNull();
   });
 
   it('totalNet equals the sum of each month\'s net pay', () => {

@@ -93,7 +93,7 @@ export interface AnnualContext {
   priorReliefUsed: number; // przychód objęty ulgą specjalną, narastająco — limit 85 528 zł
   priorPensionBase: number; // podstawa emerytalno-rentowa, narastająco — limit 30-krotności 282 600 zł
   priorFlatRevenue: number; // przychód (B2B ryczałt), narastająco — progi zdrowotnej 60k/300k
-  priorCopyrightCostsUsed: number; // 50% koszty autorskie (umowa o pracę), narastająco — roczny limit 60 000 zł
+  priorCopyrightCostsUsed: number; // 50% koszty autorskie, narastająco w ramach JEDNEGO typu umowy (umowa o pracę: copyrightSharePercent; zlecenie/dzieło: kup === 'copyright') — roczny limit 60 000 zł
 }
 
 export const EMPTY_ANNUAL_CONTEXT: AnnualContext = {
@@ -393,9 +393,15 @@ export function calcMandateContract(
 ): MandateResult {
   const gross = nonNegative(inputs.grossMonthly);
   const kupRate = inputs.kup === 'copyright' ? 0.5 : 0.2;
+  // Roczny limit 60 000 zł (ANNUAL_COPYRIGHT_KUP_LIMIT) dotyczy też 50% KUP
+  // na zleceniu (nie tylko copyrightSharePercent w umowie o pracę) — bez tego
+  // capa 12 miesięcy zlecenia z kup:'copyright' dawało nieograniczone 50%
+  // KUP przez cały rok, zaniżając podatek dla wysoko zarabiających.
+  const remainingCopyrightLimit = Math.max(0, ANNUAL_COPYRIGHT_KUP_LIMIT - ctx.priorCopyrightCostsUsed);
+  const cappedKup = (raw: number) => (inputs.kup === 'copyright' ? round2(Math.min(raw, remainingCopyrightLimit)) : raw);
 
   if (inputs.isStudentUnder26) {
-    const kup = round2(gross * kupRate);
+    const kup = cappedKup(round2(gross * kupRate));
     const incomeForTax = Math.max(0, gross - kup);
     const reducingAmount = taxReducingAmount(inputs.reducingShare);
     const { tax, reliefUsedThisMonth, taxableIncomeThisMonth } = applyIncomeTax(incomeForTax, {
@@ -429,7 +435,7 @@ export function calcMandateContract(
   const healthBase = Math.max(0, gross - employeeSocialTotal);
   const healthInsurance = round2(healthBase * HEALTH_INSURANCE_RATE_EMPLOYEE);
 
-  const kup = round2((gross - employeeSocialTotal) * kupRate);
+  const kup = cappedKup(round2((gross - employeeSocialTotal) * kupRate));
   const incomeForTax = Math.max(0, gross - employeeSocialTotal - kup);
   const reducingAmount = taxReducingAmount(inputs.reducingShare);
   const { tax, reliefUsedThisMonth, taxableIncomeThisMonth } = applyIncomeTax(incomeForTax, {
@@ -484,7 +490,11 @@ export function calcSpecificWorkContract(
 ): SpecificWorkResult {
   const gross = nonNegative(inputs.grossMonthly);
   const kupRate = inputs.kup === 'copyright' ? 0.5 : 0.2;
-  const kup = round2(gross * kupRate);
+  // Jak w calcMandateContract — roczny limit 60 000 zł dotyczy też 50% KUP
+  // na umowie o dzieło z przeniesieniem praw autorskich.
+  const remainingCopyrightLimit = Math.max(0, ANNUAL_COPYRIGHT_KUP_LIMIT - ctx.priorCopyrightCostsUsed);
+  const rawKup = round2(gross * kupRate);
+  const kup = inputs.kup === 'copyright' ? round2(Math.min(rawKup, remainingCopyrightLimit)) : rawKup;
   const taxableIncomeThisMonth = Math.max(0, gross - kup);
   const reducingAmount = taxReducingAmount(inputs.reducingShare);
   const tax = scaleTax(taxableIncomeThisMonth, ctx.priorTaxableIncome, reducingAmount);
@@ -634,14 +644,14 @@ export interface AnnualScheduleResult<TResult> {
    */
   ryczaltHealthTierCrossedMonth: number | null;
   /**
-   * Umowa o pracę z prawami autorskimi: miesiąc, w którym narastające 50%
-   * koszty autorskie (`priorCopyrightCostsUsed`) wyczerpały roczny limit
-   * `ANNUAL_COPYRIGHT_KUP_LIMIT` (60 000 zł) — od tego miesiąca
-   * `copyrightKup` spada do 0, więc dochód do opodatkowania (a przez to
-   * podatek) skokowo rośnie, obniżając netto z tego samego, realnego
-   * powodu co przekroczenie progu 120 000 zł czy limitu ZUS. `null` dla
-   * pozostałych typów umowy oraz gdy `copyrightSharePercent` nie jest
-   * ustawiony (limit nigdy się wtedy nie wyczerpuje).
+   * Umowa o pracę (copyrightSharePercent), zlecenie lub dzieło (kup ===
+   * 'copyright'): miesiąc, w którym narastające 50% koszty autorskie
+   * (`priorCopyrightCostsUsed`) wyczerpały roczny limit
+   * `ANNUAL_COPYRIGHT_KUP_LIMIT` (60 000 zł) — od tego miesiąca KUP
+   * autorski spada do 0, więc dochód do opodatkowania (a przez to podatek)
+   * skokowo rośnie, obniżając netto z tego samego, realnego powodu co
+   * przekroczenie progu 120 000 zł czy limitu ZUS. `null`, jeśli dany typ
+   * umowy w ogóle nie korzysta z 50% KUP w danym miesiącu.
    */
   copyrightLimitCrossedMonth: number | null;
 }
@@ -711,10 +721,12 @@ export function computeAnnualSalarySchedule(
       taxableIncomeThisMonth = r.taxableIncomeThisMonth;
       reliefUsedThisMonth = r.reliefExempt;
       pensionBaseThisMonth = r.pensionBaseThisMonth;
+      if (options.kup === 'copyright') copyrightCostsThisMonth = r.kup;
     } else if (contractType === 'specific_work') {
       const r = calcSpecificWorkContract({ ...options, grossMonthly: amount }, ctx);
       result = r;
       taxableIncomeThisMonth = r.taxableIncomeThisMonth;
+      if (options.kup === 'copyright') copyrightCostsThisMonth = r.kup;
     } else {
       const r = calcB2BContract({ ...options, monthlyRevenue: amount }, ctx);
       result = r;
