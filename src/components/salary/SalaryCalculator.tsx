@@ -187,6 +187,37 @@ export function formatSalaryAnnouncement(
     .replace('{totalTax}', fmtC(state.result.totalTax));
 }
 
+/**
+ * Cztery niezależne, realne powody spadku netto w trakcie roku — próg
+ * 120 000 zł (skala), wyczerpanie rocznego limitu ulgi specjalnej
+ * (85 528 zł) i limitu 50% kosztów autorskich (oba tylko umowa o
+ * pracę/zlecenie, mogą wystąpić RAZEM ze skalą w innym miesiącu), i próg
+ * 60 000/300 000 zł przychodu ryczałtu (tylko B2B ryczałt, wzajemnie
+ * wykluczający się z pozostałymi trzema). Zwraca najwcześniejszy z tych,
+ * które faktycznie wystąpiły — od tego miesiąca słupki na wykresie dostają
+ * ten sam kolor, niezależnie od tego, KTÓRY próg go wywołał.
+ *
+ * `scaleExcluded` gasi tylko próg skali (120 000 zł) — jeśli aktywne jest
+ * oświadczenie art. 32 ust. 1a pkt 2 (flatRateDeclared), zaliczka zostaje
+ * płaska 12% mimo przekroczenia progu, więc kolorowanie słupków "próg 32%"
+ * byłoby mylące. Nie dotyczy pozostałych trzech progów — applyIncomeTax
+ * liczy podatek (nawet płaski 12%) od taxableIncomeThisMonth, które już
+ * uwzględnia wyczerpanie ulgi/kosztów autorskich, więc te są widoczne w
+ * zaliczce niezależnie od oświadczenia PIT-2.
+ */
+export function earliestElevatedMonth(
+  result: Extract<SalaryState, { mode: 'annual' }>['result'],
+  scaleExcluded: boolean,
+): number | null {
+  const candidates = [
+    scaleExcluded ? null : result.scaleThresholdCrossedMonth,
+    result.copyrightLimitCrossedMonth,
+    result.reliefLimitCrossedMonth,
+    result.ryczaltHealthTierCrossedMonth,
+  ].filter((v): v is number => v !== null);
+  return candidates.length > 0 ? Math.min(...candidates) : null;
+}
+
 export function formatAnnualScheduleCsv(
   state: Extract<SalaryState, { mode: 'annual' }>,
   t: (key: TranslationKey) => string,
@@ -382,43 +413,20 @@ export default function SalaryCalculator({
     }
     const labels = MONTH_KEYS.map((k) => t(k));
     const netValues = calcState.result.months.map((m) => m.net);
-    // Miesiące od przekroczenia progu 120 000 zł (32% zamiast 12% na nadwyżce)
+    // Miesiące od najwcześniejszego z czterech progów (patrz earliestElevatedMonth)
     // dostają inny kolor słupka — spadek netto w tych miesiącach nie jest
-    // przypadkiem, tylko bezpośrednim skutkiem wyższej zaliczki. Miesiąc
-    // przekroczenia limitu 30-krotności ZUS (mniej potrącanych składek od
-    // tego miesiąca) dostaje wyróżnioną ramkę zamiast koloru wypełnienia —
-    // dwa niezależne zdarzenia, które mogą wypaść w różnych miesiącach.
+    // przypadkiem, tylko bezpośrednim skutkiem wyższej zaliczki/podatku/
+    // składki. Miesiąc przekroczenia limitu 30-krotności ZUS (mniej
+    // potrącanych składek od tego miesiąca) dostaje wyróżnioną ramkę zamiast
+    // koloru wypełnienia — niezależne zdarzenie, które może wypaść w innym miesiącu.
     const crossedIdx = calcState.result.scaleThresholdCrossedMonth;
     const zusIdx = calcState.result.zusLimitCrossedMonth;
-    // Jeśli aktywne jest oświadczenie art. 32 ust. 1a pkt 2 (flatRateDeclared),
-    // zaliczka zostaje płaska 12% mimo przekroczenia 120 000 zł — kolorowanie
-    // słupków "próg 32%" byłoby wtedy mylące, bo realnie tego progu nie widać
-    // w zaliczce (tylko ewentualnie w rocznym rozliczeniu). Nie dotyczy
-    // pozostałych trzech progów (copyrightLimitCrossedMonth,
-    // reliefLimitCrossedMonth, ryczaltHealthTierCrossedMonth) — applyIncomeTax
-    // liczy podatek (nawet płaski 12%) od taxableIncomeThisMonth, które już
-    // uwzględnia wyczerpanie ulgi/kosztów autorskich, więc te dwa progi są
-    // widoczne w zaliczce niezależnie od oświadczenia PIT-2.
     const flatRateActive =
       crossedIdx !== null &&
       inputs.jointTaxation.enabled &&
       inputs.jointTaxation.flatRateDeclared &&
       (inputs.contractType === 'employment' || inputs.contractType === 'mandate');
-    // Cztery niezależne, realne powody spadku netto w trakcie roku — próg
-    // 120 000 zł (skala), wyczerpanie rocznego limitu ulgi specjalnej
-    // (85 528 zł) i limitu 50% kosztów autorskich (oba tylko umowa o
-    // pracę/zlecenie, mogą wystąpić RAZEM ze skalą w innym miesiącu), i próg
-    // 60 000/300 000 zł przychodu ryczałtu (tylko B2B ryczałt, wzajemnie
-    // wykluczający się z pozostałymi trzema). Bierzemy najwcześniejszy z
-    // tych, które faktycznie wystąpiły — od tego miesiąca słupki dostają
-    // ten sam kolor, niezależnie od tego, KTÓRY próg go wywołał.
-    const elevatedCandidates = [
-      flatRateActive ? null : crossedIdx,
-      calcState.result.copyrightLimitCrossedMonth,
-      calcState.result.reliefLimitCrossedMonth,
-      calcState.result.ryczaltHealthTierCrossedMonth,
-    ].filter((v): v is number => v !== null);
-    const elevatedIdx = elevatedCandidates.length > 0 ? Math.min(...elevatedCandidates) : null;
+    const elevatedIdx = earliestElevatedMonth(calcState.result, flatRateActive);
     const backgroundColor = netValues.map((_, i) =>
       elevatedIdx !== null && i >= elevatedIdx - 1 ? CHART.bracketBar : CHART.overBar
     );

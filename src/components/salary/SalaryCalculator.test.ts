@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fillAnnualValuesFromAmount, formatSalarySummaryText, formatAnnualScheduleCsv, formatSalaryAnnouncement } from './SalaryCalculator';
+import { fillAnnualValuesFromAmount, formatSalarySummaryText, formatAnnualScheduleCsv, formatSalaryAnnouncement, earliestElevatedMonth } from './SalaryCalculator';
 import type { SalaryState } from '../../hooks/useSalaryCalculator';
 
 const fmtC = (n: number) => `${n.toFixed(0)} zł`;
@@ -138,5 +138,56 @@ describe('formatSalaryAnnouncement', () => {
       jointTaxation: null,
     } as unknown as SalaryState;
     expect(formatSalaryAnnouncement(state, t, fmtC)).toBe('Wyliczono rocznie: na rękę 60000 zł, podatek 9600 zł.');
+  });
+});
+
+describe('earliestElevatedMonth', () => {
+  const result = (over: Partial<{
+    scaleThresholdCrossedMonth: number | null;
+    zusLimitCrossedMonth: number | null;
+    reliefLimitCrossedMonth: number | null;
+    ryczaltHealthTierCrossedMonth: number | null;
+    copyrightLimitCrossedMonth: number | null;
+  }>) =>
+    ({
+      scaleThresholdCrossedMonth: null,
+      zusLimitCrossedMonth: null,
+      reliefLimitCrossedMonth: null,
+      ryczaltHealthTierCrossedMonth: null,
+      copyrightLimitCrossedMonth: null,
+      ...over,
+    }) as unknown as Extract<SalaryState, { mode: 'annual' }>['result'];
+
+  it('returns null when none of the four thresholds were crossed', () => {
+    expect(earliestElevatedMonth(result({}), false)).toBeNull();
+  });
+
+  it('returns the single threshold that was crossed', () => {
+    expect(earliestElevatedMonth(result({ scaleThresholdCrossedMonth: 6 }), false)).toBe(6);
+    expect(earliestElevatedMonth(result({ ryczaltHealthTierCrossedMonth: 9 }), false)).toBe(9);
+  });
+
+  it(
+    'regression: returns the EARLIEST of several thresholds crossed in the same year, not just the scale ' +
+      'threshold — an employment contract with a high copyright share can exhaust the 60 000 zł copyright ' +
+      'limit before crossing the 120 000 zł scale threshold, and the chart must color bars from the earlier one',
+    () => {
+      expect(earliestElevatedMonth(result({ scaleThresholdCrossedMonth: 5, copyrightLimitCrossedMonth: 3 }), false)).toBe(3);
+      expect(earliestElevatedMonth(result({ scaleThresholdCrossedMonth: 3, reliefLimitCrossedMonth: 7 }), false)).toBe(3);
+      expect(earliestElevatedMonth(result({ copyrightLimitCrossedMonth: 8, reliefLimitCrossedMonth: 4 }), false)).toBe(4);
+    }
+  );
+
+  it(
+    'regression: scaleExcluded (flatRateDeclared) suppresses only the scale threshold, not the other three — ' +
+      'exhausting the copyright/relief limit still raises taxableIncomeThisMonth even under a flat 12% withholding',
+    () => {
+      expect(earliestElevatedMonth(result({ scaleThresholdCrossedMonth: 2 }), true)).toBeNull();
+      expect(earliestElevatedMonth(result({ scaleThresholdCrossedMonth: 2, reliefLimitCrossedMonth: 5 }), true)).toBe(5);
+    }
+  );
+
+  it('zusLimitCrossedMonth is never included — it gets a border marker on the chart, not the fill color', () => {
+    expect(earliestElevatedMonth(result({ zusLimitCrossedMonth: 1 }), false)).toBeNull();
   });
 });
