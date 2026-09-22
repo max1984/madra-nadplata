@@ -48,6 +48,24 @@ function renderCalculator() {
   );
 }
 
+describe('Calculator creditworthiness cross-link (render)', () => {
+  it(
+    'regression: a "Sprawdź zdolność kredytową" link to the creditworthiness calculator appears once a result ' +
+      'exists — the mortgage calculator was the only one of the three with no contextual link to a sibling ' +
+      'calculator (CW→mortgage and salary→CW already existed)',
+    async () => {
+      const user = userEvent.setup();
+      renderCalculator();
+      expect(screen.queryByRole('link', { name: /zdolność kredytową/i })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /oblicz/i }));
+      const link = screen.getByRole('link', { name: /zdolność kredytową/i });
+      expect(link).toBeInTheDocument();
+      expect(link.getAttribute('href')).toMatch(/^\/zdolnosc-kredytowa\.html\?years=\d+&rate=/);
+    }
+  );
+});
+
 describe('Calculator keyboard shortcut discoverability (render)', () => {
   it(
     'regression: the "Oblicz" button has a title tooltip mentioning Ctrl+Enter — the Ctrl/Cmd+Enter shortcut ' +

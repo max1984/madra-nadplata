@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { overpayPresets, formatCalcAnnouncement, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape, shouldCancelDeleteConfirmOnEscape } from './Calculator';
+import { overpayPresets, formatCalcAnnouncement, formatResultsSummaryText, buildScenarioComparisonCSV, scenarioSummaryText, resolveImportMessage, formatChartYTick, formatScenarioCount, shouldClearFilterOnEscape, shouldCancelDeleteConfirmOnEscape, buildCreditworthinessLinkHref } from './Calculator';
 import { t as translate } from '../lib/i18n';
 import { fmt, fmtC, csvDec } from '../lib/format';
 import type { ScheduleRow } from '../lib/mortgage';
@@ -68,6 +68,25 @@ describe('formatCalcAnnouncement', () => {
 
   it('does not throw for an empty schedule', () => {
     expect(() => formatCalcAnnouncement({ rows: [] }, t, fmt)).not.toThrow();
+  });
+});
+
+describe('buildCreditworthinessLinkHref', () => {
+  it(
+    'regression: carries the loan term (converted to years) and interest rate over to the creditworthiness ' +
+      'calculator via the years/rate URL params it already understands — the mortgage calculator was the only ' +
+      'one of the three with no contextual link to a sibling calculator (CW→mortgage and salary→CW already existed)',
+    () => {
+      expect(buildCreditworthinessLinkHref(300, 7.5)).toBe('/zdolnosc-kredytowa.html?years=25&rate=7.5');
+    }
+  );
+
+  it('rounds a non-whole number of years to the nearest year', () => {
+    expect(buildCreditworthinessLinkHref(290, 6)).toBe('/zdolnosc-kredytowa.html?years=24&rate=6');
+  });
+
+  it('floors at 1 year instead of producing years=0 for a very short remaining term', () => {
+    expect(buildCreditworthinessLinkHref(3, 6)).toBe('/zdolnosc-kredytowa.html?years=1&rate=6');
   });
 });
 

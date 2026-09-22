@@ -52,6 +52,21 @@ export function formatCalcAnnouncement(
 export { isCalculateShortcut };
 
 /**
+ * Jak buildMortgageLinkHref w CreditworthinessCalculator.tsx (kierunek
+ * odwrotny) i salary_check_creditworthiness_link w SalaryCalculator.tsx —
+ * kalkulator kredytu był jedynym z trzech bez kontekstowego linku do
+ * pozostałych dwóch, mimo że CW→mortgage i salary→CW już istniały.
+ * Okres kredytu i oprocentowanie przenoszą się 1:1 do parametrów `years`/
+ * `rate`, które parseUrlCreditworthinessInputs już rozumie — użytkownik
+ * ląduje w kalkulatorze zdolności z tymi samymi założeniami, zamiast
+ * wpisywać je od nowa.
+ */
+export function buildCreditworthinessLinkHref(loanMonths: number, interestRatePercent: number): string {
+  const years = Math.max(1, Math.round(loanMonths / 12));
+  return `/zdolnosc-kredytowa.html?years=${years}&rate=${interestRatePercent}`;
+}
+
+/**
  * Czytelne, tekstowe podsumowanie wyniku do wklejenia w wiadomości/czacie —
  * inaczej niż "Kopiuj link" (goły URL) czy natywne udostępnianie (to samo,
  * tylko przez systemowy arkusz), to faktyczna treść, którą odbiorca
@@ -994,6 +1009,11 @@ export default function Calculator({
             <button type="button" className="copy-link-btn" onClick={() => onResetToDefaults()}>
               {t('reset_defaults')}
             </button>
+            {calcState && (
+              <a className="copy-link-btn" href={buildCreditworthinessLinkHref(inputs.loanMonths, inputs.interestRate)}>
+                {t('calc_check_creditworthiness_link')}
+              </a>
+            )}
 
             <div className="scenario-panel">
               <div className="scenario-save-row">

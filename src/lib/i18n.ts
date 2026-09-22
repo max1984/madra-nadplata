@@ -64,6 +64,7 @@ export type TranslationKey =
   | 'error_overpay_start'
   | 'error_total_monthly' | 'error_overpay_amount' | 'error_shorten_amount'
   | 'copy_link' | 'copy_link_copied' | 'reset_defaults' | 'share_native'
+  | 'calc_check_creditworthiness_link'
   | 'copy_summary' | 'copy_summary_copied' | 'share_summary_text'
   | 'scenario_name_placeholder' | 'scenario_save' | 'scenario_save_storage_error' | 'scenario_limit_reached' | 'scenario_saved_title'
   | 'scenario_sort_label' | 'scenario_sort_newest' | 'scenario_sort_oldest' | 'scenario_sort_name'
@@ -244,6 +245,7 @@ const pl: Translations = {
   copy_link_copied: '✓ Skopiowano!',
   reset_defaults: '↺ Przywróć domyślne dane',
   share_native: '📤 Udostępnij',
+  calc_check_creditworthiness_link: 'Sprawdź zdolność kredytową →',
   copy_summary: '📋 Kopiuj podsumowanie', copy_summary_copied: '✓ Skopiowano podsumowanie!',
   share_summary_text: 'Kredyt {amount} zł, {rate}% na {months} mies.\nZ nadpłatą: spłacę w {withMonths} rat (o {savedTime} szybciej) i zaoszczędzę {saved} odsetek.\nPoliczone w kalkulatorze Mądra Nadpłata: {url}',
   scenario_name_placeholder: 'Nazwa scenariusza (np. "Wariant z nadpłatą 500 zł")',
@@ -517,6 +519,7 @@ const en: Translations = {
   copy_link_copied: '✓ Copied!',
   reset_defaults: '↺ Reset to defaults',
   share_native: '📤 Share',
+  calc_check_creditworthiness_link: 'Check your creditworthiness →',
   copy_summary: '📋 Copy summary', copy_summary_copied: '✓ Summary copied!',
   share_summary_text: 'Loan {amount} PLN, {rate}% for {months} mo.\nWith the overpay plan: I’ll pay it off in {withMonths} payments ({savedTime} sooner) and save {saved} in interest.\nCalculated with Mądra Nadpłata: {url}',
   scenario_name_placeholder: 'Scenario name (e.g. "500 PLN overpay variant")',

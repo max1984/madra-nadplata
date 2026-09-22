@@ -50,3 +50,15 @@ if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'localStorage', { value: workingLocalStorage, configurable: true, writable: true });
   Object.defineProperty(window, 'sessionStorage', { value: workingSessionStorage, configurable: true, writable: true });
 }
+
+// jsdom doesn't implement Element.scrollIntoView — Calculator.tsx calls it
+// on the results section right after a successful calculation (auto-scroll
+// to the schedule), so any render test that actually clicks "Oblicz" and
+// waits for calcState to go from null to truthy throws "scrollIntoView is
+// not a function" from inside that effect, before the test's own assertions
+// ever run. Same category of gap as the IntersectionObserver stub above —
+// discovered the same way, by a render test finally exercising the real
+// click-to-calculate path instead of pre-seeded state.
+if (typeof window !== 'undefined' && typeof window.HTMLElement.prototype.scrollIntoView !== 'function') {
+  window.HTMLElement.prototype.scrollIntoView = function scrollIntoView() {};
+}
